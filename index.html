@@ -228,6 +228,17 @@ a{color:inherit;text-decoration:none}
 .network-no{background:var(--red-bg);color:var(--red);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
 .network-pending{background:var(--teal-bg);color:var(--teal);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600}
 
+/* ── SOURCE TOGGLE ── */
+.source-toggle{display:flex;gap:0;border-radius:var(--r2);overflow:hidden;border:1.5px solid var(--border2);background:var(--bg);width:fit-content}
+.source-toggle-btn{padding:8px 18px;border:none;background:transparent;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .2s;white-space:nowrap}
+.source-toggle-btn.active{background:var(--navy);color:#fff}
+.source-toggle-btn:not(.active):hover{background:var(--bg2)}
+
+/* ── SOURCE BADGE ── */
+.source-badge{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:3px 9px;font-size:11px;font-weight:700;letter-spacing:.3px;margin-top:4px}
+.source-badge.google{background:#e8f5e9;color:#2e7d32}
+.source-badge.ai{background:#e3f2fd;color:#1565c0}
+
 /* ── ADMIN ── */
 .admin-card{background:#fff;border-radius:var(--r);padding:24px;border:1px solid var(--border);
   box-shadow:var(--shadow);margin-bottom:20px}
@@ -443,6 +454,14 @@ a{color:inherit;text-decoration:none}
           <span class="type-chip" data-spec="Dentistry" onclick="this.classList.toggle('selected')">🦷 Dentistry</span>
         </div>
       </div>
+      <div style="margin-top:16px">
+        <div class="form-label" style="margin-bottom:8px">Search source</div>
+        <div class="source-toggle" id="source-toggle">
+          <button class="source-toggle-btn active" id="src-dual" onclick="setSource('dual')">🟢 Google Places + AI</button>
+          <button class="source-toggle-btn" id="src-ai" onclick="setSource('ai')">🤖 Claude AI Only</button>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-top:6px" id="source-hint">Google Places finds real verified businesses; Claude AI enriches and adds more providers.</div>
+      </div>
       <div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn-run" id="run-btn" onclick="startNetworkRun()">
           <span>🔍</span> <span>Start Network Run</span>
@@ -454,11 +473,11 @@ a{color:inherit;text-decoration:none}
     <div class="progress-box" id="progress-box">
       <div class="section-title" style="margin-bottom:16px">Search Progress</div>
       <div class="progress-steps" id="progress-steps">
-        <div class="step" id="step-0"><div class="step-icon">1</div><span>Connecting to Claude AI</span></div>
-        <div class="step" id="step-1"><div class="step-icon">2</div><span>Searching databases & web</span></div>
-        <div class="step" id="step-2"><div class="step-icon">3</div><span>Verifying providers</span></div>
-        <div class="step" id="step-3"><div class="step-icon">4</div><span>Formatting results</span></div>
-        <div class="step" id="step-4"><div class="step-icon">✓</div><span id="step-5-text">Complete</span></div>
+        <div class="step" id="step-0"><div class="step-icon">1</div><span id="step-0-text">Connecting to Claude AI</span></div>
+        <div class="step" id="step-1"><div class="step-icon">2</div><span id="step-1-text">Searching databases & web</span></div>
+        <div class="step" id="step-2"><div class="step-icon">3</div><span id="step-2-text">Verifying providers</span></div>
+        <div class="step" id="step-3"><div class="step-icon">4</div><span id="step-3-text">Formatting results</span></div>
+        <div class="step" id="step-4"><div class="step-icon">✓</div><span id="step-4-text">Complete</span></div>
       </div>
       <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
       <div class="progress-status" id="progress-status">Starting...</div>
@@ -508,8 +527,8 @@ a{color:inherit;text-decoration:none}
     </div>
     <div class="providers-table">
       <table><thead><tr>
-        <th>Provider</th><th>Type</th><th>Country</th><th>Email / Outlook</th>
-        <th>HWA Status</th><th>In Network</th><th>Added</th>
+        <th>Provider</th><th>Type</th><th>Country</th><th>Contact</th><th>Email / Outlook</th>
+        <th>Score</th><th>Source</th><th>HWA Status</th><th>In Network</th><th>Added</th>
       </tr></thead>
       <tbody id="db-tbody"></tbody></table>
     </div>
@@ -527,6 +546,17 @@ a{color:inherit;text-decoration:none}
         <button class="btn btn-primary" onclick="saveApiKey()" style="flex-shrink:0;margin-bottom:1px">Save Key</button>
       </div>
       <div style="font-size:12px;color:var(--text3)">Key is stored securely in Firestore. All team members use the same key.</div>
+    </div>
+    <div class="admin-card">
+      <h3>🗺️ Google Places API Key</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Google Places (New) API Key</label>
+          <input type="password" class="form-input" id="google-places-key-input" placeholder="AIza...">
+        </div>
+        <button class="btn btn-primary" onclick="saveGooglePlacesKey()" style="flex-shrink:0;margin-bottom:1px">Save Key</button>
+      </div>
+      <div style="font-size:12px;color:var(--text3)">Enables Google Places + AI dual-source search. Key stored securely in Firestore. Requires Places API (New) enabled in Google Cloud Console.</div>
     </div>
     <div class="admin-card">
       <h3>🔐 App Password</h3>
@@ -578,6 +608,8 @@ let currentUser = null;
 let currentProviders = [];
 let runResults = [];
 let apiKey = '';
+let googlePlacesKey = '';
+let _searchSource = 'dual'; // 'dual' | 'ai'
 let _passwordOk = false; // guard: app only opens after password verified
 
 // ── Auth ───────────────────────────────────────────────
@@ -647,6 +679,7 @@ function openApp(user){
     document.getElementById('admin-tab-btn').style.display='flex';
     loadAdminData();
     loadApiKey();
+    loadGooglePlacesKey();
     loadDashboard();
     loadProviders();
     initRegion();
@@ -689,9 +722,57 @@ async function saveApiKey(){
 function updateKeyStatus(){
   const el=document.getElementById('api-key-status');
   if(!el)return;
-  el.innerHTML=apiKey
-    ?'<span style="font-size:12px;background:#dcfce7;color:#166534;border-radius:20px;padding:4px 12px;font-weight:600">✓ API Key Active</span>'
-    :'<span style="font-size:12px;background:#fee2e2;color:#991b1b;border-radius:20px;padding:4px 12px;font-weight:600">⚠ API Key Missing — set in Admin</span>';
+  const claudeOk=!!apiKey;
+  const googleOk=!!googlePlacesKey;
+  const needsGoogle=_searchSource==='dual';
+  let html='';
+  if(claudeOk){
+    html+='<span style="font-size:12px;background:#dcfce7;color:#166534;border-radius:20px;padding:4px 12px;font-weight:600;margin-right:6px">✓ Claude Active</span>';
+  }else{
+    html+='<span style="font-size:12px;background:#fee2e2;color:#991b1b;border-radius:20px;padding:4px 12px;font-weight:600;margin-right:6px">⚠ Claude Key Missing</span>';
+  }
+  if(needsGoogle){
+    if(googleOk){
+      html+='<span style="font-size:12px;background:#e8f5e9;color:#2e7d32;border-radius:20px;padding:4px 12px;font-weight:600">🟢 Google Places Active</span>';
+    }else{
+      html+='<span style="font-size:12px;background:#fff3e0;color:#e65100;border-radius:20px;padding:4px 12px;font-weight:600">⚠ Google Places Key Missing</span>';
+    }
+  }
+  el.innerHTML=html;
+}
+
+// ── Google Places Key ───────────────────────────────────
+async function loadGooglePlacesKey(){
+  try{
+    const doc=await db.collection('config').doc('googlePlacesKey').get();
+    if(doc.exists&&doc.data().key){
+      googlePlacesKey=doc.data().key;
+      updateKeyStatus();
+    }
+  }catch(e){}
+}
+
+async function saveGooglePlacesKey(){
+  const val=document.getElementById('google-places-key-input').value.trim();
+  if(!val){showToast('Enter a Google Places API key','error');return;}
+  try{
+    await db.collection('config').doc('googlePlacesKey').set({key:val,updatedBy:currentUser.email,updatedAt:new Date()});
+    googlePlacesKey=val;
+    updateKeyStatus();
+    showToast('Google Places key saved ✓','success');
+    document.getElementById('google-places-key-input').value='AIza••••••••••••••••';
+  }catch(e){showToast('Save failed: '+e.message,'error');}
+}
+
+// ── Source toggle ───────────────────────────────────────
+function setSource(src){
+  _searchSource=src;
+  document.getElementById('src-dual').classList.toggle('active',src==='dual');
+  document.getElementById('src-ai').classList.toggle('active',src==='ai');
+  document.getElementById('source-hint').textContent=src==='dual'
+    ?'Google Places finds real verified businesses; Claude AI enriches and adds more providers.'
+    :'Claude AI searches databases and the web using its built-in web search tool.';
+  updateKeyStatus();
 }
 
 // ── Tab navigation ──────────────────────────────────────
@@ -874,6 +955,20 @@ function _resetRunUI(clearCards){
   document.getElementById('run-btn').disabled=true;
   document.getElementById('run-btn').innerHTML='<span>⏳</span><span>Searching...</span>';
   document.getElementById('progress-box').classList.add('visible');
+  // Update step labels based on source mode
+  if(_searchSource==='dual'){
+    document.getElementById('step-0-text').textContent='Querying Google Places API';
+    document.getElementById('step-1-text').textContent='Enriching with Claude AI';
+    document.getElementById('step-2-text').textContent='AI searching for more providers';
+    document.getElementById('step-3-text').textContent='Deduplicating & ranking results';
+    document.getElementById('step-4-text').textContent='Complete';
+  }else{
+    document.getElementById('step-0-text').textContent='Connecting to Claude AI';
+    document.getElementById('step-1-text').textContent='Searching databases & web';
+    document.getElementById('step-2-text').textContent='Verifying providers';
+    document.getElementById('step-3-text').textContent='Formatting results';
+    document.getElementById('step-4-text').textContent='Complete';
+  }
   if(clearCards){
     document.getElementById('run-results').style.display='none';
     document.getElementById('run-cards').innerHTML='';
@@ -887,8 +982,8 @@ function _finishRunUI(msg){
   document.getElementById('run-btn').disabled=false;
   document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';
   setProgress(100,'Search complete');
-  [1,2,3,4].forEach(i=>setStep(i,'done'));
-  document.getElementById('step-5-text').textContent=runResults.length?`Complete — ${runResults.length} providers found`:'Complete';
+  [0,1,2,3,4].forEach(i=>setStep(i,'done'));
+  document.getElementById('step-4-text').textContent=runResults.length?`Complete — ${runResults.length} providers found`:'Complete';
   const total=runResults.length;
   if(total>0){
     const loc=_searchCity?`${_searchCity}, ${_searchCountry}`:_searchCountry;
@@ -924,6 +1019,18 @@ async function startNetworkRun(){
   _searchSpecs=[...document.querySelectorAll('#specialty-options .type-chip.selected')].map(c=>c.dataset.spec);
   _searchActive=true;
   _resetRunUI(true);
+  if(_searchSource==='dual'){
+    if(!googlePlacesKey){
+      showToast('Google Places key missing — switching to Claude AI Only. Set key in Admin.','error');
+      setSource('ai');
+      _resetRunUI(false);
+    }else{
+      setStep(0,'active');
+      setProgress(5,'Querying Google Places...');
+      await _runDualSource();
+      return;
+    }
+  }
   setStep(0,'active');
   setProgress(5,'Connecting to Claude AI...');
   await _runBatch(1);
@@ -953,7 +1060,7 @@ Search official databases and web to find exactly 12 NEW real verified medical p
   [0,1,2,3,4].forEach(i=>setStep(i,'pending'));
   setStep(0,'done'); setStep(1,'active');
   setProgress(15, batchNum===1?'Searching databases & web...':'Batch '+batchNum+' — searching for more providers...');
-  document.getElementById('step-5-text').textContent='Complete';
+  document.getElementById('step-4-text').textContent='Complete';
 
   const stepTimers=[
     setTimeout(()=>{setStep(1,'done');setStep(2,'active');setProgress(55,'Verifying providers...');},20000),
@@ -992,7 +1099,7 @@ Search official databases and web to find exactly 12 NEW real verified medical p
 
     if(!newProviders.length){
       [1,2,3].forEach(i=>setStep(i,'done'));setStep(4,'done');
-      document.getElementById('step-5-text').textContent=`Complete — ${runResults.length} providers total`;
+      document.getElementById('step-4-text').textContent=`Complete — ${runResults.length} providers total`;
       setProgress(100,'No more unique providers found');
       _finishRunUI('All available providers found');
       return;
@@ -1001,7 +1108,7 @@ Search official databases and web to find exactly 12 NEW real verified medical p
     // Mark batch steps done
     [1,2,3].forEach(i=>setStep(i,'done'));setStep(4,'done');
     const newTotal=runResults.length+newProviders.length;
-    document.getElementById('step-5-text').textContent=`Batch ${batchNum} — ${newTotal} found`;
+    document.getElementById('step-4-text').textContent=`Batch ${batchNum} — ${newTotal} found`;
     setProgress(100,`Batch ${batchNum} complete — ${newTotal} providers found`);
 
     // Show batch separator for batches after the first
@@ -1323,6 +1430,12 @@ async function loadAdminData(){
     const doc=await db.collection('config').doc('api').get();
     if(doc.exists&&doc.data().anthropicKey){
       document.getElementById('api-key-input').value='sk-ant-••••••••••••••••';
+    }
+  }catch(e){}
+  try{
+    const doc=await db.collection('config').doc('googlePlacesKey').get();
+    if(doc.exists&&doc.data().key){
+      document.getElementById('google-places-key-input').value='AIza••••••••••••••••';
     }
   }catch(e){}
   try{

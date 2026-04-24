@@ -454,11 +454,10 @@ a{color:inherit;text-decoration:none}
       <div class="section-title" style="margin-bottom:16px">Search Progress</div>
       <div class="progress-steps" id="progress-steps">
         <div class="step" id="step-0"><div class="step-icon">1</div><span>Connecting to Claude AI</span></div>
-        <div class="step" id="step-1"><div class="step-icon">2</div><span>Searching Europe & Mediterranean</span></div>
-        <div class="step" id="step-2"><div class="step-icon">3</div><span>Searching Asia & Middle East</span></div>
-        <div class="step" id="step-3"><div class="step-icon">4</div><span>Searching Africa</span></div>
-        <div class="step" id="step-4"><div class="step-icon">5</div><span>Writing cooperation emails</span></div>
-        <div class="step" id="step-5"><div class="step-icon">✓</div><span id="step-5-text">Complete</span></div>
+        <div class="step" id="step-1"><div class="step-icon">2</div><span>Searching databases & web</span></div>
+        <div class="step" id="step-2"><div class="step-icon">3</div><span>Verifying providers</span></div>
+        <div class="step" id="step-3"><div class="step-icon">4</div><span>Writing cooperation emails</span></div>
+        <div class="step" id="step-4"><div class="step-icon">✓</div><span id="step-5-text">Complete</span></div>
       </div>
       <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
       <div class="progress-status" id="progress-status">Starting...</div>
@@ -828,14 +827,11 @@ ${specsLine}
 Search the web AND official databases (WHO, national health ministry registry, company registration, JCI directory, medical association directories) to find 8–12 real verified medical providers in ${country} matching the requested types and specialties. Return JSON only.`;
 
   try{
-    setStep(0,'done'); setStep(1,'active'); setProgress(20,'Searching Europe & Mediterranean...');
-    
-    // Simulate step progression during API call
-    let stepTimer=0;
+    setStep(0,'done'); setStep(1,'active'); setProgress(25,'Searching databases & web...');
+
     const stepTimers=[
-      setTimeout(()=>{setStep(1,'done');setStep(2,'active');setProgress(40,'Searching Asia & Middle East...');},15000),
-      setTimeout(()=>{setStep(2,'done');setStep(3,'active');setProgress(60,'Searching Africa...');},35000),
-      setTimeout(()=>{setStep(3,'done');setStep(4,'active');setProgress(80,'Writing cooperation emails...');},55000),
+      setTimeout(()=>{setStep(1,'done');setStep(2,'active');setProgress(55,'Verifying providers...');},25000),
+      setTimeout(()=>{setStep(2,'done');setStep(3,'active');setProgress(80,'Writing cooperation emails...');},50000),
     ];
 
     const controller=new AbortController();
@@ -877,8 +873,8 @@ Search the web AND official databases (WHO, national health ministry registry, c
     if(!providers.length)throw new Error('No providers in response');
 
     // Step complete
-    [1,2,3,4].forEach(i=>setStep(i,'done'));
-    setStep(5,'done');
+    [1,2,3].forEach(i=>setStep(i,'done'));
+    setStep(4,'done');
     document.getElementById('step-5-text').textContent=`Complete — ${providers.length} providers found`;
     setProgress(100,`Found ${providers.length} providers`);
 

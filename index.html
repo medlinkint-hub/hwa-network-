@@ -775,9 +775,9 @@ OUTPUT MUST BE VALID JSON ONLY — no markdown, no backticks, no prose before or
       "accreditations": ["JCI","ISO","EACCME"],
       "specialties": ["Cardiology","Orthopedics","Physical Therapy","General Medicine"],
       "has_international_dept": true,
-      "why_hwa": "1-2 sentences on network value for HWA and its insurer clients",
-      "email_subject": "Partnership Proposal — HealthWatch Assistance & [Name]",
-      "email_body": "Full professional email (max 300 words). Explain HWA, IPMI, benefit to provider. Sign off: Dr. Sami | Medical Officer | HealthWatch Assistance S.A. | sami@healthwatch.gr"
+      "why_hwa": "1-2 sentences on the specific value this provider brings to HWA's insurer clients",
+      "email_subject": "Network Partnership Invitation — HealthWatch Assistance & [Provider Name]",
+      "email_body": "SEE EMAIL RULES BELOW"
     }
   ],
   "summary": "2-sentence summary"
@@ -798,8 +798,39 @@ RULES (strictly follow all):
 3. For each provider cross-check at least 2 sources to confirm it is active and registered.
 4. Prefer accredited providers (JCI, ISO 9001, national health ministry certified).
 5. For type=doctor: name = doctor's full name + title (e.g. "Dr. Nikos Papadopoulos — Cardiologist").
-6. Email body must be personalised with the specific provider name, city, and specialty.
-7. If a country has a local language, also search in that language (e.g. Greek: "κλινική", "φυσικοθεραπεία", "ιατρός").`;
+6. If a country has a local language, also search in that language (e.g. Greek: "κλινική", "φυσικοθεραπεία", "ιατρός").
+
+EMAIL RULES — every email_body MUST follow this structure and logic:
+
+PARAGRAPH 1 — Introduction (2 sentences):
+"Dear [Dr./Mr./Ms. Last Name or Medical Director of Provider Name],
+My name is Dr. Sami, Medical Officer at HealthWatch Assistance S.A. (HWA), a leading international medical assistance and TPA company based in Thessaloniki, Greece, serving major Lloyd's and global insurers including AegisInsurance, Canopius, Argo Group, HDI Global, Prime Cyprus Group, and GBG Group."
+
+PARAGRAPH 2 — Why we are contacting THIS provider specifically (specialty-driven, 3 sentences):
+Explain exactly WHY this provider's specialty is relevant to HWA's clients. Be specific:
+- For a cardiology clinic: "Our insured members traveling to [city] frequently require urgent cardiac consultations, stress tests, and interventional cardiology services. Having a trusted, accredited cardiology partner in [city] allows us to guarantee our clients rapid access to specialist care without navigating unknown facilities."
+- For physical therapy: "Rehabilitation and physical therapy represent one of the most common post-injury and post-surgical needs among our internationally mobile patients. A certified physiotherapy center in [city] with experience treating international patients is essential to completing our network."
+- For a hospital: "As a major referral destination in [city/region], [Provider Name] is positioned to serve as our primary hospital partner for emergency admissions, surgical procedures, and specialist consultations for insured patients in your area."
+- For a doctor/specialist: "Dr. [Name]'s expertise in [specialty] is precisely the type of specialist access our insurers require for their policyholders traveling to or residing in [city]."
+- Adapt the logic to the actual specialty found for each provider.
+
+PARAGRAPH 3 — What we offer the provider (3 sentences):
+"Joining the HWA Medical Network means your facility/practice will receive direct patient referrals from international insurance companies, guaranteed payment through our cashless or reimbursement system with no administrative burden on your side. We handle all pre-authorizations, documentation, and insurer coordination so your team focuses only on providing excellent care. Our network currently covers patients from over 30 countries, and we are actively growing our provider base in [country]."
+
+PARAGRAPH 4 — Call to action (2 sentences):
+"I would welcome the opportunity to schedule a brief call or video meeting at your convenience to discuss the terms of our cooperation agreement and answer any questions you may have. Please feel free to reply to this email or contact me directly at sami@healthwatch.gr."
+
+CLOSING:
+"Warm regards,
+Dr. Sami
+Medical Officer
+HealthWatch Assistance S.A.
+Thermi, Thessaloniki, Greece
+Tel: +30 2310 000000
+Email: sami@healthwatch.gr
+www.healthwatch.gr"
+
+IMPORTANT: Write each email freshly — do NOT copy-paste the same email for all providers. Each email must reference the provider's actual name, city, and specific specialty. Tone: formal, respectful, confident. Length: 250–350 words.`;
 
 async function startNetworkRun(){
   if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}

@@ -151,6 +151,7 @@ a{color:inherit;text-decoration:none}
 .progress-box.visible{display:block}
 .progress-steps{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
 .step{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text3);transition:all .3s}
+.step.pending{color:var(--text3);opacity:.5}
 .step.active{color:var(--navy);font-weight:600}
 .step.done{color:var(--green)}
 .step.error{color:var(--red)}
@@ -885,6 +886,9 @@ function _finishRunUI(msg){
   _searchActive=false;
   document.getElementById('run-btn').disabled=false;
   document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';
+  setProgress(100,'Search complete');
+  [1,2,3,4].forEach(i=>setStep(i,'done'));
+  document.getElementById('step-5-text').textContent=runResults.length?`Complete — ${runResults.length} providers found`:'Complete';
   const total=runResults.length;
   if(total>0){
     const loc=_searchCity?`${_searchCity}, ${_searchCountry}`:_searchCountry;
@@ -944,7 +948,8 @@ ${specsLine}${excludeLine}
 
 Search official databases and web to find exactly 12 NEW real verified medical providers in ${loc} matching the requested types and specialties. Order best-first: JCI/ISO-accredited first, then providers with verified email + website. Do not repeat any provider from the ALREADY FOUND list. Return JSON only.`;
 
-  // Reset steps for this batch
+  // Reset steps and progress bar for this batch
+  setProgress(0,'');
   [0,1,2,3,4].forEach(i=>setStep(i,'pending'));
   setStep(0,'done'); setStep(1,'active');
   setProgress(15, batchNum===1?'Searching databases & web...':'Batch '+batchNum+' — searching for more providers...');
@@ -1021,7 +1026,7 @@ Search official databases and web to find exactly 12 NEW real verified medical p
     setTimeout(()=>{document.getElementById('save-bar').classList.add('visible');updateSaveCount();},newProviders.length*100+300);
 
     // Session log (non-critical)
-    try{await db.collection('sessions').add({date:today,region:loc,providersFound:runResults.length,batchNum,runBy:currentUser.displayName,runByEmail:currentUser.email,createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
+    try{await db.collection('sessions').add({date:today,region:loc,providersFound:runResults.length,batchNum,runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
 
     // Auto-continue to next batch
     if(_searchActive&&runResults.length<250){
@@ -1048,9 +1053,9 @@ function setStep(n,state){
   if(!el)return;
   el.className='step '+state;
   const icon=el.querySelector('.step-icon');
-  if(state==='done')icon.textContent='✓';
+  if(state==='done'||n===4)icon.textContent='✓';
   else if(state==='error')icon.textContent='✗';
-  else{icon.textContent=n===4?'✓':n+1;}
+  else icon.textContent=n+1;
 }
 function setProgress(pct,text){
   document.getElementById('progress-bar').style.width=pct+'%';
@@ -1307,7 +1312,7 @@ function downloadExcel(){
   const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
   ws['!cols']=headers.map((_,i)=>({wch:[14,30,16,14,14,24,24,16,16,22,10,28,16,14,14,24,13,14,16][i]||14}));
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,'Providers',ws);
+  XLSX.utils.book_append_sheet(wb,ws,'Providers');
   XLSX.writeFile(wb,`HWA_Network_Tracker_${new Date().toISOString().split('T')[0]}.xlsx`);
   showToast('Excel downloaded ✓','success');
 }

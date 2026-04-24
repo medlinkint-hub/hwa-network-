@@ -774,9 +774,9 @@ async function startNetworkRun(){
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:8000,
-        tools:[{type:'web_search_20250305',name:'web_search',max_uses:15}],
+        model:'claude-sonnet-4-6',
+        max_tokens:16000,
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:10}],
         system:SYSTEM_PROMPT,
         messages:[{role:'user',content:userMsg}]
       })
@@ -787,11 +787,9 @@ async function startNetworkRun(){
     if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error '+resp.status);}
 
     const data=await resp.json();
-    let rawText='';
-    for(let i=data.content.length-1;i>=0;i--){
-      if(data.content[i].type==='text'){rawText=data.content[i].text;break;}
-    }
-    if(!rawText)throw new Error('No text in response');
+    // Concatenate all text blocks — web_search responses interleave text and tool_use blocks
+    let rawText=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    if(!rawText)throw new Error('No text in response (stop_reason: '+data.stop_reason+')');
 
     // Parse JSON
     let clean=rawText.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();

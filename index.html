@@ -112,9 +112,6 @@ a{color:inherit;text-decoration:none}
   display:flex;align-items:center;gap:10px;transition:all .25s}
 .btn-run:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 32px rgba(26,47,94,.5)}
 .btn-run:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.btn-stop{background:#b91c1c;color:#fff;border:none;border-radius:8px;padding:12px 22px;
-  font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
-.btn-stop:hover{background:#991b1b;transform:translateY(-1px)}
 .batch-sep{text-align:center;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:2px;
   padding:16px 0 8px;text-transform:uppercase}
 .btn-outlook{background:#0078d4;color:#fff;border:none;border-radius:6px;padding:8px 16px;
@@ -448,9 +445,6 @@ a{color:inherit;text-decoration:none}
       <div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn-run" id="run-btn" onclick="startNetworkRun()">
           <span>🔍</span> <span>Start Network Run</span>
-        </button>
-        <button class="btn-stop" id="stop-btn" onclick="stopSearch()" style="display:none">
-          ⏹ Stop Search
         </button>
         <div id="api-key-status"></div>
       </div>
@@ -875,14 +869,9 @@ let _searchCity='';
 let _searchTypes=[];
 let _searchSpecs=[];
 
-function stopSearch(){
-  _searchActive=false;
-}
-
 function _resetRunUI(clearCards){
   document.getElementById('run-btn').disabled=true;
   document.getElementById('run-btn').innerHTML='<span>⏳</span><span>Searching...</span>';
-  document.getElementById('stop-btn').style.display='inline-flex';
   document.getElementById('progress-box').classList.add('visible');
   if(clearCards){
     document.getElementById('run-results').style.display='none';
@@ -896,7 +885,6 @@ function _finishRunUI(msg){
   _searchActive=false;
   document.getElementById('run-btn').disabled=false;
   document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';
-  document.getElementById('stop-btn').style.display='none';
   const total=runResults.length;
   if(total>0){
     const loc=_searchCity?`${_searchCity}, ${_searchCountry}`:_searchCountry;
@@ -1051,7 +1039,7 @@ Search official databases and web to find exactly 12 NEW real verified medical p
     setProgress(0,'Error: '+msg);
     showToast(isAbort?`Timed out after batch ${batchNum} — ${runResults.length} providers saved`:'Run failed: '+e.message,'error');
     if(runResults.length>0)_finishRunUI('Search ended with error');
-    else{document.getElementById('run-btn').disabled=false;document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';document.getElementById('stop-btn').style.display='none';}
+    else{document.getElementById('run-btn').disabled=false;document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';}
   }
 }
 

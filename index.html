@@ -816,21 +816,51 @@ CRITICAL JSON RULES: All string values must be properly escaped. Use \\n for lin
 }
 
 SEARCH STRATEGY — use web_search to cross-reference ALL of the following sources for each provider:
+
+UNIVERSAL SOURCES (always search):
 - General web search (provider website, Google Maps listing)
-- WHO Global Health Observatory and WHO country health profiles
-- National ministry of health or medical council registration database for that country
-- Company/business registration databases (e.g. GEMI for Greece, Companies House for UK)
+- WHO Global Health Observatory and WHO country health profiles (who.int)
 - JCI-accredited organizations list (jointcommissioninternational.org)
-- International medical directories (Bookimed, Medigo, WhatClinic, Doctoralia, Zocdoc)
-- Local medical association or hospital federation directories
+- International medical directories: Bookimed, Medigo, WhatClinic, Doctoralia, Zocdoc, Healthgrades
+
+GREECE-SPECIFIC SOURCES (use when country = Greece or city is Greek):
+- Ιατρικός Σύλλογος Αθηνών (Medical Association of Athens): isa.gr — search for specialist doctors and clinics
+- Ιατρικός Σύλλογος Θεσσαλονίκης (Medical Association of Thessaloniki): isat.gr
+- Πανελλήνιος Ιατρικός Σύλλογος (Panhellenic Medical Association): pis.gr
+- Πανελλήνιος Σύλλογος Φυσικοθεραπευτών (Greek Physical Therapy Association): psf.gr
+- ΕΣΙΔΙ — Association of Private Hospitals of Greece: esidi.gr
+- Greek Ministry of Health provider registry: moh.gov.gr
+- ΓΕΜΙ / GEMI business registry (Greek company registration): businessregistry.gr
+- iatronet.gr — Greek medical directory with verified specialist profiles
+- ygeiaonline.gr — Greek health portal with clinic/doctor listings
+- findadoctor.gr — doctor search portal in Greece
+- Search in Greek using terms: "ιδιωτική κλινική", "διαγνωστικό κέντρο", "φυσικοθεραπεία", "ιατρός ειδικός", "καρδιολόγος", "ορθοπεδικός", "νευρολόγος", "ογκολόγος" + city name
+
+SOUTH EUROPE — COUNTRY-SPECIFIC SOURCES:
+- ITALY: FNOMCeO national medical register (fnomceo.it), AGENAS hospital quality database, ARS Toscana/Lombardia regional registries, ISS (Istituto Superiore di Sanità), Paginemediche.it, search in Italian: "clinica privata", "poliambulatorio", "fisioterapia", "specialista"
+- SPAIN: CGCOM national medical council (cgcom.es), SNS hospital directory (sanidad.gob.es), TOP Doctors Spain (topdoctors.es), Doctoralia Spain, Salud180, search in Spanish: "clínica privada", "centro médico", "fisioterapia", "especialista"
+- PORTUGAL: Ordem dos Médicos (ordemdosmedicos.pt), ACSS hospital listing (acss.min-saude.pt), SNS hospital directory (sns.gov.pt), search in Portuguese: "clínica privada", "centro médico", "fisioterapia"
+- CYPRUS: Cyprus Medical Association (cma.org.cy), Ministry of Health Cyprus (moh.gov.cy/en), JCC Medical Cyprus, private hospital directories Limassol/Nicosia/Larnaca
+- CROATIA: Croatian Medical Chamber (hlk.hr), HZZO hospital network, Ministry of Health Croatia (zdravlje.gov.hr), search: "privatna klinika", "fizioterapija"
+- SERBIA: Serbian Medical Chamber (lks.org.rs), Ministry of Health Serbia (zdravlje.gov.rs), search: "privatna klinika", "fizioterapija"
+- NORTH MACEDONIA: Macedonian Medical Association, Ministry of Health North Macedonia
+- ALBANIA: Medical Chamber of Albania, Ministry of Health Albania (shendetesia.gov.al)
+- MALTA: Medical Council of Malta (medicalcouncil.gov.mt), Malta Health Network, Ministry of Health Malta
+- SLOVENIA: Medical Chamber of Slovenia (zdravniskazbornica.si), NIJZ health data
+- BULGARIA: Bulgarian Medical Association (blsm.bg), Ministry of Health Bulgaria, search: "частна клиника", "физиотерапия"
+- TURKEY: Turkish Medical Association (ttb.org.tr), Health Tourism accreditation list (saglik.gov.tr), search: "özel hastane", "klinik", "fizyoterapi"
+
+ALWAYS cross-check each found provider against at least 2 sources before including.
 
 RULES (strictly follow all):
 1. Only return REAL verified providers — confirmed name, address, working website, real contact email/phone. No invented data.
 2. Find 8–12 providers matching the requested country AND specialties/types exactly.
-3. For each provider cross-check at least 2 sources to confirm it is active and registered.
+3. For each provider cross-check at least 2 sources to confirm it is active and registered. Use country-specific sources listed above — do NOT rely only on Google Maps.
 4. Prefer accredited providers (JCI, ISO 9001, national health ministry certified).
 5. For type=doctor: name = doctor's full name + title (e.g. "Dr. Nikos Papadopoulos — Cardiologist").
-6. If a country has a local language, also search in that language (e.g. Greek: "κλινική", "φυσικοθεραπεία", "ιατρός").
+6. ALWAYS search in the local language of the country using the local-language terms listed above — this is mandatory for Greece, Italy, Spain, Portugal, Croatia, Serbia, Bulgaria, Turkey.
+7. For Greece specifically: search iatronet.gr and isat.gr or isa.gr depending on city, and cross-reference with GEMI for clinic registration status.
+8. Prioritize providers with a verified email address — this is the most important contact field.
 
 EMAIL RULES — every email_body MUST follow this structure and logic:
 

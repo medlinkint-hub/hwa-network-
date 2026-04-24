@@ -759,6 +759,7 @@ HWA is a leading medical TPA serving: AegisInsurance, Canopius, Argo, HDI Global
 Contact: Dr. Sami, Medical Officer | sami@healthwatch.gr
 
 OUTPUT MUST BE VALID JSON ONLY — no markdown, no backticks, no prose before or after.
+CRITICAL JSON RULES: All string values must be properly escaped. Use \\n for line breaks inside strings. Never use raw double-quotes inside a string value — escape them as \\". Keep email_body as a single continuous string with \\n for paragraph breaks.
 
 {
   "session_date": "YYYY-MM-DD",
@@ -908,7 +909,35 @@ Search the web AND official databases (WHO, national health ministry registry, c
     let clean=rawText.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
     const match=clean.match(/\{[\s\S]*\}/);
     if(match)clean=match[0];
-    const parsed=JSON.parse(clean);
+
+    // Repair common JSON issues caused by long email bodies:
+    // 1. Replace literal newlines inside string values with \n
+    // 2. Remove control characters that break JSON
+    clean=clean
+      .replace(/[ --]/g,'') // strip control chars
+      .replace(/\t/g,'\\t');                                     // escape tabs
+
+    // Attempt parse; if it fails try aggressive string-field sanitisation
+    let parsed;
+    try{
+      parsed=JSON.parse(clean);
+    }catch(firstErr){
+      // Sanitise every string value: replace unescaped quotes and bare newlines
+      const repaired=clean
+        .replace(/"email_body"\s*:\s*"([\s\S]*?)(?=",\s*"\w+"\s*:|"\s*\})/g,(_,body)=>{
+          const safe=body.replace(/\n/g,'\\n').replace(/\r/g,'').replace(/(?<!\\)"/g,'\\"');
+          return `"email_body":"${safe}`;
+        })
+        .replace(/"why_hwa"\s*:\s*"([\s\S]*?)(?=",\s*"\w+"\s*:|"\s*\})/g,(_,val)=>{
+          const safe=val.replace(/\n/g,' ').replace(/(?<!\\)"/g,'\\"');
+          return `"why_hwa":"${safe}`;
+        });
+      try{
+        parsed=JSON.parse(repaired);
+      }catch(secondErr){
+        throw new Error('Could not parse response — try again (JSON error: '+secondErr.message+')');
+      }
+    }
     const providers=parsed.providers||[];
     if(!providers.length)throw new Error('No providers in response');
 

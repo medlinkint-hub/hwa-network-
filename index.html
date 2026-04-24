@@ -553,10 +553,25 @@ function getTodayRegion(){return REGIONS[new Date().getDay()];}
 async function signInGoogle(){
   try{
     const provider=new firebase.auth.GoogleAuthProvider();
-    await auth.signInWithPopup(provider);
+    try{
+      await auth.signInWithPopup(provider);
+    }catch(popupErr){
+      if(popupErr.code==='auth/operation-not-supported-in-this-environment'||
+         popupErr.code==='auth/popup-blocked'||
+         popupErr.code==='auth/popup-closed-by-user'){
+        await auth.signInWithRedirect(provider);
+      }else{
+        throw popupErr;
+      }
+    }
   }catch(e){showToast('Sign-in failed: '+e.message,'error');}
 }
 async function signOut(){await auth.signOut();}
+
+// Pick up the result after a signInWithRedirect round-trip
+auth.getRedirectResult().catch(e=>{
+  if(e&&e.code)showToast('Sign-in failed: '+e.message,'error');
+});
 
 auth.onAuthStateChanged(async user=>{
   if(user){

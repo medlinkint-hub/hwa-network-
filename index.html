@@ -430,6 +430,7 @@ a{color:inherit;text-decoration:none}
         <option>Hospital</option><option>Clinic</option>
         <option>Air Ambulance</option><option>Ground Ambulance</option>
         <option>TPA / Assistance Co</option>
+        <option>Physical Therapy</option><option>Doctor / Specialist</option>
       </select>
       <select class="filter-select" onchange="filterProviders()" id="db-status">
         <option value="">All Statuses</option>
@@ -712,16 +713,16 @@ OUTPUT MUST BE VALID JSON ONLY — no markdown, no backticks, no prose before or
   "providers": [
     {
       "name": "string",
-      "type": "hospital|clinic|ground_ambulance|air_ambulance|tpa",
+      "type": "hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor",
       "country": "string",
       "city": "string",
       "website": "https://...",
       "email": "contact@provider.com",
       "phone": "+XX XXX XXX XXXX",
-      "accreditations": ["JCI"],
-      "specialties": ["Cardiology"],
+      "accreditations": ["JCI","ISO","EACCME"],
+      "specialties": ["Cardiology","Orthopedics","Physical Therapy","General Medicine"],
       "has_international_dept": true,
-      "why_hwa": "1-2 sentences on network value",
+      "why_hwa": "1-2 sentences on network value for HWA and its insurer clients",
       "email_subject": "Partnership Proposal — HealthWatch Assistance & [Name]",
       "email_body": "Full professional email (max 300 words). Explain HWA, IPMI, benefit to provider. Sign off: Dr. Sami | Medical Officer | HealthWatch Assistance S.A. | sami@healthwatch.gr"
     }
@@ -729,7 +730,16 @@ OUTPUT MUST BE VALID JSON ONLY — no markdown, no backticks, no prose before or
   "summary": "2-sentence summary"
 }
 
-Rules: use web_search for real data only. Find 6+ providers: 2 Europe, 2 Asia, 2 Africa. No invented providers.`;
+RULES (strictly follow all):
+1. Use web_search to verify every provider — real names, real addresses, real emails/phones only. No invented data.
+2. Find 8+ providers total covering the requested region PLUS always include at least 3 Greek providers:
+   - Physical therapy & rehabilitation centers in Greece (search "φυσικοθεραπεία κλινική Ελλάδα" and "physical therapy clinic Greece")
+   - Specialist doctors in Greece with international patient experience
+   - Private clinics in Athens, Thessaloniki, Crete accepting international insurance
+3. For worldwide results: 2 Europe, 2 Asia/Middle East, 2 Africa, 2 Greece minimum.
+4. Verify each provider's website exists. Prefer providers with JCI, ISO or other accreditations.
+5. For type=doctor, name field = doctor's full name and specialty.
+6. Email bodies must be personalised with the provider's name and specialty.`;
 
 async function startNetworkRun(){
   if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
@@ -894,7 +904,7 @@ function updateSaveCount(){
   document.getElementById('save-bar-sub').textContent=`${checked} provider${checked!==1?'s':''} selected`;
 }
 function typeLabel(t){
-  return{hospital:'🏥 Hospital',clinic:'🏢 Clinic',ground_ambulance:'🚑 Ground Amb.',air_ambulance:'✈️ Air Amb.',tpa:'🤝 TPA'}[t]||t;
+  return{hospital:'🏥 Hospital',clinic:'🏢 Clinic',ground_ambulance:'🚑 Ground Amb.',air_ambulance:'✈️ Air Amb.',tpa:'🤝 TPA',physical_therapy:'🏋️ Physical Therapy',doctor:'👨‍⚕️ Doctor/Specialist'}[t]||t;
 }
 function buildMailto(p){
   const subj=encodeURIComponent(p.email_subject||'Partnership Proposal — HealthWatch Assistance');
@@ -986,7 +996,7 @@ function renderTable(providers){
       <td style="font-size:13px">${p.country||''}</td>
       <td>
         ${p.email?`<div style="font-size:12px;color:var(--text2)">${p.email}</div>`:''}
-        ${p.email?`<a class="table-outlook" href="${buildMailto(p)}" target="_blank" title="Open in Outlook">📧</a>`:''}
+        ${p.email?`<a class="table-outlook" href="${buildMailto(p)}" target="_blank" title="Open in Outlook — auto-marks Email Sent" onclick="trackEmailSent('${p.id}')">📧 Send</a>`:''}
       </td>
       <td>
         <select class="status-sel ${statusClass}" onchange="updateStatus('${p.id}',this)">
@@ -1010,6 +1020,20 @@ async function updateStatus(docId,sel){
     showToast('Status updated ✓','success');
     loadDashboard();
   }catch(e){showToast('Update failed','error');}
+}
+
+async function trackEmailSent(docId){
+  if(!docId)return;
+  try{
+    const today=new Date().toISOString().split('T')[0];
+    await db.collection('providers').doc(docId).update({
+      status:'Email Sent',
+      lastContact:today
+    });
+    showToast('Email opened — status set to "Email Sent" ✓','success');
+    await loadProviders();
+    loadDashboard();
+  }catch(e){}
 }
 
 function filterProviders(){

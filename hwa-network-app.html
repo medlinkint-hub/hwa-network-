@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>HWA Medical Network</title>
+<meta name="theme-color" content="#1a2f5e">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --navy:#1a2f5e;--navy2:#2d4a8e;--red:#c0392b;--bg:#f0f2f7;--bg2:#e8ebf2;
+  --white:#fff;--border:rgba(26,47,94,.1);--border2:rgba(26,47,94,.18);
+  --text:#1a1f36;--text2:#4a5568;--text3:#8492a6;
+  --green:#0f6e56;--green-bg:#e1f5ee;--amber:#854f0b;--amber-bg:#faeeda;
+  --teal:#0e7490;--teal-bg:#e0f2fe;--red-bg:#fee2e2;
+  --shadow:0 2px 12px rgba(26,47,94,.08);--shadow2:0 8px 32px rgba(26,47,94,.14);
+  --r:12px;--r2:8px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+input,button,select,textarea{font-family:inherit;font-size:14px}
+a{color:inherit;text-decoration:none}
+
+/* ── LOGIN ── */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0d1e3d 0%,#1a2f5e 50%,#243a6e 100%);padding:20px}
+.login-card{background:#fff;border-radius:20px;padding:48px 40px;width:100%;max-width:420px;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center}
+.login-logo{width:64px;height:64px;background:linear-gradient(135deg,var(--navy),var(--navy2));
+  border-radius:16px;display:inline-flex;align-items:center;justify-content:center;
+  color:#fff;font-size:26px;font-weight:700;margin-bottom:20px;box-shadow:0 8px 24px rgba(26,47,94,.35)}
+.login-title{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.login-sub{font-size:14px;color:var(--text3);margin-bottom:32px;line-height:1.5}
+.btn-google{width:100%;padding:14px;border:1.5px solid var(--border2);border-radius:var(--r);
+  background:#fff;cursor:pointer;font-size:15px;font-weight:600;color:var(--text);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.btn-google:hover{background:#f8f9ff;border-color:var(--navy);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.btn-google svg{width:20px;height:20px}
+.login-footer{margin-top:28px;font-size:12px;color:var(--text3)}
+
+/* ── HEADER ── */
+#app{display:none;min-height:100vh;flex-direction:column}
+.app-header{background:var(--navy);padding:0 24px;height:58px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 16px rgba(0,0,0,.2)}
+.header-brand{display:flex;align-items:center;gap:12px}
+.header-logo{width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px}
+.header-title{color:#fff;font-size:16px;font-weight:700}
+.header-sub{color:rgba(255,255,255,.55);font-size:11px;font-weight:400}
+.header-right{display:flex;align-items:center;gap:12px}
+.user-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);
+  border-radius:20px;padding:5px 12px 5px 5px;cursor:pointer}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.user-name{font-size:12px;color:rgba(255,255,255,.85);font-weight:500}
+.btn-signout{font-size:12px;color:rgba(255,255,255,.6);cursor:pointer;padding:4px 8px;
+  border-radius:6px;border:1px solid rgba(255,255,255,.2);background:none}
+.btn-signout:hover{background:rgba(255,255,255,.1);color:#fff}
+
+/* ── TABS ── */
+.tab-bar{background:#fff;border-bottom:1px solid var(--border);display:flex;
+  overflow-x:auto;scrollbar-width:none;position:sticky;top:58px;z-index:99;
+  box-shadow:0 2px 8px rgba(26,47,94,.05)}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{padding:0 20px;height:46px;border:none;background:none;cursor:pointer;
+  font-size:13px;font-weight:500;color:var(--text3);white-space:nowrap;
+  border-bottom:3px solid transparent;transition:all .2s;display:flex;align-items:center;gap:7px}
+.tab-btn:hover{color:var(--navy);background:#f8f9ff}
+.tab-btn.active{color:var(--navy);font-weight:600;border-bottom-color:var(--navy)}
+.tab-content{flex:1;overflow-y:auto;padding:24px;max-width:1200px;margin:0 auto;width:100%}
+
+/* ── KPI CARDS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+.kpi-card{background:#fff;border-radius:var(--r);padding:20px;border:1px solid var(--border);
+  box-shadow:var(--shadow)}
+.kpi-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.kpi-value{font-size:32px;font-weight:700;color:var(--navy);line-height:1}
+.kpi-sub{font-size:12px;color:var(--text3);margin-top:6px}
+.kpi-card.green .kpi-value{color:var(--green)}
+.kpi-card.amber .kpi-value{color:var(--amber)}
+.kpi-card.red .kpi-value{color:var(--red)}
+
+/* ── SECTION HEADERS ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-size:16px;font-weight:700;color:var(--navy)}
+.section-sub{font-size:13px;color:var(--text3);margin-top:2px}
+
+/* ── BUTTONS ── */
+.btn{padding:10px 20px;border-radius:var(--r2);border:none;cursor:pointer;
+  font-size:14px;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;
+  box-shadow:0 4px 14px rgba(26,47,94,.35)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,47,94,.45)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-outline{background:#fff;color:var(--navy);border:1.5px solid var(--border2)}
+.btn-outline:hover{background:var(--bg);border-color:var(--navy)}
+.btn-sm{padding:7px 14px;font-size:12px;border-radius:6px}
+.btn-run{padding:16px 40px;font-size:16px;border-radius:var(--r);
+  background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;
+  box-shadow:0 6px 24px rgba(26,47,94,.4);border:none;cursor:pointer;font-weight:700;
+  display:flex;align-items:center;gap:10px;transition:all .25s}
+.btn-run:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 32px rgba(26,47,94,.5)}
+.btn-run:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-outlook{background:#0078d4;color:#fff;border:none;border-radius:6px;padding:8px 16px;
+  font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+  transition:all .2s;text-decoration:none}
+.btn-outlook:hover{background:#006cbf;transform:translateY(-1px)}
+.btn-green{background:var(--green);color:#fff;border:none}
+.btn-green:hover{background:#0a5a45}
+
+/* ── RUN TAB ── */
+.run-config{background:#fff;border-radius:var(--r);padding:24px;border:1px solid var(--border);
+  box-shadow:var(--shadow);margin-bottom:20px}
+.run-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.region-badge{background:var(--navy);color:#fff;border-radius:20px;padding:6px 16px;
+  font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.region-options{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.region-chip{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border2);
+  background:#fff;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
+.region-chip.selected,.region-chip:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* ── PROGRESS ── */
+.progress-box{background:#fff;border-radius:var(--r);padding:28px;border:1px solid var(--border);
+  box-shadow:var(--shadow);margin-bottom:20px;display:none}
+.progress-box.visible{display:block}
+.progress-steps{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+.step{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text3);transition:all .3s}
+.step.active{color:var(--navy);font-weight:600}
+.step.done{color:var(--green)}
+.step.error{color:var(--red)}
+.step-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex-shrink:0;background:var(--bg);border:2px solid var(--border2)}
+.step.active .step-icon{background:var(--navy);color:#fff;border-color:var(--navy);animation:pulse 1.5s infinite}
+.step.done .step-icon{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.step.error .step-icon{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(26,47,94,.4)}50%{box-shadow:0 0 0 6px rgba(26,47,94,0)}}
+.progress-bar-wrap{height:4px;background:var(--bg2);border-radius:2px;overflow:hidden}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--navy),var(--navy2));
+  width:0%;transition:width .5s ease;border-radius:2px}
+.progress-status{font-size:13px;color:var(--text2);margin-top:10px;min-height:20px}
+
+/* ── PROVIDER CARDS ── */
+.providers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.provider-card{background:#fff;border-radius:var(--r);border:1px solid var(--border);
+  box-shadow:var(--shadow);overflow:hidden;animation:fadeUp .4s ease forwards;opacity:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.card-header{background:linear-gradient(135deg,var(--navy),var(--navy2));padding:16px 18px;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.card-name{font-size:15px;font-weight:700;color:#fff;line-height:1.3;flex:1}
+.card-location{font-size:12px;color:rgba(255,255,255,.7);margin-top:3px}
+.type-badge{background:rgba(255,255,255,.2);color:#fff;border-radius:20px;padding:3px 10px;
+  font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0}
+.card-body{padding:16px 18px}
+.card-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;font-size:13px}
+.card-row-icon{color:var(--text3);width:16px;flex-shrink:0;margin-top:1px;font-size:14px}
+.card-row-val{color:var(--text);line-height:1.5}
+.card-row-val a{color:var(--teal)}
+.accs{display:flex;gap:5px;flex-wrap:wrap}
+.acc-tag{background:var(--teal-bg);color:var(--teal);border-radius:4px;padding:2px 7px;font-size:11px;font-weight:600}
+.why-box{background:#f8f9ff;border-left:3px solid var(--navy);border-radius:0 6px 6px 0;
+  padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.5}
+.email-toggle{font-size:12px;color:var(--navy);font-weight:600;cursor:pointer;
+  display:flex;align-items:center;gap:5px;padding:8px 0;border:none;background:none}
+.email-preview{display:none;background:var(--bg);border-radius:8px;padding:14px;
+  font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap;margin-bottom:12px;
+  max-height:200px;overflow-y:auto;border:1px solid var(--border)}
+.email-preview.open{display:block}
+.card-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  padding:12px 18px;border-top:1px solid var(--border);background:#fafbff}
+.save-check{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;margin-left:auto}
+.save-check input{width:15px;height:15px;accent-color:var(--navy);cursor:pointer}
+
+/* ── SAVE BAR ── */
+.save-bar{position:sticky;bottom:0;background:var(--navy);padding:14px 24px;
+  display:none;align-items:center;justify-content:space-between;
+  box-shadow:0 -4px 20px rgba(26,47,94,.3);z-index:50}
+.save-bar.visible{display:flex}
+.save-bar-text{color:#fff;font-size:14px;font-weight:600}
+.save-bar-sub{color:rgba(255,255,255,.65);font-size:12px;margin-top:2px}
+
+/* ── PROVIDER TABLE ── */
+.db-toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.search-input{flex:1;min-width:180px;padding:9px 14px;border-radius:var(--r2);
+  border:1.5px solid var(--border2);background:#fff;font-size:13px;outline:none}
+.search-input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,47,94,.1)}
+.filter-select{padding:9px 12px;border-radius:var(--r2);border:1.5px solid var(--border2);
+  background:#fff;font-size:13px;color:var(--text);cursor:pointer;outline:none}
+.filter-select:focus{border-color:var(--navy)}
+.providers-table{width:100%;background:#fff;border-radius:var(--r);
+  border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+.providers-table table{width:100%;border-collapse:collapse;font-size:13px}
+.providers-table th{background:var(--navy);color:#fff;padding:11px 14px;text-align:left;
+  font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.providers-table td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.providers-table tr:last-child td{border-bottom:none}
+.providers-table tr:hover td{background:#f8f9ff}
+.status-sel{padding:4px 10px;border-radius:20px;border:none;font-size:12px;
+  font-weight:600;cursor:pointer;outline:none;min-width:130px}
+.status-New{background:var(--bg2);color:var(--text2)}
+.status-Email-Sent{background:var(--amber-bg);color:var(--amber)}
+.status-Agreement-Sent{background:#fef3c7;color:#92400e}
+.status-Agreement-Signed{background:var(--green-bg);color:var(--green)}
+.status-In-Network{background:#dcfce7;color:#166534;font-weight:700}
+.status-No-Response{background:var(--red-bg);color:var(--red)}
+.status-Declined{background:#fee2e2;color:#991b1b}
+.network-yes{background:#dcfce7;color:#166534;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
+.network-no{background:var(--red-bg);color:var(--red);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
+.network-pending{background:var(--teal-bg);color:var(--teal);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600}
+.table-outlook{color:#0078d4;font-size:20px;cursor:pointer;text-decoration:none;transition:transform .2s}
+.table-outlook:hover{transform:scale(1.2)}
+
+/* ── ADMIN ── */
+.admin-card{background:#fff;border-radius:var(--r);padding:24px;border:1px solid var(--border);
+  box-shadow:var(--shadow);margin-bottom:20px}
+.admin-card h3{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:16px;
+  padding-bottom:12px;border-bottom:1px solid var(--border)}
+.form-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:200px}
+.form-label{font-size:12px;font-weight:600;color:var(--text2)}
+.form-input{padding:10px 14px;border-radius:var(--r2);border:1.5px solid var(--border2);
+  font-size:14px;outline:none;background:#fff;width:100%}
+.form-input:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,47,94,.1)}
+.form-input[type=password]{letter-spacing:.1em}
+.key-status{font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px}
+.key-ok{background:var(--green-bg);color:var(--green)}
+.key-missing{background:var(--red-bg);color:var(--red)}
+.users-table{width:100%;border-collapse:collapse;font-size:13px}
+.users-table th{text-align:left;padding:8px;font-size:11px;font-weight:600;
+  color:var(--text3);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--border)}
+.users-table td{padding:9px 8px;border-bottom:1px solid var(--border);color:var(--text)}
+.role-badge{background:var(--navy);color:#fff;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600}
+.role-badge.member{background:var(--teal-bg);color:var(--teal)}
+.del-btn{color:var(--red);cursor:pointer;font-size:18px;background:none;border:none;padding:4px;border-radius:4px}
+.del-btn:hover{background:var(--red-bg)}
+
+/* ── EMPTY / LOADING ── */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:.4}
+.empty-title{font-size:16px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.empty-sub{font-size:13px}
+.skeleton{background:linear-gradient(90deg,var(--bg) 25%,var(--bg2) 50%,var(--bg) 75%);
+  background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── TOAST ── */
+#toasts{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:#fff;border-radius:var(--r2);padding:12px 16px;box-shadow:0 4px 20px rgba(0,0,0,.15);
+  display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;max-width:320px;
+  animation:slideIn .3s ease;border-left:4px solid var(--navy)}
+.toast.success{border-left-color:var(--green)}
+.toast.error{border-left-color:var(--red)}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── MODAL ── */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:16px}
+#modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:600px;max-height:80vh;
+  overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:16px 16px 0 0}
+.modal-title{font-size:16px;font-weight:700;color:#fff}
+.modal-close{color:rgba(255,255,255,.7);font-size:22px;cursor:pointer;
+  background:none;border:none;padding:4px 8px;border-radius:6px}
+.modal-close:hover{background:rgba(255,255,255,.15);color:#fff}
+.modal-body{padding:24px}
+.modal-email{background:var(--bg);border-radius:8px;padding:16px;font-size:13px;
+  color:var(--text2);line-height:1.7;white-space:pre-wrap;margin-bottom:16px;border:1px solid var(--border)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  .tab-content{padding:14px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .providers-grid{grid-template-columns:1fr}
+  .login-card{padding:32px 24px}
+  .header-title{font-size:14px}
+  .tab-btn{padding:0 14px;font-size:12px}
+  .db-toolbar{gap:8px}
+  .providers-table{overflow-x:auto}
+  .providers-table table{min-width:600px}
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#0e1220;--bg2:#151929;--white:#fff;--text:#e8eaf0;--text2:#a0aabb;--text3:#68748a;
+    --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.14)}
+  .login-card,.tab-bar,.kpi-card,.run-config,.progress-box,.provider-card,.providers-table,.admin-card{background:#1a1d2e}
+  .providers-table th{background:#1a2f5e}
+  .card-header{background:linear-gradient(135deg,#1a2f5e,#2d4a8e)}
+  .app-header{background:#111827}
+  .search-input,.filter-select,.form-input{background:#1a1d2e;color:var(--text)}
+  .email-preview{background:#111827}
+  .btn-outline{background:#1a1d2e;color:#a0c4f8}
+  .why-box{background:#111827}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">HW</div>
+    <div class="login-title">HWA Medical Network</div>
+    <div class="login-sub">HealthWatch Assistance — Provider Outreach Hub<br>Daily networking agent for your team</div>
+    <button class="btn-google" onclick="signInGoogle()">
+      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Sign in with Google
+    </button>
+    <div class="login-footer">HealthWatch Assistance S.A. · Thermi, Thessaloniki, Greece<br>Restricted to authorized HWA team members</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;flex-direction:column;min-height:100vh">
+  <div class="app-header">
+    <div class="header-brand">
+      <div class="header-logo">HW</div>
+      <div>
+        <div class="header-title">Medical Network</div>
+        <div class="header-sub">Provider Outreach Hub</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="user-pill">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <div class="user-name" id="user-name">Loading...</div>
+      </div>
+      <button class="btn-signout" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="tab-bar" id="tab-bar">
+    <button class="tab-btn active" onclick="showTab('dashboard')" data-tab="dashboard">📊 Dashboard</button>
+    <button class="tab-btn" onclick="showTab('run')" data-tab="run">🔍 Network Run</button>
+    <button class="tab-btn" onclick="showTab('providers')" data-tab="providers">📋 Providers</button>
+    <button class="tab-btn" id="admin-tab-btn" onclick="showTab('admin')" data-tab="admin" style="display:none">⚙️ Admin</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="tab-content">
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Total Providers</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-sub">in database</div></div>
+      <div class="kpi-card green"><div class="kpi-label">In Network</div><div class="kpi-value" id="kpi-network">—</div><div class="kpi-sub">signed agreements</div></div>
+      <div class="kpi-card amber"><div class="kpi-label">In Progress</div><div class="kpi-value" id="kpi-progress">—</div><div class="kpi-sub">email sent / negotiating</div></div>
+      <div class="kpi-card red"><div class="kpi-label">Last Run</div><div class="kpi-value" id="kpi-lastrun" style="font-size:16px;padding-top:6px">—</div><div class="kpi-sub" id="kpi-lastrun-sub">no sessions yet</div></div>
+    </div>
+    <div class="section-header">
+      <div><div class="section-title">Today's Region</div><div class="section-sub" id="dash-region">Loading...</div></div>
+      <button class="btn btn-primary" onclick="showTab('run')">🔍 Run Network Search</button>
+    </div>
+    <div id="dash-recent"></div>
+  </div>
+
+  <!-- NETWORK RUN -->
+  <div id="tab-run" class="tab-content" style="display:none">
+    <div class="run-config">
+      <div class="run-header">
+        <div>
+          <div class="section-title">Network Run</div>
+          <div class="section-sub">Find new medical providers to contact for cooperation agreements</div>
+        </div>
+        <div class="region-badge" id="run-region-badge">📍 Loading...</div>
+      </div>
+      <div style="margin-top:16px">
+        <div class="form-label" style="margin-bottom:8px">Focus region (auto by weekday, or select below)</div>
+        <div class="region-options" id="region-options">
+          <span class="region-chip" data-region="Mediterranean & Middle East" onclick="selectRegion(this)">🌊 Mediterranean & Middle East</span>
+          <span class="region-chip" data-region="Southeast Asia" onclick="selectRegion(this)">🌏 Southeast Asia</span>
+          <span class="region-chip" data-region="Sub-Saharan Africa" onclick="selectRegion(this)">🌍 Sub-Saharan Africa</span>
+          <span class="region-chip" data-region="Eastern Europe & Latin America" onclick="selectRegion(this)">🌎 E. Europe & Latin America</span>
+          <span class="region-chip" data-region="All regions" onclick="selectRegion(this)">🌐 All Regions</span>
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn-run" id="run-btn" onclick="startNetworkRun()">
+          <span>🔍</span> <span>Start Network Run</span>
+        </button>
+        <div id="api-key-status"></div>
+      </div>
+    </div>
+
+    <div class="progress-box" id="progress-box">
+      <div class="section-title" style="margin-bottom:16px">Search Progress</div>
+      <div class="progress-steps" id="progress-steps">
+        <div class="step" id="step-0"><div class="step-icon">1</div><span>Connecting to Claude AI</span></div>
+        <div class="step" id="step-1"><div class="step-icon">2</div><span>Searching Europe & Mediterranean</span></div>
+        <div class="step" id="step-2"><div class="step-icon">3</div><span>Searching Asia & Middle East</span></div>
+        <div class="step" id="step-3"><div class="step-icon">4</div><span>Searching Africa</span></div>
+        <div class="step" id="step-4"><div class="step-icon">5</div><span>Writing cooperation emails</span></div>
+        <div class="step" id="step-5"><div class="step-icon">✓</div><span id="step-5-text">Complete</span></div>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+      <div class="progress-status" id="progress-status">Starting...</div>
+    </div>
+
+    <div id="run-results" style="display:none">
+      <div class="section-header">
+        <div><div class="section-title" id="results-title">Providers Found</div><div class="section-sub" id="results-sub">Review and save to database</div></div>
+      </div>
+      <div class="providers-grid" id="run-cards"></div>
+    </div>
+
+    <div class="save-bar" id="save-bar">
+      <div>
+        <div class="save-bar-text">💾 Save to HWA Database</div>
+        <div class="save-bar-sub" id="save-bar-sub">0 providers selected</div>
+      </div>
+      <button class="btn btn-primary" onclick="saveSelectedProviders()" id="save-all-btn">Save Selected</button>
+    </div>
+  </div>
+
+  <!-- PROVIDERS DATABASE -->
+  <div id="tab-providers" class="tab-content" style="display:none">
+    <div class="section-header">
+      <div><div class="section-title">Provider Database</div><div class="section-sub" id="db-count">Loading...</div></div>
+      <button class="btn btn-outline btn-sm" onclick="downloadExcel()">📥 Download Excel</button>
+    </div>
+    <div class="db-toolbar">
+      <input class="search-input" placeholder="🔍  Search providers..." oninput="filterProviders()" id="db-search">
+      <select class="filter-select" onchange="filterProviders()" id="db-type">
+        <option value="">All Types</option>
+        <option>Hospital</option><option>Clinic</option>
+        <option>Air Ambulance</option><option>Ground Ambulance</option>
+        <option>TPA / Assistance Co</option>
+      </select>
+      <select class="filter-select" onchange="filterProviders()" id="db-status">
+        <option value="">All Statuses</option>
+        <option>New</option><option>Email Sent</option>
+        <option>Agreement Sent</option><option>Agreement Signed</option>
+        <option>In Network</option><option>No Response</option><option>Declined</option>
+      </select>
+      <select class="filter-select" onchange="filterProviders()" id="db-network">
+        <option value="">Network Status</option>
+        <option>Yes</option><option>No</option><option>Pending</option>
+      </select>
+    </div>
+    <div class="providers-table">
+      <table><thead><tr>
+        <th>Provider</th><th>Type</th><th>Country</th><th>Email / Outlook</th>
+        <th>HWA Status</th><th>In Network</th><th>Added</th>
+      </tr></thead>
+      <tbody id="db-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="tab-admin" class="tab-content" style="display:none">
+    <div class="admin-card">
+      <h3>⚙️ Claude API Key</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Anthropic API Key</label>
+          <input type="password" class="form-input" id="api-key-input" placeholder="sk-ant-...">
+        </div>
+        <button class="btn btn-primary" onclick="saveApiKey()" style="flex-shrink:0;margin-bottom:1px">Save Key</button>
+      </div>
+      <div style="font-size:12px;color:var(--text3)">Key is stored securely in Firestore. All team members use the same key.</div>
+    </div>
+    <div class="admin-card">
+      <h3>👥 Authorized Team Members</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Add Email</label>
+          <input type="email" class="form-input" id="new-user-email" placeholder="colleague@healthwatch.gr">
+        </div>
+        <select class="filter-select" id="new-user-role" style="margin-bottom:1px">
+          <option value="member">Member</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button class="btn btn-primary" onclick="addUser()" style="flex-shrink:0;margin-bottom:1px">Add</button>
+      </div>
+      <table class="users-table" id="users-table">
+        <thead><tr><th>Email</th><th>Role</th><th>Added</th><th></th></tr></thead>
+        <tbody id="users-tbody"></tbody>
+      </table>
+    </div>
+    <div class="admin-card">
+      <h3>📋 Recent Sessions</h3>
+      <div id="sessions-list"><div class="empty-state" style="padding:20px"><div class="empty-sub">No sessions yet</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Email Draft</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-subject" style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)"></div>
+      <div class="modal-email" id="modal-body-text"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn-outlook" id="modal-outlook-btn" href="#" target="_blank">📧 Open in Outlook</a>
+        <button class="btn btn-outline btn-sm" onclick="copyEmail()">📋 Copy Email</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// CONFIG — TODO: Replace with your Firebase config
+// ══════════════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey: "TODO_REPLACE_WITH_YOUR_FIREBASE_API_KEY",
+  authDomain: "healthwatch-tpa.firebaseapp.com",
+  projectId: "healthwatch-tpa",
+  storageBucket: "healthwatch-tpa.appspot.com",
+  messagingSenderId: "TODO_REPLACE",
+  appId: "TODO_REPLACE"
+};
+const ADMIN_EMAIL = "sami@healthwatch.gr";
+
+// ── Firebase init ──────────────────────────────────────
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+db.enablePersistence().catch(()=>{});
+
+// ── State ──────────────────────────────────────────────
+let currentUser = null;
+let currentProviders = [];
+let runResults = [];
+let selectedRegion = null;
+let apiKey = '';
+
+// ── Region rotation ────────────────────────────────────
+const REGIONS = {
+  1:{name:'Mediterranean & Middle East',countries:'Italy, Spain, Turkey, UAE, Jordan, Saudi Arabia, Egypt, Lebanon'},
+  2:{name:'Southeast Asia & South Asia',countries:'Thailand, Malaysia, Singapore, India, Philippines, Vietnam'},
+  3:{name:'Sub-Saharan Africa',countries:'South Africa, Kenya, Nigeria, Ghana, Tanzania, Ethiopia, Senegal'},
+  4:{name:'Eastern Europe & Latin America',countries:'Poland, Czech Republic, Colombia, Brazil, Panama, Mexico'},
+  5:{name:'Pacific & Coverage Gaps',countries:'Australia, Japan, South Korea, Taiwan, Hong Kong'},
+  6:{name:'Mediterranean & Middle East',countries:'Italy, Spain, UAE, Jordan, Egypt, Cyprus, Morocco'},
+  0:{name:'Southeast Asia & South Asia',countries:'Thailand, Malaysia, Singapore, India, Indonesia, Vietnam'},
+};
+
+function getTodayRegion(){return REGIONS[new Date().getDay()];}
+
+// ── Auth ───────────────────────────────────────────────
+async function signInGoogle(){
+  try{
+    const provider=new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+  }catch(e){showToast('Sign-in failed: '+e.message,'error');}
+}
+async function signOut(){await auth.signOut();}
+
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    // Check if authorized
+    const allowed=await isAuthorized(user.email);
+    if(!allowed&&user.email!==ADMIN_EMAIL){
+      showToast('Access denied. Contact Dr. Sami to request access.','error');
+      await auth.signOut(); return;
+    }
+    currentUser=user;
+    document.getElementById('login-screen').style.display='none';
+    const app=document.getElementById('app');
+    app.style.display='flex';
+    document.getElementById('user-name').textContent=user.displayName||user.email;
+    document.getElementById('user-avatar').textContent=(user.displayName||user.email||'?')[0].toUpperCase();
+    if(user.email===ADMIN_EMAIL){
+      document.getElementById('admin-tab-btn').style.display='flex';
+      loadAdminData();
+    }
+    loadApiKey();
+    loadDashboard();
+    loadProviders();
+    initRegion();
+  } else {
+    currentUser=null;
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('app').style.display='none';
+  }
+});
+
+async function isAuthorized(email){
+  if(email===ADMIN_EMAIL)return true;
+  try{
+    const doc=await db.collection('authorized_users').doc(email.replace(/\./g,'_')).get();
+    return doc.exists;
+  }catch(e){return false;}
+}
+
+// ── API Key ─────────────────────────────────────────────
+async function loadApiKey(){
+  try{
+    const doc=await db.collection('config').doc('api').get();
+    if(doc.exists){
+      apiKey=doc.data().anthropicKey||'';
+      updateKeyStatus();
+    }
+  }catch(e){}
+}
+
+async function saveApiKey(){
+  const val=document.getElementById('api-key-input').value.trim();
+  if(!val.startsWith('sk-ant-')){showToast('Invalid key format','error');return;}
+  try{
+    await db.collection('config').doc('api').set({anthropicKey:val,updatedBy:currentUser.email,updatedAt:new Date()});
+    apiKey=val;
+    updateKeyStatus();
+    showToast('API key saved ✓','success');
+  }catch(e){showToast('Save failed: '+e.message,'error');}
+}
+
+function updateKeyStatus(){
+  const el=document.getElementById('api-key-status');
+  if(!el)return;
+  el.innerHTML=apiKey
+    ?'<span style="font-size:12px;background:#dcfce7;color:#166534;border-radius:20px;padding:4px 12px;font-weight:600">✓ API Key Active</span>'
+    :'<span style="font-size:12px;background:#fee2e2;color:#991b1b;border-radius:20px;padding:4px 12px;font-weight:600">⚠ API Key Missing — set in Admin</span>';
+}
+
+// ── Tab navigation ──────────────────────────────────────
+function showTab(tab){
+  document.querySelectorAll('.tab-content').forEach(el=>el.style.display='none');
+  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById('tab-'+tab);
+  if(el)el.style.display='block';
+  const btn=document.querySelector(`[data-tab="${tab}"]`);
+  if(btn)btn.classList.add('active');
+  if(tab==='providers')loadProviders();
+  if(tab==='dashboard')loadDashboard();
+}
+
+// ── Dashboard ───────────────────────────────────────────
+async function loadDashboard(){
+  try{
+    const snap=await db.collection('providers').get();
+    const all=snap.docs.map(d=>d.data());
+    document.getElementById('kpi-total').textContent=all.length||'0';
+    document.getElementById('kpi-network').textContent=all.filter(p=>p.inNetwork==='Yes').length||'0';
+    document.getElementById('kpi-progress').textContent=all.filter(p=>['Email Sent','Agreement Sent','Agreement Signed'].includes(p.status)).length||'0';
+    // Recent
+    const recent=all.sort((a,b)=>new Date(b.outreachDate||0)-new Date(a.outreachDate||0)).slice(0,5);
+    const cont=document.getElementById('dash-recent');
+    if(recent.length===0){cont.innerHTML='<div class="empty-state"><div class="empty-icon">🌐</div><div class="empty-title">No providers yet</div><div class="empty-sub">Run your first Network Search to find providers</div></div>';return;}
+    cont.innerHTML='<div class="section-title" style="margin-bottom:12px">Recent Providers</div>'+
+      recent.map(p=>`<div style="background:#fff;border-radius:8px;padding:12px 16px;margin-bottom:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div><div style="font-weight:600;font-size:14px">${p.name}</div><div style="font-size:12px;color:var(--text3)">${p.city}, ${p.country} · ${p.type}</div></div>
+        <span class="status-sel status-${(p.status||'New').replace(/ /g,'-')}" style="cursor:default">${p.status||'New'}</span>
+      </div>`).join('');
+    // Last run
+    const sessSnap=await db.collection('sessions').orderBy('createdAt','desc').limit(1).get();
+    if(!sessSnap.empty){
+      const sess=sessSnap.docs[0].data();
+      document.getElementById('kpi-lastrun').textContent=new Date(sess.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+      document.getElementById('kpi-lastrun-sub').textContent=`${sess.providersFound||0} providers found`;
+    }
+  }catch(e){console.error(e);}
+  const r=getTodayRegion();
+  document.getElementById('dash-region').textContent=`Today: ${r.name} — ${r.countries.split(',').slice(0,3).join(', ')}...`;
+}
+
+// ── Region init ─────────────────────────────────────────
+function initRegion(){
+  const r=selectedRegion||getTodayRegion();
+  document.getElementById('run-region-badge').textContent='📍 '+r.name;
+  updateKeyStatus();
+}
+
+function selectRegion(el){
+  document.querySelectorAll('.region-chip').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedRegion={name:el.dataset.region,countries:''};
+  document.getElementById('run-region-badge').textContent='📍 '+el.dataset.region;
+}
+
+// ══════════════════════════════════════════════════════
+// CLAUDE API — NETWORK RUN
+// ══════════════════════════════════════════════════════
+const SYSTEM_PROMPT=`You are the HWA Medical Networking Agent for HealthWatch Assistance S.A. (HWA), Thermi, Thessaloniki, Greece.
+HWA is a leading medical TPA serving: AegisInsurance, Canopius, Argo, HDI Global, Prime Cyprus Group, GBG Group.
+Contact: Dr. Sami, Medical Officer | sami@healthwatch.gr
+
+OUTPUT MUST BE VALID JSON ONLY — no markdown, no backticks, no prose before or after.
+
+{
+  "session_date": "YYYY-MM-DD",
+  "region_focus": "string",
+  "providers": [
+    {
+      "name": "string",
+      "type": "hospital|clinic|ground_ambulance|air_ambulance|tpa",
+      "country": "string",
+      "city": "string",
+      "website": "https://...",
+      "email": "contact@provider.com",
+      "phone": "+XX XXX XXX XXXX",
+      "accreditations": ["JCI"],
+      "specialties": ["Cardiology"],
+      "has_international_dept": true,
+      "why_hwa": "1-2 sentences on network value",
+      "email_subject": "Partnership Proposal — HealthWatch Assistance & [Name]",
+      "email_body": "Full professional email (max 300 words). Explain HWA, IPMI, benefit to provider. Sign off: Dr. Sami | Medical Officer | HealthWatch Assistance S.A. | sami@healthwatch.gr"
+    }
+  ],
+  "summary": "2-sentence summary"
+}
+
+Rules: use web_search for real data only. Find 6+ providers: 2 Europe, 2 Asia, 2 Africa. No invented providers.`;
+
+async function startNetworkRun(){
+  if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
+  const region=selectedRegion||getTodayRegion();
+  const today=new Date().toISOString().split('T')[0];
+
+  // UI: show progress
+  document.getElementById('run-btn').disabled=true;
+  document.getElementById('run-btn').innerHTML='<span>⏳</span><span>Running...</span>';
+  document.getElementById('progress-box').classList.add('visible');
+  document.getElementById('run-results').style.display='none';
+  document.getElementById('save-bar').classList.remove('visible');
+  document.getElementById('run-cards').innerHTML='';
+  runResults=[];
+
+  setStep(0,'active');
+  setProgress(5,'Connecting to Claude AI...');
+
+  const userMsg=`NETWORK RUN — Date: ${today}\nPrimary focus: ${region.name}\nCountries: ${region.countries||'All'}\n\nSearch the web and find 6+ real medical providers. Return JSON only.`;
+
+  try{
+    setStep(0,'done'); setStep(1,'active'); setProgress(20,'Searching Europe & Mediterranean...');
+    
+    // Simulate step progression during API call
+    let stepTimer=0;
+    const stepTimers=[
+      setTimeout(()=>{setStep(1,'done');setStep(2,'active');setProgress(40,'Searching Asia & Middle East...');},15000),
+      setTimeout(()=>{setStep(2,'done');setStep(3,'active');setProgress(60,'Searching Africa...');},35000),
+      setTimeout(()=>{setStep(3,'done');setStep(4,'active');setProgress(80,'Writing cooperation emails...');},55000),
+    ];
+
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),300000);
+
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',signal:controller.signal,
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-beta':'web-search-2025-03-05',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:8000,
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:15}],
+        system:SYSTEM_PROMPT,
+        messages:[{role:'user',content:userMsg}]
+      })
+    });
+    clearTimeout(timeout);
+    stepTimers.forEach(t=>clearTimeout(t));
+
+    if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error '+resp.status);}
+
+    const data=await resp.json();
+    let rawText='';
+    for(let i=data.content.length-1;i>=0;i--){
+      if(data.content[i].type==='text'){rawText=data.content[i].text;break;}
+    }
+    if(!rawText)throw new Error('No text in response');
+
+    // Parse JSON
+    let clean=rawText.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
+    const match=clean.match(/\{[\s\S]*\}/);
+    if(match)clean=match[0];
+    const parsed=JSON.parse(clean);
+    const providers=parsed.providers||[];
+    if(!providers.length)throw new Error('No providers in response');
+
+    // Step complete
+    [1,2,3,4].forEach(i=>setStep(i,'done'));
+    setStep(5,'done');
+    document.getElementById('step-5-text').textContent=`Complete — ${providers.length} providers found`;
+    setProgress(100,`Found ${providers.length} providers`);
+
+    // Save session
+    await db.collection('sessions').add({
+      date:today,region:region.name,providersFound:providers.length,
+      runBy:currentUser.displayName,runByEmail:currentUser.email,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Render cards
+    runResults=providers;
+    document.getElementById('run-results').style.display='block';
+    document.getElementById('results-title').textContent=`${providers.length} Providers Found`;
+    document.getElementById('results-sub').textContent=`${today} · ${region.name} · Select providers to save`;
+    document.getElementById('run-cards').innerHTML='';
+    providers.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*120));
+    setTimeout(()=>{
+      document.getElementById('save-bar').classList.add('visible');
+      updateSaveCount();
+    },providers.length*120+200);
+
+  }catch(e){
+    setStep(document.querySelectorAll('.step.active')[0]?.id.replace('step-',''),'error');
+    setProgress(0,'Error: '+e.message);
+    showToast('Run failed: '+e.message,'error');
+  }finally{
+    document.getElementById('run-btn').disabled=false;
+    document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';
+  }
+}
+
+function setStep(n,state){
+  const el=document.getElementById('step-'+n);
+  if(!el)return;
+  el.className='step '+state;
+  const icon=el.querySelector('.step-icon');
+  if(state==='done')icon.textContent='✓';
+  else if(state==='error')icon.textContent='✗';
+  else icon.textContent=n+1;
+}
+function setProgress(pct,text){
+  document.getElementById('progress-bar').style.width=pct+'%';
+  document.getElementById('progress-status').textContent=text;
+}
+
+// ── Provider Card (Run tab) ─────────────────────────────
+function renderRunCard(p,idx){
+  const id='card-'+idx;
+  const accHtml=(p.accreditations||[]).map(a=>`<span class="acc-tag">${a}</span>`).join('');
+  const emailEncoded=buildMailto(p);
+  const card=document.createElement('div');
+  card.className='provider-card'; card.id=id;
+  card.style.animationDelay=(idx*0.08)+'s';
+  card.innerHTML=`
+    <div class="card-header">
+      <div>
+        <div class="card-name">${p.name}</div>
+        <div class="card-location">📍 ${p.city}, ${p.country}</div>
+      </div>
+      <span class="type-badge">${typeLabel(p.type)}</span>
+    </div>
+    <div class="card-body">
+      ${p.email?`<div class="card-row"><span class="card-row-icon">✉</span><span class="card-row-val"><a href="mailto:${p.email}">${p.email}</a></span></div>`:''}
+      ${p.phone?`<div class="card-row"><span class="card-row-icon">📞</span><span class="card-row-val">${p.phone}</span></div>`:''}
+      ${p.website?`<div class="card-row"><span class="card-row-icon">🌐</span><span class="card-row-val"><a href="${p.website}" target="_blank">${p.website.replace('https://','')}</a></span></div>`:''}
+      ${accHtml?`<div class="card-row"><span class="card-row-icon">🏅</span><span class="card-row-val"><div class="accs">${accHtml}</div></span></div>`:''}
+      ${p.why_hwa?`<div class="why-box">${p.why_hwa}</div>`:''}
+      <button class="email-toggle" onclick="toggleEmail('email-${idx}',this)">📄 View Email Draft ▼</button>
+      <div class="email-preview" id="email-${idx}">${p.email_body||''}</div>
+    </div>
+    <div class="card-actions">
+      <a class="btn-outlook" href="${emailEncoded}" target="_blank">📧 Open in Outlook</a>
+      <button class="btn btn-outline btn-sm" onclick="openModal(${idx})">👁 Full View</button>
+      <label class="save-check">
+        <input type="checkbox" checked id="chk-${idx}" onchange="updateSaveCount()">
+        Save to DB
+      </label>
+    </div>`;
+  document.getElementById('run-cards').appendChild(card);
+}
+
+function toggleEmail(id,btn){
+  const el=document.getElementById(id);
+  el.classList.toggle('open');
+  btn.textContent=el.classList.contains('open')?'📄 Hide Email ▲':'📄 View Email Draft ▼';
+}
+function updateSaveCount(){
+  const checked=document.querySelectorAll('[id^="chk-"]:checked').length;
+  document.getElementById('save-bar-sub').textContent=`${checked} provider${checked!==1?'s':''} selected`;
+}
+function typeLabel(t){
+  return{hospital:'🏥 Hospital',clinic:'🏢 Clinic',ground_ambulance:'🚑 Ground Amb.',air_ambulance:'✈️ Air Amb.',tpa:'🤝 TPA'}[t]||t;
+}
+function buildMailto(p){
+  const subj=encodeURIComponent(p.email_subject||'Partnership Proposal — HealthWatch Assistance');
+  const body=encodeURIComponent(p.email_body||'');
+  return `mailto:${p.email||''}?subject=${subj}&body=${body}`;
+}
+
+// ── Modal ───────────────────────────────────────────────
+function openModal(idx){
+  const p=runResults[idx];
+  if(!p)return;
+  document.getElementById('modal-title').textContent=p.name;
+  document.getElementById('modal-subject').textContent='Subject: '+(p.email_subject||'');
+  document.getElementById('modal-body-text').textContent=p.email_body||'';
+  document.getElementById('modal-outlook-btn').href=buildMailto(p);
+  window._modalEmail=p.email_body;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+function copyEmail(){
+  navigator.clipboard.writeText(window._modalEmail||'');
+  showToast('Email copied to clipboard ✓','success');
+}
+
+// ── Save to Firestore ───────────────────────────────────
+async function saveSelectedProviders(){
+  const today=new Date().toISOString().split('T')[0];
+  const toSave=[];
+  document.querySelectorAll('[id^="chk-"]').forEach(chk=>{
+    if(chk.checked){
+      const idx=parseInt(chk.id.replace('chk-',''));
+      if(runResults[idx])toSave.push(runResults[idx]);
+    }
+  });
+  if(!toSave.length){showToast('No providers selected','error');return;}
+  try{
+    const batch=db.batch();
+    toSave.forEach(p=>{
+      const cc=(p.country||'XX').slice(0,2).toLowerCase();
+      const slug=(p.name||'p').toLowerCase().replace(/[^a-z0-9]/g,'-').slice(0,18);
+      const docId=`${cc}-${slug}-${today.replace(/-/g,'')}`;
+      const ref=db.collection('providers').doc(docId);
+      batch.set(ref,{
+        name:p.name||'',type:p.type||'',country:p.country||'',city:p.city||'',
+        website:p.website||'',email:p.email||'',phone:p.phone||'',
+        accreditations:p.accreditations||[],specialties:p.specialties||[],
+        hasInternationalDept:p.has_international_dept||false,
+        whyHWA:p.why_hwa||'',emailSubject:p.email_subject||'',emailBody:p.email_body||'',
+        outreachDate:today,status:'New',inNetwork:'Pending',
+        lastContact:'',responseNotes:'',agreementDate:'',
+        addedBy:currentUser.displayName||'',addedByEmail:currentUser.email||'',
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    });
+    await batch.commit();
+    showToast(`${toSave.length} providers saved to database ✓`,'success');
+    document.getElementById('save-bar').classList.remove('visible');
+    loadDashboard();
+  }catch(e){showToast('Save failed: '+e.message,'error');}
+}
+
+// ── Provider Database ────────────────────────────────────
+async function loadProviders(){
+  const tbody=document.getElementById('db-tbody');
+  tbody.innerHTML='<tr><td colspan="7"><div class="skeleton" style="height:40px;margin:8px"></div></td></tr>';
+  try{
+    const snap=await db.collection('providers').orderBy('createdAt','desc').limit(500).get();
+    currentProviders=snap.docs.map(d=>({id:d.id,...d.data()}));
+    document.getElementById('db-count').textContent=`${currentProviders.length} providers in database`;
+    renderTable(currentProviders);
+  }catch(e){
+    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3)">Could not load providers: ${e.message}</td></tr>`;
+  }
+}
+
+function renderTable(providers){
+  const tbody=document.getElementById('db-tbody');
+  if(!providers.length){
+    tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No providers yet</div><div class="empty-sub">Run a Network Search to find providers</div></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML=providers.map(p=>{
+    const mailto=buildMailto(p);
+    const statusClass='status-'+(p.status||'New').replace(/ /g,'-');
+    const netClass=p.inNetwork==='Yes'?'network-yes':p.inNetwork==='No'?'network-no':'network-pending';
+    return `<tr>
+      <td><div style="font-weight:600;font-size:13px">${p.name||''}</div><div style="font-size:11px;color:var(--text3)">${p.city||''}, ${p.country||''}</div></td>
+      <td><span style="font-size:11px;background:var(--teal-bg);color:var(--teal);border-radius:4px;padding:2px 7px;font-weight:600">${typeLabel(p.type||'')}</span></td>
+      <td style="font-size:13px">${p.country||''}</td>
+      <td>
+        ${p.email?`<div style="font-size:12px;color:var(--text2)">${p.email}</div>`:''}
+        ${p.email?`<a class="table-outlook" href="${buildMailto(p)}" target="_blank" title="Open in Outlook">📧</a>`:''}
+      </td>
+      <td>
+        <select class="status-sel ${statusClass}" onchange="updateStatus('${p.id}',this)">
+          ${['New','Email Sent','Agreement Sent','Agreement Signed','In Network','No Response','Declined'].map(s=>`<option${s===p.status?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td><span class="${netClass}">${p.inNetwork||'Pending'}</span></td>
+      <td style="font-size:11px;color:var(--text3)">${p.outreachDate||''}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function updateStatus(docId,sel){
+  const newStatus=sel.value;
+  sel.className='status-sel status-'+newStatus.replace(/ /g,'-');
+  try{
+    const update={status:newStatus,lastContact:new Date().toISOString().split('T')[0]};
+    if(newStatus==='In Network')update.inNetwork='Yes';
+    if(newStatus==='Declined')update.inNetwork='No';
+    await db.collection('providers').doc(docId).update(update);
+    showToast('Status updated ✓','success');
+    loadDashboard();
+  }catch(e){showToast('Update failed','error');}
+}
+
+function filterProviders(){
+  const q=(document.getElementById('db-search').value||'').toLowerCase();
+  const type=document.getElementById('db-type').value;
+  const status=document.getElementById('db-status').value;
+  const network=document.getElementById('db-network').value;
+  const filtered=currentProviders.filter(p=>{
+    if(q&&!`${p.name}${p.country}${p.city}${p.email}`.toLowerCase().includes(q))return false;
+    if(type&&p.type!==type.toLowerCase().replace(/ \/ /,'/').replace(/ /,'_'))return false;
+    if(status&&p.status!==status)return false;
+    if(network&&p.inNetwork!==network)return false;
+    return true;
+  });
+  renderTable(filtered);
+  document.getElementById('db-count').textContent=`${filtered.length} of ${currentProviders.length} providers`;
+}
+
+// ── Excel Export ─────────────────────────────────────────
+function downloadExcel(){
+  if(!currentProviders.length){showToast('No providers to export','error');return;}
+  const headers=['Date Found','Provider Name','Type','Country','City','Website','Email','Phone',
+    'Accreditations','Specialties','Int\'l Dept','Why HWA','HWA Status','Outreach Date',
+    'Last Contact','Response Notes','In HWA Network','Agreement Date','Added By'];
+  const rows=currentProviders.map(p=>[
+    p.outreachDate||'',p.name||'',p.type||'',p.country||'',p.city||'',
+    p.website||'',p.email||'',p.phone||'',
+    (p.accreditations||[]).join('; '),(p.specialties||[]).join('; '),
+    p.hasInternationalDept?'Yes':'Unknown',p.whyHWA||'',
+    p.status||'New',p.outreachDate||'',p.lastContact||'',p.responseNotes||'',
+    p.inNetwork||'Pending',p.agreementDate||'',p.addedBy||''
+  ]);
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  ws['!cols']=headers.map((_,i)=>({wch:[14,30,16,14,14,24,24,16,16,22,10,28,16,14,14,24,13,14,16][i]||14}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Providers',ws);
+  XLSX.writeFile(wb,`HWA_Network_Tracker_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast('Excel downloaded ✓','success');
+}
+
+// ── Admin ─────────────────────────────────────────────────
+async function loadAdminData(){
+  // Load API key to input
+  try{
+    const doc=await db.collection('config').doc('api').get();
+    if(doc.exists&&doc.data().anthropicKey){
+      document.getElementById('api-key-input').value='sk-ant-••••••••••••••••';
+    }
+  }catch(e){}
+  // Load users
+  try{
+    const snap=await db.collection('authorized_users').get();
+    const tbody=document.getElementById('users-tbody');
+    const users=[{email:ADMIN_EMAIL,role:'admin',addedAt:'Owner'},...snap.docs.map(d=>d.data())];
+    tbody.innerHTML=users.map(u=>`<tr>
+      <td>${u.email}</td>
+      <td><span class="role-badge ${u.role==='admin'?'':'member'}">${u.role||'member'}</span></td>
+      <td style="font-size:11px;color:var(--text3)">${u.addedAt||''}</td>
+      <td>${u.email!==ADMIN_EMAIL?`<button class="del-btn" onclick="removeUser('${u.email}')">×</button>`:''}</td>
+    </tr>`).join('');
+  }catch(e){}
+  // Load sessions
+  try{
+    const snap=await db.collection('sessions').orderBy('createdAt','desc').limit(10).get();
+    const cont=document.getElementById('sessions-list');
+    if(snap.empty){cont.innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px">No sessions yet</div>';return;}
+    cont.innerHTML=snap.docs.map(d=>{const s=d.data();return`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <div><strong>${s.date}</strong> · ${s.region}</div>
+        <div style="color:var(--text3)">${s.providersFound||0} providers · ${s.runBy||''}</div>
+      </div>`;}).join('');
+  }catch(e){}
+}
+
+async function addUser(){
+  const email=document.getElementById('new-user-email').value.trim();
+  const role=document.getElementById('new-user-role').value;
+  if(!email||!email.includes('@')){showToast('Enter a valid email','error');return;}
+  try{
+    await db.collection('authorized_users').doc(email.replace(/\./g,'_')).set({
+      email,role,addedAt:new Date().toISOString().split('T')[0],addedBy:currentUser.email
+    });
+    showToast(`${email} added ✓`,'success');
+    document.getElementById('new-user-email').value='';
+    loadAdminData();
+  }catch(e){showToast('Failed: '+e.message,'error');}
+}
+async function removeUser(email){
+  if(!confirm(`Remove ${email}?`))return;
+  try{
+    await db.collection('authorized_users').doc(email.replace(/\./g,'_')).delete();
+    showToast(`${email} removed`,'success');
+    loadAdminData();
+  }catch(e){showToast('Failed: '+e.message,'error');}
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function showToast(msg,type='info'){
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.textContent=msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(),4000);
+}
+
+// ── PWA Service Worker ────────────────────────────────────
+if('serviceWorker' in navigator){
+  const sw=`self.addEventListener('install',e=>self.skipWaiting());
+self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))))`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
+}
+</script>
+</body>
+</html>

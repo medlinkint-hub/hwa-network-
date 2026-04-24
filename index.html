@@ -228,16 +228,6 @@ a{color:inherit;text-decoration:none}
 .network-no{background:var(--red-bg);color:var(--red);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
 .network-pending{background:var(--teal-bg);color:var(--teal);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600}
 
-/* ── SOURCE TOGGLE ── */
-.source-toggle{display:flex;gap:0;border-radius:var(--r2);overflow:hidden;border:1.5px solid var(--border2);background:var(--bg);width:fit-content}
-.source-toggle-btn{padding:8px 18px;border:none;background:transparent;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .2s;white-space:nowrap}
-.source-toggle-btn.active{background:var(--navy);color:#fff}
-.source-toggle-btn:not(.active):hover{background:var(--bg2)}
-
-/* ── SOURCE BADGE ── */
-.source-badge{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:3px 9px;font-size:11px;font-weight:700;letter-spacing:.3px;margin-top:4px}
-.source-badge.google{background:#e8f5e9;color:#2e7d32}
-.source-badge.ai{background:#e3f2fd;color:#1565c0}
 
 /* ── ADMIN ── */
 .admin-card{background:#fff;border-radius:var(--r);padding:24px;border:1px solid var(--border);
@@ -454,14 +444,6 @@ a{color:inherit;text-decoration:none}
           <span class="type-chip" data-spec="Dentistry" onclick="this.classList.toggle('selected')">🦷 Dentistry</span>
         </div>
       </div>
-      <div style="margin-top:16px">
-        <div class="form-label" style="margin-bottom:8px">Search source</div>
-        <div class="source-toggle" id="source-toggle">
-          <button class="source-toggle-btn active" id="src-dual" onclick="setSource('dual')">🟢 Google Places + AI</button>
-          <button class="source-toggle-btn" id="src-ai" onclick="setSource('ai')">🤖 Claude AI Only</button>
-        </div>
-        <div style="font-size:12px;color:var(--text3);margin-top:6px" id="source-hint">Google Places finds real verified businesses; Claude AI enriches and adds more providers.</div>
-      </div>
       <div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn-run" id="run-btn" onclick="startNetworkRun()">
           <span>🔍</span> <span>Start Network Run</span>
@@ -473,11 +455,9 @@ a{color:inherit;text-decoration:none}
     <div class="progress-box" id="progress-box">
       <div class="section-title" style="margin-bottom:16px">Search Progress</div>
       <div class="progress-steps" id="progress-steps">
-        <div class="step" id="step-0"><div class="step-icon">1</div><span id="step-0-text">Connecting to Claude AI</span></div>
-        <div class="step" id="step-1"><div class="step-icon">2</div><span id="step-1-text">Searching databases & web</span></div>
-        <div class="step" id="step-2"><div class="step-icon">3</div><span id="step-2-text">Verifying providers</span></div>
-        <div class="step" id="step-3"><div class="step-icon">4</div><span id="step-3-text">Formatting results</span></div>
-        <div class="step" id="step-4"><div class="step-icon">✓</div><span id="step-4-text">Complete</span></div>
+        <div class="step" id="step-0"><div class="step-icon">1</div><span id="step-0-text">Searching verified providers...</span></div>
+        <div class="step" id="step-1"><div class="step-icon">2</div><span id="step-1-text">Enriching with contacts & emails...</span></div>
+        <div class="step" id="step-2"><div class="step-icon">✓</div><span id="step-2-text">Complete</span></div>
       </div>
       <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
       <div class="progress-status" id="progress-status">Starting...</div>
@@ -524,16 +504,11 @@ a{color:inherit;text-decoration:none}
         <option value="">Network Status</option>
         <option>Yes</option><option>No</option><option>Pending</option>
       </select>
-      <select class="filter-select" onchange="filterProviders()" id="db-source">
-        <option value="">All Sources</option>
-        <option value="Google Verified">🟢 Google Verified</option>
-        <option value="AI Found">🤖 AI Found</option>
-      </select>
     </div>
     <div class="providers-table">
       <table><thead><tr>
         <th>Provider</th><th>Type</th><th>Country</th><th>Contact Person</th><th>Email / Outlook</th>
-        <th>Score</th><th>Source</th><th>HWA Status</th><th>In Network</th><th>Added</th>
+        <th>Score</th><th>HWA Status</th><th>In Network</th><th>Added</th>
       </tr></thead>
       <tbody id="db-tbody"></tbody></table>
     </div>
@@ -614,7 +589,6 @@ let currentProviders = [];
 let runResults = [];
 let apiKey = '';
 let googlePlacesKey = '';
-let _searchSource = 'dual'; // 'dual' | 'ai'
 let _passwordOk = false; // guard: app only opens after password verified
 
 // ── Auth ───────────────────────────────────────────────
@@ -729,20 +703,13 @@ function updateKeyStatus(){
   if(!el)return;
   const claudeOk=!!apiKey;
   const googleOk=!!googlePlacesKey;
-  const needsGoogle=_searchSource==='dual';
   let html='';
-  if(claudeOk){
-    html+='<span style="font-size:12px;background:#dcfce7;color:#166534;border-radius:20px;padding:4px 12px;font-weight:600;margin-right:6px">✓ Claude Active</span>';
-  }else{
-    html+='<span style="font-size:12px;background:#fee2e2;color:#991b1b;border-radius:20px;padding:4px 12px;font-weight:600;margin-right:6px">⚠ Claude Key Missing</span>';
-  }
-  if(needsGoogle){
-    if(googleOk){
-      html+='<span style="font-size:12px;background:#e8f5e9;color:#2e7d32;border-radius:20px;padding:4px 12px;font-weight:600">🟢 Google Places Active</span>';
-    }else{
-      html+='<span style="font-size:12px;background:#fff3e0;color:#e65100;border-radius:20px;padding:4px 12px;font-weight:600">⚠ Google Places Key Missing</span>';
-    }
-  }
+  html+=claudeOk
+    ?'<span style="font-size:12px;background:#dcfce7;color:#166534;border-radius:20px;padding:4px 12px;font-weight:600;margin-right:6px">✓ Claude Active</span>'
+    :'<span style="font-size:12px;background:#fee2e2;color:#991b1b;border-radius:20px;padding:4px 12px;font-weight:600;margin-right:6px">⚠ Claude Key Missing</span>';
+  html+=googleOk
+    ?'<span style="font-size:12px;background:#e8f5e9;color:#2e7d32;border-radius:20px;padding:4px 12px;font-weight:600">🟢 Google Places Active</span>'
+    :'<span style="font-size:12px;background:#fff3e0;color:#e65100;border-radius:20px;padding:4px 12px;font-weight:600">⚠ Google Places Key Missing — AI Only</span>';
   el.innerHTML=html;
 }
 
@@ -769,16 +736,6 @@ async function saveGooglePlacesKey(){
   }catch(e){showToast('Save failed: '+e.message,'error');}
 }
 
-// ── Source toggle ───────────────────────────────────────
-function setSource(src){
-  _searchSource=src;
-  document.getElementById('src-dual').classList.toggle('active',src==='dual');
-  document.getElementById('src-ai').classList.toggle('active',src==='ai');
-  document.getElementById('source-hint').textContent=src==='dual'
-    ?'Google Places finds real verified businesses; Claude AI enriches and adds more providers.'
-    :'Claude AI searches databases and the web using its built-in web search tool.';
-  updateKeyStatus();
-}
 
 // ── Tab navigation ──────────────────────────────────────
 function showTab(tab){
@@ -960,20 +917,9 @@ function _resetRunUI(clearCards){
   document.getElementById('run-btn').disabled=true;
   document.getElementById('run-btn').innerHTML='<span>⏳</span><span>Searching...</span>';
   document.getElementById('progress-box').classList.add('visible');
-  // Update step labels based on source mode
-  if(_searchSource==='dual'){
-    document.getElementById('step-0-text').textContent='Querying Google Places API';
-    document.getElementById('step-1-text').textContent='Enriching with Claude AI';
-    document.getElementById('step-2-text').textContent='AI searching for more providers';
-    document.getElementById('step-3-text').textContent='Deduplicating & ranking results';
-    document.getElementById('step-4-text').textContent='Complete';
-  }else{
-    document.getElementById('step-0-text').textContent='Connecting to Claude AI';
-    document.getElementById('step-1-text').textContent='Searching databases & web';
-    document.getElementById('step-2-text').textContent='Verifying providers';
-    document.getElementById('step-3-text').textContent='Formatting results';
-    document.getElementById('step-4-text').textContent='Complete';
-  }
+  document.getElementById('step-0-text').textContent='Locating providers';
+  document.getElementById('step-1-text').textContent='Enriching & qualifying';
+  document.getElementById('step-2-text').textContent='Complete';
   if(clearCards){
     document.getElementById('run-results').style.display='none';
     document.getElementById('run-cards').innerHTML='';
@@ -987,8 +933,8 @@ function _finishRunUI(msg){
   document.getElementById('run-btn').disabled=false;
   document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';
   setProgress(100,'Search complete');
-  [0,1,2,3,4].forEach(i=>setStep(i,'done'));
-  document.getElementById('step-4-text').textContent=runResults.length?`Complete — ${runResults.length} providers found`:'Complete';
+  [0,1,2].forEach(i=>setStep(i,'done'));
+  document.getElementById('step-2-text').textContent=runResults.length?`Complete — ${runResults.length} providers found`:'Complete';
   const total=runResults.length;
   if(total>0){
     const loc=_searchCity?`${_searchCity}, ${_searchCountry}`:_searchCountry;
@@ -1024,247 +970,187 @@ async function startNetworkRun(){
   _searchSpecs=[...document.querySelectorAll('#specialty-options .type-chip.selected')].map(c=>c.dataset.spec);
   _searchActive=true;
   _resetRunUI(true);
-  if(_searchSource==='dual'){
-    if(!googlePlacesKey){
-      showToast('Google Places key missing — switching to Claude AI Only. Set key in Admin.','error');
-      setSource('ai');
-      _resetRunUI(false);
-    }else{
-      setStep(0,'active');
-      setProgress(5,'Querying Google Places...');
-      await _runDualSource();
-      return;
-    }
-  }
   setStep(0,'active');
-  setProgress(5,'Connecting to Claude AI...');
-  await _runBatch(1);
+  setProgress(5,'Locating providers...');
+  await _runUnified();
 }
 
-// ── Google Places + Claude AI Dual-Source Pipeline ─────────
-async function _runDualSource(){
+// ── Unified Google Places + Claude AI Pipeline ─────────────
+async function _runUnified(){
   const today=new Date().toISOString().split('T')[0];
   const loc=_searchCity?`${_searchCity}, ${_searchCountry}`:_searchCountry;
+  const typeStr=_searchTypes.join(', ');
+  const specStr=_searchSpecs.length?_searchSpecs.join(', '):'';
 
-  // Build Google Places query terms from selected types and specialties
-  const typeQueries=_searchTypes.map(t=>({
-    hospital:'hospital',clinic:'medical clinic',ground_ambulance:'ambulance service',
-    air_ambulance:'air ambulance',tpa:'insurance assistance company',
-    physical_therapy:'physiotherapy clinic',doctor:'specialist doctor clinic'
-  })[t]||t);
-  const specStr=_searchSpecs.length?_searchSpecs.join(' '):'' ;
-  const baseQuery=typeQueries.join(' OR ')+' '+(specStr?specStr+' ':'')+'medical';
-  const locationStr=_searchCity?`${_searchCity} ${_searchCountry}`:_searchCountry;
-  const textQuery=`${baseQuery} in ${locationStr}`;
-
-  // ── STEP 0: Query Google Places ──────────────────────────
-  setStep(0,'active'); setProgress(8,'Querying Google Places API...');
+  // ── STEP 0: Google Places ────────────────────────────────
   let googleProviders=[];
-  try{
-    const gpResp=await fetch('https://places.googleapis.com/v1/places:searchText',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'X-Goog-Api-Key':googlePlacesKey,
-        'X-Goog-FieldMask':'places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.types,places.id,places.location'
-      },
-      body:JSON.stringify({
-        textQuery:textQuery,
-        maxResultCount:20,
-        languageCode:'en'
-      })
-    });
-    if(!gpResp.ok){
-      const gpErr=await gpResp.json();
-      throw new Error('Google Places API error: '+(gpErr.error?.message||gpResp.status));
-    }
-    const gpData=await gpResp.json();
-    const places=(gpData.places||[]);
-
-    // Map Google Places results to provider format
-    googleProviders=places.map(pl=>{
-      const addr=pl.formattedAddress||'';
-      // Extract city from formatted address (second-to-last part typically)
-      const addrParts=addr.split(',').map(s=>s.trim());
-      const detectedCity=addrParts.length>=2?addrParts[addrParts.length-2]:_searchCity||'';
-      const plTypes=pl.types||[];
-      let pType='clinic';
-      if(plTypes.some(t=>t.includes('hospital')))pType='hospital';
-      else if(plTypes.some(t=>t.includes('physiotherapist')||t.includes('physical_therapy')))pType='physical_therapy';
-      else if(plTypes.some(t=>t.includes('doctor')||t.includes('physician')))pType='doctor';
-      const rating=pl.rating?Math.round(pl.rating*20):null; // convert 5-star to 100-pt
-      return{
-        name:pl.displayName?.text||'Unknown',
-        type:pType,
-        country:_searchCountry,
-        city:detectedCity||_searchCity||_searchCountry,
-        address:pl.formattedAddress||'',
-        website:pl.websiteUri||'',
-        email:'',
-        phone:pl.internationalPhoneNumber||pl.nationalPhoneNumber||'',
-        accreditations:[],
-        specialties:_searchSpecs.length?_searchSpecs:[],
-        has_international_dept:false,
-        why_hwa:'',
-        cooperation_score:rating,
-        contact_person:'',
-        _source:'google',
-        _googlePlaceId:pl.id||'',
-        _googleRating:pl.rating||null,
-        _googleReviews:pl.userRatingCount||0
-      };
-    });
-    setStep(0,'done'); setProgress(25,`Google Places: ${googleProviders.length} places found`);
-  }catch(gpErr){
-    showToast('Google Places: '+gpErr.message+' — falling back to Claude AI','error');
-    // Update step labels to Claude-only mode before falling back
-    document.getElementById('step-0-text').textContent='Connecting to Claude AI';
-    document.getElementById('step-1-text').textContent='Searching databases & web';
-    document.getElementById('step-2-text').textContent='Verifying providers';
-    document.getElementById('step-3-text').textContent='Formatting results';
-    document.getElementById('step-4-text').textContent='Complete';
-    setProgress(0,'');
-    [0,1,2,3,4].forEach(i=>setStep(i,'pending'));
-    setStep(0,'done'); setStep(1,'active');
-    setProgress(15,'Searching databases & web with Claude AI...');
-    await _runBatch(1);
-    return;
-  }
-
-  // ── STEP 1: Enrich Google results with Claude AI ─────────
-  setStep(1,'active'); setProgress(30,'Enriching Google results with Claude AI...');
-  let enrichedProviders=[];
-  if(googleProviders.length>0){
+  if(googlePlacesKey){
     try{
-      const providerList=googleProviders.map((p,i)=>`${i+1}. ${p.name} | ${p.city}, ${p.country} | ${p.website||'no website'} | ${p.phone||'no phone'}`).join('\n');
-      const enrichMsg=`ENRICH TASK — Date: ${today}
-You have been given ${googleProviders.length} medical providers found via Google Places in ${loc}.
-For EACH provider, verify it is real and find its email address if possible.
-Also add: specialties array, accreditations array, has_international_dept boolean, why_hwa string (1-2 sentences on value to HWA's insurer clients), contact_person (name of medical director or international dept coordinator if findable), cooperation_score (integer 1-100 based on size, accreditation, international experience — higher=better).
-
-PROVIDERS:
-${providerList}
-
-Return ONLY valid JSON (no markdown):
-{"enriched":[{"index":0,"email":"...","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"...","contact_person":"","cooperation_score":70},...]}
-Index corresponds to 0-based position in the input list. Include ALL ${googleProviders.length} providers in output.`;
-
-      const enrichResp=await fetch('https://api.anthropic.com/v1/messages',{
+      const typeQueries=_searchTypes.map(t=>({
+        hospital:'hospital',clinic:'medical clinic',ground_ambulance:'ambulance service',
+        air_ambulance:'air ambulance',tpa:'insurance assistance company',
+        physical_therapy:'physiotherapy clinic',doctor:'specialist doctor clinic'
+      })[t]||t);
+      const baseQuery=typeQueries.join(' OR ')+' '+(specStr?specStr+' ':'')+'medical';
+      const locationStr=_searchCity?`${_searchCity} ${_searchCountry}`:_searchCountry;
+      const textQuery=`${baseQuery} in ${locationStr}`;
+      const gpResp=await fetch('https://places.googleapis.com/v1/places:searchText',{
         method:'POST',
         headers:{
-          'Content-Type':'application/json','x-api-key':apiKey,
-          'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05',
-          'anthropic-dangerous-direct-browser-access':'true'
+          'Content-Type':'application/json',
+          'X-Goog-Api-Key':googlePlacesKey,
+          'X-Goog-FieldMask':'places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.types,places.id,places.location'
         },
-        body:JSON.stringify({
-          model:'claude-sonnet-4-6',max_tokens:6000,
-          tools:[{type:'web_search_20250305',name:'web_search',max_uses:5}],
-          system:SYSTEM_PROMPT,
-          messages:[{role:'user',content:enrichMsg}]
-        })
+        body:JSON.stringify({textQuery,maxResultCount:20,languageCode:'en'})
       });
-      if(enrichResp.ok){
-        const enrichData=await enrichResp.json();
-        const rawText=enrichData.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-        if(rawText){
-          const parsed=_parseClaudeJSON(rawText);
-          const enriched=parsed.enriched||[];
-          enriched.forEach(e=>{
-            const p=googleProviders[e.index];
-            if(!p)return;
-            p.email=e.email||p.email||'';
-            p.specialties=e.specialties||p.specialties||[];
-            p.accreditations=e.accreditations||[];
-            p.has_international_dept=e.has_international_dept||false;
-            p.why_hwa=e.why_hwa||'';
-            p.contact_person=e.contact_person||'';
-            p.cooperation_score=e.cooperation_score||p.cooperation_score||70;
-          });
-        }
-      }
-      enrichedProviders=[...googleProviders];
-    }catch(enrichErr){
-      enrichedProviders=[...googleProviders];
+      if(!gpResp.ok){const e=await gpResp.json();throw new Error(e.error?.message||gpResp.status);}
+      const gpData=await gpResp.json();
+      googleProviders=(gpData.places||[]).map(pl=>{
+        const addr=pl.formattedAddress||'';
+        const addrParts=addr.split(',').map(s=>s.trim());
+        const detectedCity=addrParts.length>=2?addrParts[addrParts.length-2]:_searchCity||'';
+        const plTypes=pl.types||[];
+        let pType='clinic';
+        if(plTypes.some(t=>t.includes('hospital')))pType='hospital';
+        else if(plTypes.some(t=>t.includes('physiotherapist')||t.includes('physical_therapy')))pType='physical_therapy';
+        else if(plTypes.some(t=>t.includes('doctor')||t.includes('physician')))pType='doctor';
+        return{
+          name:pl.displayName?.text||'Unknown',type:pType,
+          country:_searchCountry,city:detectedCity||_searchCity||_searchCountry,
+          address:pl.formattedAddress||'',website:pl.websiteUri||'',email:'',
+          phone:pl.internationalPhoneNumber||pl.nationalPhoneNumber||'',
+          accreditations:[],specialties:_searchSpecs.length?[..._searchSpecs]:[],
+          has_international_dept:false,why_hwa:'',
+          cooperation_score:pl.rating?Math.round(pl.rating*20):null,
+          contact_person:'',
+          _googlePlaceId:pl.id||'',_googleRating:pl.rating||null,_googleReviews:pl.userRatingCount||0
+        };
+      });
+      setProgress(30,`Located ${googleProviders.length} providers`);
+    }catch(gpErr){
+      showToast('Google Places unavailable — using AI search only','error');
     }
   }
-  setStep(1,'done'); setProgress(55,'Enrichment done — '+(enrichedProviders.length)+' providers enriched');
+  setStep(0,'done');
 
-  // ── STEP 2: Claude AI finds additional providers ─────────
-  setStep(2,'active'); setProgress(60,'Claude AI searching for more providers...');
-  let aiProviders=[];
+  // ── STEP 1: Claude AI — enrich + supplemental ───────────
+  setStep(1,'active'); setProgress(40,'Enriching & qualifying providers...');
+  const controller=new AbortController();
+  const abortTimer=setTimeout(()=>controller.abort(),240000);
   try{
-    const existingNames=new Set(enrichedProviders.map(p=>p.name.toLowerCase().trim()));
-    const excludeLine=enrichedProviders.length>0
-      ?`\nALREADY FOUND via Google Places — do NOT include:\n${enrichedProviders.map(p=>p.name).join(' | ')}`:'';
-    const aiMsg=`NETWORK RUN — Date: ${today}
-Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity:' (entire country)'}
-Provider types required: ${_searchTypes.join(', ')}
-${_searchSpecs.length?'Medical specialties: '+_searchSpecs.join(', '):'Medical specialties: any'}${excludeLine}
+    let claudeMsg;
+    if(googleProviders.length>0){
+      const providerList=googleProviders.map((p,i)=>`${i+1}. ${p.name} | ${p.city}, ${p.country} | ${p.website||'no website'} | ${p.phone||'no phone'}`).join('\n');
+      const additionalCount=Math.max(4,12-googleProviders.length);
+      claudeMsg=`UNIFIED NETWORK RUN — Date: ${today}
+Location: ${loc}
+Provider types: ${typeStr}
+${specStr?'Specialties: '+specStr:''}
+Google Places found ${googleProviders.length} providers. Your tasks:
+1. Enrich each provider below: find email, contact_person (medical director or international coordinator), specialties array, accreditations array, has_international_dept boolean, why_hwa (1-2 sentences on value to HWA's insurer clients), cooperation_score (integer 1-100, higher = better international partner).
+2. Find up to ${additionalCount} ADDITIONAL verified providers in ${loc} not already in the list.
 
-Google Places already found ${enrichedProviders.length} providers. Now find up to 8 ADDITIONAL real verified medical providers in ${loc} that were NOT found by Google Places — focus on smaller clinics, specialist doctors, TPAs, ambulance services that may not appear prominently in Google. Add contact_person (medical director/international coordinator name if findable) and cooperation_score (1-100). Return JSON only.`;
+PROVIDERS TO ENRICH:
+${providerList}
 
-    const aiResp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
+ALREADY FOUND — do NOT repeat: ${googleProviders.map(p=>p.name).join(' | ')}
+
+Return ONLY valid JSON (no markdown, no backticks):
+{"enriched":[{"index":0,"email":"","contact_person":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","cooperation_score":65}]}`;
+    }else{
+      claudeMsg=`NETWORK RUN — Date: ${today}
+Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity+' (search primarily here, expand to nearby if needed)':' (search across the entire country)'}
+Provider types required: ${typeStr}
+${specStr?'Medical specialties: '+specStr:'Medical specialties: any'}
+
+Search official databases and web to find exactly 12 real verified medical providers in ${loc} matching the requested types and specialties. Order best-first: JCI/ISO-accredited first, then providers with verified email + website. Return JSON only.`;
+    }
+
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',signal:controller.signal,
       headers:{
         'Content-Type':'application/json','x-api-key':apiKey,
         'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05',
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',max_tokens:5000,
+        model:'claude-sonnet-4-6',max_tokens:6000,
         tools:[{type:'web_search_20250305',name:'web_search',max_uses:6}],
         system:SYSTEM_PROMPT,
-        messages:[{role:'user',content:aiMsg}]
+        messages:[{role:'user',content:claudeMsg}]
       })
     });
-    if(aiResp.ok){
-      const aiData=await aiResp.json();
-      const rawText=aiData.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-      if(rawText){
+    clearTimeout(abortTimer);
+    if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error '+resp.status);}
+
+    const data=await resp.json();
+    const rawText=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    if(!rawText)throw new Error('No response from Claude (stop_reason: '+data.stop_reason+')');
+
+    setProgress(80,'Processing results...');
+
+    let finalProviders=[];
+    if(googleProviders.length>0){
+      try{
         const parsed=_parseClaudeJSON(rawText);
-        const batch=parsed.providers||[];
-        aiProviders=batch
-          .filter(p=>!existingNames.has(p.name.toLowerCase().trim()))
-          .map(p=>({...p,_source:'ai',cooperation_score:p.cooperation_score||65,contact_person:p.contact_person||''}));
+        (parsed.enriched||[]).forEach(e=>{
+          const p=googleProviders[e.index];
+          if(!p)return;
+          p.email=e.email||p.email||'';
+          p.contact_person=e.contact_person||'';
+          p.specialties=e.specialties||p.specialties||[];
+          p.accreditations=e.accreditations||[];
+          p.has_international_dept=e.has_international_dept||false;
+          p.why_hwa=e.why_hwa||'';
+          p.cooperation_score=e.cooperation_score||p.cooperation_score||70;
+        });
+        const existingNames=new Set(googleProviders.map(p=>p.name.toLowerCase().trim()));
+        const additional=(parsed.additional||[])
+          .filter(p=>p.name&&!existingNames.has(p.name.toLowerCase().trim()))
+          .map(p=>({...p,cooperation_score:p.cooperation_score||65,contact_person:p.contact_person||''}));
+        finalProviders=[...googleProviders,...additional];
+      }catch(_){
+        finalProviders=[...googleProviders];
       }
+    }else{
+      try{
+        const parsed=_parseClaudeJSON(rawText);
+        finalProviders=(parsed.providers||[]).map(p=>({...p,cooperation_score:p.cooperation_score||65,contact_person:p.contact_person||''}));
+      }catch(_){ finalProviders=[]; }
     }
-  }catch(aiErr){
-    // AI step failed — continue with Google results only
+
+    // Deduplicate
+    const seen=new Set();
+    finalProviders=finalProviders.filter(p=>{
+      const key=(p.name||'').toLowerCase().trim();
+      if(!key||seen.has(key))return false;
+      seen.add(key);return true;
+    });
+
+    // Sort by cooperation_score descending
+    finalProviders.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
+
+    setProgress(95,'Rendering providers...');
+    runResults=[...finalProviders];
+    document.getElementById('run-results').style.display='block';
+    finalProviders.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*80));
+
+    try{await db.collection('sessions').add({date:today,region:loc,providersFound:finalProviders.length,batchNum:1,runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
+
+    setTimeout(()=>{
+      setStep(1,'done');setStep(2,'done');
+      _finishRunUI(`${finalProviders.length} providers found`);
+    },finalProviders.length*80+400);
+
+  }catch(e){
+    clearTimeout(abortTimer);
+    const isAbort=e.name==='AbortError'||e.message.toLowerCase().includes('abort');
+    setProgress(0,'Error: '+(isAbort?'Search timed out':e.message));
+    showToast(isAbort?'Search timed out — try a more specific location':'Run failed: '+e.message,'error');
+    _searchActive=false;
+    document.getElementById('run-btn').disabled=false;
+    document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';
   }
-  setStep(2,'done'); setProgress(80,'AI found '+aiProviders.length+' additional providers');
-
-  // ── STEP 3: Deduplicate & rank ───────────────────────────
-  setStep(3,'active'); setProgress(85,'Deduplicating and ranking results...');
-  const allProviders=[...enrichedProviders,...aiProviders];
-  const seen=new Set();
-  const dedupedProviders=allProviders.filter(p=>{
-    const key=p.name.toLowerCase().trim();
-    if(seen.has(key))return false;
-    seen.add(key);return true;
-  });
-  // Sort: Google-verified with high cooperation_score first, then AI
-  dedupedProviders.sort((a,b)=>{
-    const aScore=(a._source==='google'?20:0)+(a.cooperation_score||50);
-    const bScore=(b._source==='google'?20:0)+(b.cooperation_score||50);
-    return bScore-aScore;
-  });
-  setStep(3,'done'); setProgress(92,'Rendering results...');
-
-  // ── STEP 4: Render ───────────────────────────────────────
-  setStep(4,'active');
-  document.getElementById('run-results').style.display='block';
-  dedupedProviders.forEach((p,i)=>{
-    setTimeout(()=>renderRunCard(p,runResults.length+i),i*80);
-  });
-  runResults.push(...dedupedProviders);
-
-  // Session log
-  try{await db.collection('sessions').add({date:today,region:loc,providersFound:runResults.length,batchNum:1,source:'dual',runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
-
-  setTimeout(()=>{
-    setStep(4,'done');
-    _finishRunUI(`Google: ${enrichedProviders.length} | AI: ${aiProviders.length} | Total: ${dedupedProviders.length}`);
-  },dedupedProviders.length*80+400);
 }
 
 async function _runBatch(batchNum){
@@ -1288,14 +1174,12 @@ Search official databases and web to find exactly 12 NEW real verified medical p
 
   // Reset steps and progress bar for this batch
   setProgress(0,'');
-  [0,1,2,3,4].forEach(i=>setStep(i,'pending'));
-  setStep(0,'done'); setStep(1,'active');
+  [0,1,2].forEach(i=>setStep(i,'pending'));
+  setStep(0,'active');
   setProgress(15, batchNum===1?'Searching databases & web...':'Batch '+batchNum+' — searching for more providers...');
-  document.getElementById('step-4-text').textContent='Complete';
 
   const stepTimers=[
-    setTimeout(()=>{setStep(1,'done');setStep(2,'active');setProgress(55,'Verifying providers...');},20000),
-    setTimeout(()=>{setStep(2,'done');setStep(3,'active');setProgress(80,'Formatting results...');},40000),
+    setTimeout(()=>{setStep(0,'done');setStep(1,'active');setProgress(50,'Analyzing providers...');},15000),
   ];
   const controller=new AbortController();
   const abortTimer=setTimeout(()=>controller.abort(),240000);
@@ -1329,17 +1213,15 @@ Search official databases and web to find exactly 12 NEW real verified medical p
     const newProviders=batch.filter(p=>!existingNames.has(p.name.toLowerCase().trim()));
 
     if(!newProviders.length){
-      [1,2,3].forEach(i=>setStep(i,'done'));setStep(4,'done');
-      document.getElementById('step-4-text').textContent=`Complete — ${runResults.length} providers total`;
+      [0,1,2].forEach(i=>setStep(i,'done'));
       setProgress(100,'No more unique providers found');
       _finishRunUI('All available providers found');
       return;
     }
 
     // Mark batch steps done
-    [1,2,3].forEach(i=>setStep(i,'done'));setStep(4,'done');
+    [0,1,2].forEach(i=>setStep(i,'done'));
     const newTotal=runResults.length+newProviders.length;
-    document.getElementById('step-4-text').textContent=`Batch ${batchNum} — ${newTotal} found`;
     setProgress(100,`Batch ${batchNum} complete — ${newTotal} providers found`);
 
     // Show batch separator for batches after the first
@@ -1391,7 +1273,7 @@ function setStep(n,state){
   if(!el)return;
   el.className='step '+state;
   const icon=el.querySelector('.step-icon');
-  if(state==='done'||n===4)icon.textContent='✓';
+  if(state==='done'||n===2)icon.textContent='✓';
   else if(state==='error')icon.textContent='✗';
   else icon.textContent=n+1;
 }
@@ -1404,10 +1286,6 @@ function setProgress(pct,text){
 function renderRunCard(p,idx){
   const id='card-'+idx;
   const accHtml=(p.accreditations||[]).map(a=>`<span class="acc-tag">${a}</span>`).join('');
-  const isGoogle=p._source==='google';
-  const sourceBadge=isGoogle
-    ?`<span class="source-badge google">🟢 Google Verified</span>`
-    :`<span class="source-badge ai">🤖 AI Found</span>`;
   const scoreHtml=p.cooperation_score
     ?`<div class="card-row"><span class="card-row-icon">⭐</span><span class="card-row-val">Cooperation score: <strong>${p.cooperation_score}/100</strong></span></div>`:'';
   const contactHtml=p.contact_person
@@ -1420,7 +1298,6 @@ function renderRunCard(p,idx){
       <div>
         <div class="card-name">${p.name}</div>
         <div class="card-location">📍 ${p.city}, ${p.country}</div>
-        ${sourceBadge}
       </div>
       <span class="type-badge">${typeLabel(p.type)}</span>
     </div>
@@ -1551,7 +1428,6 @@ async function saveSelectedProviders(){
         lastContact:'',responseNotes:'',agreementDate:'',
         contact_person:p.contact_person||'',
         cooperation_score:p.cooperation_score||null,
-        source:p._source==='google'?'Google Verified':'AI Found',
         google_place_id:p._googlePlaceId||'',
         google_rating:p._googleRating||null,
         addedBy:currentUser.displayName||'',addedByEmail:currentUser.email||'',
@@ -1568,32 +1444,26 @@ async function saveSelectedProviders(){
 // ── Provider Database ────────────────────────────────────
 async function loadProviders(){
   const tbody=document.getElementById('db-tbody');
-  tbody.innerHTML='<tr><td colspan="10"><div class="skeleton" style="height:40px;margin:8px"></div></td></tr>';
+  tbody.innerHTML='<tr><td colspan="9"><div class="skeleton" style="height:40px;margin:8px"></div></td></tr>';
   try{
     const snap=await db.collection('providers').orderBy('createdAt','desc').limit(500).get();
     currentProviders=snap.docs.map(d=>({id:d.id,...d.data()}));
     document.getElementById('db-count').textContent=`${currentProviders.length} providers in database`;
     renderTable(currentProviders);
   }catch(e){
-    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text3)">Could not load providers: ${e.message}</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text3)">Could not load providers: ${e.message}</td></tr>`;
   }
 }
 
 function renderTable(providers){
   const tbody=document.getElementById('db-tbody');
   if(!providers.length){
-    tbody.innerHTML='<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No providers yet</div><div class="empty-sub">Run a Network Search to find providers</div></div></td></tr>';
+    tbody.innerHTML='<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No providers yet</div><div class="empty-sub">Run a Network Search to find providers</div></div></td></tr>';
     return;
   }
   tbody.innerHTML=providers.map(p=>{
     const statusClass='status-'+(p.status||'New').replace(/ /g,'-');
     const netClass=p.inNetwork==='Yes'?'network-yes':p.inNetwork==='No'?'network-no':'network-pending';
-    const isGoogle=(p.source||'').includes('Google');
-    const sourceBadgeHtml=p.source
-      ?(isGoogle
-        ?`<span class="source-badge google" style="margin-top:0">🟢 ${p.source}</span>`
-        :`<span class="source-badge ai" style="margin-top:0">🤖 ${p.source}</span>`)
-      :'<span style="font-size:11px;color:var(--text3)">—</span>';
     const scoreHtml=p.cooperation_score
       ?`<span style="font-size:12px;font-weight:700;color:${p.cooperation_score>=80?'var(--green)':p.cooperation_score>=60?'var(--amber)':'var(--text3)'}">${p.cooperation_score}</span>`
       :'<span style="color:var(--text3)">—</span>';
@@ -1607,7 +1477,6 @@ function renderTable(providers){
         <button class="table-gen-email" onclick="generateEmailForDb('${p.id}',this)">✉ Generate & Send</button>
       </td>
       <td>${scoreHtml}</td>
-      <td>${sourceBadgeHtml}</td>
       <td>
         <select class="status-sel ${statusClass}" onchange="updateStatus('${p.id}',this)">
           ${['New','Email Sent','Agreement Sent','Agreement Signed','In Network','No Response','Declined'].map(s=>`<option${s===p.status?' selected':''}>${s}</option>`).join('')}
@@ -1651,13 +1520,11 @@ function filterProviders(){
   const type=document.getElementById('db-type').value;
   const status=document.getElementById('db-status').value;
   const network=document.getElementById('db-network').value;
-  const source=document.getElementById('db-source').value;
   const filtered=currentProviders.filter(p=>{
     if(q&&!`${p.name}${p.country}${p.city}${p.email}${p.contact_person||''}`.toLowerCase().includes(q))return false;
     if(type&&p.type!==type.toLowerCase().replace(/ \/ /,'/').replace(/ /,'_'))return false;
     if(status&&p.status!==status)return false;
     if(network&&p.inNetwork!==network)return false;
-    if(source&&(p.source||'AI Found')!==source)return false;
     return true;
   });
   renderTable(filtered);
@@ -1668,19 +1535,19 @@ function filterProviders(){
 function downloadExcel(){
   if(!currentProviders.length){showToast('No providers to export','error');return;}
   const headers=['Date Found','Provider Name','Type','Country','City','Website','Email','Phone',
-    'Accreditations','Specialties','Int\'l Dept','Why HWA','Contact Person','Cooperation Score','Source',
+    'Accreditations','Specialties','Int\'l Dept','Why HWA','Contact Person','Cooperation Score',
     'HWA Status','Outreach Date','Last Contact','Response Notes','In HWA Network','Agreement Date','Added By'];
   const rows=currentProviders.map(p=>[
     p.outreachDate||'',p.name||'',p.type||'',p.country||'',p.city||'',
     p.website||'',p.email||'',p.phone||'',
     (p.accreditations||[]).join('; '),(p.specialties||[]).join('; '),
     p.hasInternationalDept?'Yes':'Unknown',p.whyHWA||'',
-    p.contact_person||'',p.cooperation_score||'',p.source||'',
+    p.contact_person||'',p.cooperation_score||'',
     p.status||'New',p.outreachDate||'',p.lastContact||'',p.responseNotes||'',
     p.inNetwork||'Pending',p.agreementDate||'',p.addedBy||''
   ]);
   const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
-  ws['!cols']=headers.map((_,i)=>({wch:[14,30,16,14,14,24,24,16,16,22,10,28,18,10,14,16,14,14,24,13,14,16][i]||14}));
+  ws['!cols']=headers.map((_,i)=>({wch:[14,30,16,14,14,24,24,16,16,22,10,28,18,10,16,14,14,24,13,14,16][i]||14}));
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Providers');
   XLSX.writeFile(wb,`HWA_Network_Tracker_${new Date().toISOString().split('T')[0]}.xlsx`);

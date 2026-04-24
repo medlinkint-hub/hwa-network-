@@ -941,12 +941,8 @@ Search the web AND official databases (WHO, national health ministry registry, c
     const match=clean.match(/\{[\s\S]*\}/);
     if(match)clean=match[0];
 
-    // Repair common JSON issues caused by long email bodies:
-    // 1. Replace literal newlines inside string values with \n
-    // 2. Remove control characters that break JSON
-    clean=clean
-      .replace(/[ --]/g,'') // strip control chars
-      .replace(/\t/g,'\\t');                                     // escape tabs
+    // Strip control characters that break JSON (keep newlines and tabs)
+    clean=clean.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,'');
 
     // Attempt parse; if it fails try aggressive string-field sanitisation
     let parsed;

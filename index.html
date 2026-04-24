@@ -527,7 +527,7 @@ a{color:inherit;text-decoration:none}
     </div>
     <div class="providers-table">
       <table><thead><tr>
-        <th>Provider</th><th>Type</th><th>Country</th><th>Contact</th><th>Email / Outlook</th>
+        <th>Provider</th><th>Type</th><th>Country</th><th>Contact Person</th><th>Email / Outlook</th>
         <th>Score</th><th>Source</th><th>HWA Status</th><th>In Network</th><th>Added</th>
       </tr></thead>
       <tbody id="db-tbody"></tbody></table>
@@ -1036,6 +1036,226 @@ async function startNetworkRun(){
   await _runBatch(1);
 }
 
+// ── Google Places + Claude AI Dual-Source Pipeline ─────────
+async function _runDualSource(){
+  const today=new Date().toISOString().split('T')[0];
+  const loc=_searchCity?`${_searchCity}, ${_searchCountry}`:_searchCountry;
+
+  // Build Google Places query terms from selected types and specialties
+  const typeQueries=_searchTypes.map(t=>({
+    hospital:'hospital',clinic:'medical clinic',ground_ambulance:'ambulance service',
+    air_ambulance:'air ambulance',tpa:'insurance assistance company',
+    physical_therapy:'physiotherapy clinic',doctor:'specialist doctor clinic'
+  })[t]||t);
+  const specStr=_searchSpecs.length?_searchSpecs.join(' '):'' ;
+  const baseQuery=typeQueries.join(' OR ')+' '+(specStr?specStr+' ':'')+'medical';
+  const locationStr=_searchCity?`${_searchCity} ${_searchCountry}`:_searchCountry;
+  const textQuery=`${baseQuery} in ${locationStr}`;
+
+  // ── STEP 0: Query Google Places ──────────────────────────
+  setStep(0,'active'); setProgress(8,'Querying Google Places API...');
+  let googleProviders=[];
+  try{
+    const gpResp=await fetch('https://places.googleapis.com/v1/places:searchText',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'X-Goog-Api-Key':googlePlacesKey,
+        'X-Goog-FieldMask':'places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.types,places.id,places.location'
+      },
+      body:JSON.stringify({
+        textQuery:textQuery,
+        maxResultCount:20,
+        languageCode:'en'
+      })
+    });
+    if(!gpResp.ok){
+      const gpErr=await gpResp.json();
+      throw new Error('Google Places API error: '+(gpErr.error?.message||gpResp.status));
+    }
+    const gpData=await gpResp.json();
+    const places=(gpData.places||[]);
+
+    // Map Google Places results to provider format
+    googleProviders=places.map(pl=>{
+      const addr=pl.formattedAddress||'';
+      // Extract city from formatted address (second-to-last part typically)
+      const addrParts=addr.split(',').map(s=>s.trim());
+      const detectedCity=addrParts.length>=2?addrParts[addrParts.length-2]:_searchCity||'';
+      const plTypes=pl.types||[];
+      let pType='clinic';
+      if(plTypes.some(t=>t.includes('hospital')))pType='hospital';
+      else if(plTypes.some(t=>t.includes('physiotherapist')||t.includes('physical_therapy')))pType='physical_therapy';
+      else if(plTypes.some(t=>t.includes('doctor')||t.includes('physician')))pType='doctor';
+      const rating=pl.rating?Math.round(pl.rating*20):null; // convert 5-star to 100-pt
+      return{
+        name:pl.displayName?.text||'Unknown',
+        type:pType,
+        country:_searchCountry,
+        city:detectedCity||_searchCity||_searchCountry,
+        website:pl.websiteUri||'',
+        email:'',
+        phone:pl.internationalPhoneNumber||pl.nationalPhoneNumber||'',
+        accreditations:[],
+        specialties:_searchSpecs.length?_searchSpecs:[],
+        has_international_dept:false,
+        why_hwa:'',
+        cooperation_score:rating,
+        contact_person:'',
+        _source:'google',
+        _googleRating:pl.rating||null,
+        _googleReviews:pl.userRatingCount||0
+      };
+    });
+    setStep(0,'done'); setProgress(25,`Google Places: ${googleProviders.length} places found`);
+  }catch(gpErr){
+    setStep(0,'error');
+    setProgress(20,'Google Places failed — continuing with Claude AI only');
+    showToast('Google Places: '+gpErr.message,'error');
+    // Fall back to AI-only
+    [0,1,2,3,4].forEach(i=>setStep(i,'pending'));
+    setStep(0,'done'); setStep(1,'active');
+    setProgress(15,'Searching databases & web with Claude AI...');
+    await _runBatch(1);
+    return;
+  }
+
+  // ── STEP 1: Enrich Google results with Claude AI ─────────
+  setStep(1,'active'); setProgress(30,'Enriching Google results with Claude AI...');
+  let enrichedProviders=[];
+  if(googleProviders.length>0){
+    try{
+      const providerList=googleProviders.map((p,i)=>`${i+1}. ${p.name} | ${p.city}, ${p.country} | ${p.website||'no website'} | ${p.phone||'no phone'}`).join('\n');
+      const enrichMsg=`ENRICH TASK — Date: ${today}
+You have been given ${googleProviders.length} medical providers found via Google Places in ${loc}.
+For EACH provider, verify it is real and find its email address if possible.
+Also add: specialties array, accreditations array, has_international_dept boolean, why_hwa string (1-2 sentences on value to HWA's insurer clients), contact_person (name of medical director or international dept coordinator if findable), cooperation_score (integer 1-100 based on size, accreditation, international experience — higher=better).
+
+PROVIDERS:
+${providerList}
+
+Return ONLY valid JSON (no markdown):
+{"enriched":[{"index":0,"email":"...","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"...","contact_person":"","cooperation_score":70},...]}
+Index corresponds to 0-based position in the input list. Include ALL ${googleProviders.length} providers in output.`;
+
+      const enrichResp=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json','x-api-key':apiKey,
+          'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body:JSON.stringify({
+          model:'claude-sonnet-4-6',max_tokens:6000,
+          tools:[{type:'web_search_20250305',name:'web_search',max_uses:5}],
+          system:SYSTEM_PROMPT,
+          messages:[{role:'user',content:enrichMsg}]
+        })
+      });
+      if(enrichResp.ok){
+        const enrichData=await enrichResp.json();
+        const rawText=enrichData.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+        if(rawText){
+          const parsed=_parseClaudeJSON(rawText);
+          const enriched=parsed.enriched||[];
+          enriched.forEach(e=>{
+            const p=googleProviders[e.index];
+            if(!p)return;
+            p.email=e.email||p.email||'';
+            p.specialties=e.specialties||p.specialties||[];
+            p.accreditations=e.accreditations||[];
+            p.has_international_dept=e.has_international_dept||false;
+            p.why_hwa=e.why_hwa||'';
+            p.contact_person=e.contact_person||'';
+            p.cooperation_score=e.cooperation_score||p.cooperation_score||70;
+          });
+        }
+      }
+      enrichedProviders=[...googleProviders];
+    }catch(enrichErr){
+      enrichedProviders=[...googleProviders];
+    }
+  }
+  setStep(1,'done'); setProgress(55,'Enrichment done — '+(enrichedProviders.length)+' providers enriched');
+
+  // ── STEP 2: Claude AI finds additional providers ─────────
+  setStep(2,'active'); setProgress(60,'Claude AI searching for more providers...');
+  let aiProviders=[];
+  try{
+    const existingNames=new Set(enrichedProviders.map(p=>p.name.toLowerCase().trim()));
+    const excludeLine=enrichedProviders.length>0
+      ?`\nALREADY FOUND via Google Places — do NOT include:\n${enrichedProviders.map(p=>p.name).join(' | ')}`:'';
+    const aiMsg=`NETWORK RUN — Date: ${today}
+Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity:' (entire country)'}
+Provider types required: ${_searchTypes.join(', ')}
+${_searchSpecs.length?'Medical specialties: '+_searchSpecs.join(', '):'Medical specialties: any'}${excludeLine}
+
+Google Places already found ${enrichedProviders.length} providers. Now find up to 8 ADDITIONAL real verified medical providers in ${loc} that were NOT found by Google Places — focus on smaller clinics, specialist doctors, TPAs, ambulance services that may not appear prominently in Google. Add contact_person (medical director/international coordinator name if findable) and cooperation_score (1-100). Return JSON only.`;
+
+    const aiResp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json','x-api-key':apiKey,
+        'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',max_tokens:5000,
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:6}],
+        system:SYSTEM_PROMPT,
+        messages:[{role:'user',content:aiMsg}]
+      })
+    });
+    if(aiResp.ok){
+      const aiData=await aiResp.json();
+      const rawText=aiData.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+      if(rawText){
+        const parsed=_parseClaudeJSON(rawText);
+        const batch=parsed.providers||[];
+        aiProviders=batch
+          .filter(p=>!existingNames.has(p.name.toLowerCase().trim()))
+          .map(p=>({...p,_source:'ai',cooperation_score:p.cooperation_score||65,contact_person:p.contact_person||''}));
+      }
+    }
+  }catch(aiErr){
+    // AI step failed — continue with Google results only
+  }
+  setStep(2,'done'); setProgress(80,'AI found '+aiProviders.length+' additional providers');
+
+  // ── STEP 3: Deduplicate & rank ───────────────────────────
+  setStep(3,'active'); setProgress(85,'Deduplicating and ranking results...');
+  const allProviders=[...enrichedProviders,...aiProviders];
+  const seen=new Set();
+  const dedupedProviders=allProviders.filter(p=>{
+    const key=p.name.toLowerCase().trim();
+    if(seen.has(key))return false;
+    seen.add(key);return true;
+  });
+  // Sort: Google-verified with high cooperation_score first, then AI
+  dedupedProviders.sort((a,b)=>{
+    const aScore=(a._source==='google'?20:0)+(a.cooperation_score||50);
+    const bScore=(b._source==='google'?20:0)+(b.cooperation_score||50);
+    return bScore-aScore;
+  });
+  setStep(3,'done'); setProgress(92,'Rendering results...');
+
+  // ── STEP 4: Render ───────────────────────────────────────
+  setStep(4,'active');
+  document.getElementById('run-results').style.display='block';
+  dedupedProviders.forEach((p,i)=>{
+    setTimeout(()=>renderRunCard(p,runResults.length+i),i*80);
+  });
+  runResults.push(...dedupedProviders);
+
+  // Session log
+  try{await db.collection('sessions').add({date:today,region:loc,providersFound:runResults.length,batchNum:1,source:'dual',runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
+
+  setTimeout(()=>{
+    setStep(4,'done');
+    _finishRunUI(`Google: ${enrichedProviders.length} | AI: ${aiProviders.length} | Total: ${dedupedProviders.length}`);
+  },dedupedProviders.length*80+400);
+}
+
 async function _runBatch(batchNum){
   if(!_searchActive){_finishRunUI('Search stopped');return;}
   if(runResults.length>=250){_finishRunUI('250 providers reached');return;}
@@ -1173,6 +1393,14 @@ function setProgress(pct,text){
 function renderRunCard(p,idx){
   const id='card-'+idx;
   const accHtml=(p.accreditations||[]).map(a=>`<span class="acc-tag">${a}</span>`).join('');
+  const isGoogle=p._source==='google';
+  const sourceBadge=isGoogle
+    ?`<span class="source-badge google">🟢 Google Verified</span>`
+    :`<span class="source-badge ai">🤖 AI Found</span>`;
+  const scoreHtml=p.cooperation_score
+    ?`<div class="card-row"><span class="card-row-icon">⭐</span><span class="card-row-val">Cooperation score: <strong>${p.cooperation_score}/100</strong></span></div>`:'';
+  const contactHtml=p.contact_person
+    ?`<div class="card-row"><span class="card-row-icon">👤</span><span class="card-row-val">${p.contact_person}</span></div>`:'';
   const card=document.createElement('div');
   card.className='provider-card'; card.id=id;
   card.style.animationDelay=(idx*0.08)+'s';
@@ -1181,14 +1409,17 @@ function renderRunCard(p,idx){
       <div>
         <div class="card-name">${p.name}</div>
         <div class="card-location">📍 ${p.city}, ${p.country}</div>
+        ${sourceBadge}
       </div>
       <span class="type-badge">${typeLabel(p.type)}</span>
     </div>
     <div class="card-body">
+      ${contactHtml}
       ${p.email?`<div class="card-row"><span class="card-row-icon">✉</span><span class="card-row-val"><a href="mailto:${p.email}">${p.email}</a></span></div>`:''}
       ${p.phone?`<div class="card-row"><span class="card-row-icon">📞</span><span class="card-row-val">${p.phone}</span></div>`:''}
       ${p.website?`<div class="card-row"><span class="card-row-icon">🌐</span><span class="card-row-val"><a href="${p.website}" target="_blank">${p.website.replace('https://','')}</a></span></div>`:''}
       ${accHtml?`<div class="card-row"><span class="card-row-icon">🏅</span><span class="card-row-val"><div class="accs">${accHtml}</div></span></div>`:''}
+      ${scoreHtml}
       ${p.why_hwa?`<div class="why-box">${p.why_hwa}</div>`:''}
     </div>
     <div class="card-actions">
@@ -1306,6 +1537,9 @@ async function saveSelectedProviders(){
         whyHWA:p.why_hwa||'',email_subject:'',email_body:'',
         outreachDate:today,status:'New',inNetwork:'Pending',
         lastContact:'',responseNotes:'',agreementDate:'',
+        contact_person:p.contact_person||'',
+        cooperation_score:p.cooperation_score||null,
+        source:p._source==='google'?'Google Verified':'AI Found',
         addedBy:currentUser.displayName||'',addedByEmail:currentUser.email||'',
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -1320,34 +1554,46 @@ async function saveSelectedProviders(){
 // ── Provider Database ────────────────────────────────────
 async function loadProviders(){
   const tbody=document.getElementById('db-tbody');
-  tbody.innerHTML='<tr><td colspan="7"><div class="skeleton" style="height:40px;margin:8px"></div></td></tr>';
+  tbody.innerHTML='<tr><td colspan="10"><div class="skeleton" style="height:40px;margin:8px"></div></td></tr>';
   try{
     const snap=await db.collection('providers').orderBy('createdAt','desc').limit(500).get();
     currentProviders=snap.docs.map(d=>({id:d.id,...d.data()}));
     document.getElementById('db-count').textContent=`${currentProviders.length} providers in database`;
     renderTable(currentProviders);
   }catch(e){
-    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3)">Could not load providers: ${e.message}</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text3)">Could not load providers: ${e.message}</td></tr>`;
   }
 }
 
 function renderTable(providers){
   const tbody=document.getElementById('db-tbody');
   if(!providers.length){
-    tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No providers yet</div><div class="empty-sub">Run a Network Search to find providers</div></div></td></tr>';
+    tbody.innerHTML='<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No providers yet</div><div class="empty-sub">Run a Network Search to find providers</div></div></td></tr>';
     return;
   }
   tbody.innerHTML=providers.map(p=>{
     const statusClass='status-'+(p.status||'New').replace(/ /g,'-');
     const netClass=p.inNetwork==='Yes'?'network-yes':p.inNetwork==='No'?'network-no':'network-pending';
+    const isGoogle=(p.source||'').includes('Google');
+    const sourceBadgeHtml=p.source
+      ?(isGoogle
+        ?`<span class="source-badge google" style="margin-top:0">🟢 ${p.source}</span>`
+        :`<span class="source-badge ai" style="margin-top:0">🤖 ${p.source}</span>`)
+      :'<span style="font-size:11px;color:var(--text3)">—</span>';
+    const scoreHtml=p.cooperation_score
+      ?`<span style="font-size:12px;font-weight:700;color:${p.cooperation_score>=80?'var(--green)':p.cooperation_score>=60?'var(--amber)':'var(--text3)'}">${p.cooperation_score}</span>`
+      :'<span style="color:var(--text3)">—</span>';
     return `<tr>
       <td><div style="font-weight:600;font-size:13px">${p.name||''}</div><div style="font-size:11px;color:var(--text3)">${p.city||''}, ${p.country||''}</div></td>
       <td><span style="font-size:11px;background:var(--teal-bg);color:var(--teal);border-radius:4px;padding:2px 7px;font-weight:600">${typeLabel(p.type||'')}</span></td>
       <td style="font-size:13px">${p.country||''}</td>
+      <td style="font-size:12px;color:var(--text2)">${p.contact_person||'<span style="color:var(--text3)">—</span>'}</td>
       <td>
         ${p.email?`<div style="font-size:12px;color:var(--text2)">${p.email}</div>`:''}
         <button class="table-gen-email" onclick="generateEmailForDb('${p.id}',this)">✉ Generate & Send</button>
       </td>
+      <td>${scoreHtml}</td>
+      <td>${sourceBadgeHtml}</td>
       <td>
         <select class="status-sel ${statusClass}" onchange="updateStatus('${p.id}',this)">
           ${['New','Email Sent','Agreement Sent','Agreement Signed','In Network','No Response','Declined'].map(s=>`<option${s===p.status?' selected':''}>${s}</option>`).join('')}
@@ -1406,18 +1652,19 @@ function filterProviders(){
 function downloadExcel(){
   if(!currentProviders.length){showToast('No providers to export','error');return;}
   const headers=['Date Found','Provider Name','Type','Country','City','Website','Email','Phone',
-    'Accreditations','Specialties','Int\'l Dept','Why HWA','HWA Status','Outreach Date',
-    'Last Contact','Response Notes','In HWA Network','Agreement Date','Added By'];
+    'Accreditations','Specialties','Int\'l Dept','Why HWA','Contact Person','Cooperation Score','Source',
+    'HWA Status','Outreach Date','Last Contact','Response Notes','In HWA Network','Agreement Date','Added By'];
   const rows=currentProviders.map(p=>[
     p.outreachDate||'',p.name||'',p.type||'',p.country||'',p.city||'',
     p.website||'',p.email||'',p.phone||'',
     (p.accreditations||[]).join('; '),(p.specialties||[]).join('; '),
     p.hasInternationalDept?'Yes':'Unknown',p.whyHWA||'',
+    p.contact_person||'',p.cooperation_score||'',p.source||'',
     p.status||'New',p.outreachDate||'',p.lastContact||'',p.responseNotes||'',
     p.inNetwork||'Pending',p.agreementDate||'',p.addedBy||''
   ]);
   const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
-  ws['!cols']=headers.map((_,i)=>({wch:[14,30,16,14,14,24,24,16,16,22,10,28,16,14,14,24,13,14,16][i]||14}));
+  ws['!cols']=headers.map((_,i)=>({wch:[14,30,16,14,14,24,24,16,16,22,10,28,18,10,14,16,14,14,24,13,14,16][i]||14}));
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Providers');
   XLSX.writeFile(wb,`HWA_Network_Tracker_${new Date().toISOString().split('T')[0]}.xlsx`);

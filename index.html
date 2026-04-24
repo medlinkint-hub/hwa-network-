@@ -357,7 +357,7 @@ a{color:inherit;text-decoration:none}
       <div class="kpi-card red"><div class="kpi-label">Last Run</div><div class="kpi-value" id="kpi-lastrun" style="font-size:16px;padding-top:6px">—</div><div class="kpi-sub" id="kpi-lastrun-sub">no sessions yet</div></div>
     </div>
     <div class="section-header">
-      <div><div class="section-title">Today's Region</div><div class="section-sub" id="dash-region">Loading...</div></div>
+      <div><div class="section-title">Network Activity</div><div class="section-sub" id="dash-region"></div></div>
       <button class="btn btn-primary" onclick="showTab('run')">🔍 Run Network Search</button>
     </div>
     <div id="dash-recent"></div>
@@ -371,26 +371,16 @@ a{color:inherit;text-decoration:none}
           <div class="section-title">Network Run</div>
           <div class="section-sub">Find new medical providers to contact for cooperation agreements</div>
         </div>
-        <div class="region-badge" id="run-region-badge">📍 Loading...</div>
+        <div class="region-badge" id="run-region-badge">🎯 Select a country</div>
       </div>
       <div style="margin-top:16px">
-        <div class="form-label" style="margin-bottom:8px">Focus region (auto by weekday, or select below)</div>
-        <div class="region-options" id="region-options">
-          <span class="region-chip" data-region="Mediterranean & Middle East" onclick="selectRegion(this)">🌊 Mediterranean & Middle East</span>
-          <span class="region-chip" data-region="Southeast Asia" onclick="selectRegion(this)">🌏 Southeast Asia</span>
-          <span class="region-chip" data-region="Sub-Saharan Africa" onclick="selectRegion(this)">🌍 Sub-Saharan Africa</span>
-          <span class="region-chip" data-region="Eastern Europe & Latin America" onclick="selectRegion(this)">🌎 E. Europe & Latin America</span>
-          <span class="region-chip" data-region="All regions" onclick="selectRegion(this)">🌐 All Regions</span>
-        </div>
-      </div>
-      <div style="margin-top:16px">
-        <div class="form-label" style="margin-bottom:8px">Specific country <span style="color:var(--text3);font-weight:400">(optional — overrides region)</span></div>
+        <div class="form-label" style="margin-bottom:8px">Country <span style="color:var(--red);font-weight:600">*</span></div>
         <div style="display:flex;gap:8px;align-items:center;max-width:340px">
           <input id="country-input" list="country-list" class="search-input" style="flex:1;margin:0"
-            placeholder="e.g. Greece, Germany, UAE..."
+            placeholder="Type a country name..."
             oninput="updateCountryBadge()"
             autocomplete="off">
-          <button onclick="clearCountry()" style="background:none;border:1.5px solid var(--border2);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;color:var(--text3)" title="Clear country">×</button>
+          <button onclick="clearCountry()" style="background:none;border:1.5px solid var(--border2);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;color:var(--text3)" title="Clear">×</button>
         </div>
         <datalist id="country-list">
           <option>Afghanistan</option><option>Albania</option><option>Algeria</option><option>Angola</option><option>Argentina</option><option>Armenia</option><option>Australia</option><option>Austria</option><option>Azerbaijan</option>
@@ -420,7 +410,7 @@ a{color:inherit;text-decoration:none}
         </datalist>
       </div>
       <div style="margin-top:16px">
-        <div class="form-label" style="margin-bottom:8px">Provider types to find <span style="color:var(--text3);font-weight:400">(tap to toggle)</span></div>
+        <div class="form-label" style="margin-bottom:8px">Provider types <span style="color:var(--text3);font-weight:400">(tap to toggle)</span></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap" id="type-options">
           <span class="type-chip selected" data-type="hospital" onclick="this.classList.toggle('selected')">🏥 Hospital</span>
           <span class="type-chip selected" data-type="clinic" onclick="this.classList.toggle('selected')">🏢 Clinic</span>
@@ -431,7 +421,28 @@ a{color:inherit;text-decoration:none}
           <span class="type-chip" data-type="tpa" onclick="this.classList.toggle('selected')">🤝 TPA / Assistance</span>
         </div>
       </div>
-      <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div style="margin-top:16px">
+        <div class="form-label" style="margin-bottom:8px">Medical specialties <span style="color:var(--text3);font-weight:400">(leave all off = any specialty)</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="specialty-options">
+          <span class="type-chip" data-spec="General Medicine" onclick="this.classList.toggle('selected')">🩺 General Medicine</span>
+          <span class="type-chip" data-spec="Cardiology" onclick="this.classList.toggle('selected')">❤️ Cardiology</span>
+          <span class="type-chip" data-spec="Orthopedics" onclick="this.classList.toggle('selected')">🦴 Orthopedics</span>
+          <span class="type-chip" data-spec="Physical Therapy & Rehabilitation" onclick="this.classList.toggle('selected')">🏋️ Physical Therapy</span>
+          <span class="type-chip" data-spec="Neurology" onclick="this.classList.toggle('selected')">🧠 Neurology</span>
+          <span class="type-chip" data-spec="Oncology" onclick="this.classList.toggle('selected')">🔬 Oncology</span>
+          <span class="type-chip" data-spec="Pediatrics" onclick="this.classList.toggle('selected')">👶 Pediatrics</span>
+          <span class="type-chip" data-spec="Surgery" onclick="this.classList.toggle('selected')">🔪 Surgery</span>
+          <span class="type-chip" data-spec="Ophthalmology" onclick="this.classList.toggle('selected')">👁️ Ophthalmology</span>
+          <span class="type-chip" data-spec="Gynecology & Obstetrics" onclick="this.classList.toggle('selected')">🤰 Gynecology</span>
+          <span class="type-chip" data-spec="Dermatology" onclick="this.classList.toggle('selected')">🧴 Dermatology</span>
+          <span class="type-chip" data-spec="Psychiatry & Mental Health" onclick="this.classList.toggle('selected')">🧩 Psychiatry</span>
+          <span class="type-chip" data-spec="Internal Medicine" onclick="this.classList.toggle('selected')">🩻 Internal Medicine</span>
+          <span class="type-chip" data-spec="Radiology & Imaging" onclick="this.classList.toggle('selected')">📡 Radiology</span>
+          <span class="type-chip" data-spec="Emergency Medicine" onclick="this.classList.toggle('selected')">🚨 Emergency</span>
+          <span class="type-chip" data-spec="Dentistry" onclick="this.classList.toggle('selected')">🦷 Dentistry</span>
+        </div>
+      </div>
+      <div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn-run" id="run-btn" onclick="startNetworkRun()">
           <span>🔍</span> <span>Start Network Run</span>
         </button>
@@ -588,21 +599,7 @@ db.enablePersistence().catch(()=>{});
 let currentUser = null;
 let currentProviders = [];
 let runResults = [];
-let selectedRegion = null;
 let apiKey = '';
-
-// ── Region rotation ────────────────────────────────────
-const REGIONS = {
-  1:{name:'Mediterranean & Middle East',countries:'Italy, Spain, Turkey, UAE, Jordan, Saudi Arabia, Egypt, Lebanon'},
-  2:{name:'Southeast Asia & South Asia',countries:'Thailand, Malaysia, Singapore, India, Philippines, Vietnam'},
-  3:{name:'Sub-Saharan Africa',countries:'South Africa, Kenya, Nigeria, Ghana, Tanzania, Ethiopia, Senegal'},
-  4:{name:'Eastern Europe & Latin America',countries:'Poland, Czech Republic, Colombia, Brazil, Panama, Mexico'},
-  5:{name:'Pacific & Coverage Gaps',countries:'Australia, Japan, South Korea, Taiwan, Hong Kong'},
-  6:{name:'Mediterranean & Middle East',countries:'Italy, Spain, UAE, Jordan, Egypt, Cyprus, Morocco'},
-  0:{name:'Southeast Asia & South Asia',countries:'Thailand, Malaysia, Singapore, India, Indonesia, Vietnam'},
-};
-
-function getTodayRegion(){return REGIONS[new Date().getDay()];}
 
 // ── Auth ───────────────────────────────────────────────
 async function signInGoogle(){
@@ -732,32 +729,20 @@ async function loadDashboard(){
       document.getElementById('kpi-lastrun-sub').textContent=`${sess.providersFound||0} providers found`;
     }
   }catch(e){console.error(e);}
-  const r=getTodayRegion();
-  document.getElementById('dash-region').textContent=`Today: ${r.name} — ${r.countries.split(',').slice(0,3).join(', ')}...`;
+  document.getElementById('dash-region').textContent='Search by country and specialty in the Network Run tab';
 }
 
 // ── Region init ─────────────────────────────────────────
 function initRegion(){
-  const r=selectedRegion||getTodayRegion();
-  document.getElementById('run-region-badge').textContent='📍 '+r.name;
   updateKeyStatus();
-}
-
-function selectRegion(el){
-  document.querySelectorAll('.region-chip').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedRegion={name:el.dataset.region,countries:''};
-  document.getElementById('run-region-badge').textContent='📍 '+el.dataset.region;
-  document.getElementById('country-input').value='';
 }
 function updateCountryBadge(){
   const c=(document.getElementById('country-input').value||'').trim();
-  if(c) document.getElementById('run-region-badge').textContent='🎯 '+c;
-  else initRegion();
+  document.getElementById('run-region-badge').textContent=c?'🎯 '+c:'🎯 Select a country';
 }
 function clearCountry(){
   document.getElementById('country-input').value='';
-  initRegion();
+  document.getElementById('run-region-badge').textContent='🎯 Select a country';
 }
 
 // ══════════════════════════════════════════════════════
@@ -771,7 +756,7 @@ OUTPUT MUST BE VALID JSON ONLY — no markdown, no backticks, no prose before or
 
 {
   "session_date": "YYYY-MM-DD",
-  "region_focus": "string",
+  "country_focus": "string",
   "providers": [
     {
       "name": "string",
@@ -792,20 +777,28 @@ OUTPUT MUST BE VALID JSON ONLY — no markdown, no backticks, no prose before or
   "summary": "2-sentence summary"
 }
 
+SEARCH STRATEGY — use web_search to cross-reference ALL of the following sources for each provider:
+- General web search (provider website, Google Maps listing)
+- WHO Global Health Observatory and WHO country health profiles
+- National ministry of health or medical council registration database for that country
+- Company/business registration databases (e.g. GEMI for Greece, Companies House for UK)
+- JCI-accredited organizations list (jointcommissioninternational.org)
+- International medical directories (Bookimed, Medigo, WhatClinic, Doctoralia, Zocdoc)
+- Local medical association or hospital federation directories
+
 RULES (strictly follow all):
-1. Use web_search to verify every provider — real names, real addresses, real emails/phones only. No invented data.
-2. Find 8+ providers total covering the requested region PLUS always include at least 3 Greek providers:
-   - Physical therapy & rehabilitation centers in Greece (search "φυσικοθεραπεία κλινική Ελλάδα" and "physical therapy clinic Greece")
-   - Specialist doctors in Greece with international patient experience
-   - Private clinics in Athens, Thessaloniki, Crete accepting international insurance
-3. For worldwide results: 2 Europe, 2 Asia/Middle East, 2 Africa, 2 Greece minimum.
-4. Verify each provider's website exists. Prefer providers with JCI, ISO or other accreditations.
-5. For type=doctor, name field = doctor's full name and specialty.
-6. Email bodies must be personalised with the provider's name and specialty.`;
+1. Only return REAL verified providers — confirmed name, address, working website, real contact email/phone. No invented data.
+2. Find 8–12 providers matching the requested country AND specialties/types exactly.
+3. For each provider cross-check at least 2 sources to confirm it is active and registered.
+4. Prefer accredited providers (JCI, ISO 9001, national health ministry certified).
+5. For type=doctor: name = doctor's full name + title (e.g. "Dr. Nikos Papadopoulos — Cardiologist").
+6. Email body must be personalised with the specific provider name, city, and specialty.
+7. If a country has a local language, also search in that language (e.g. Greek: "κλινική", "φυσικοθεραπεία", "ιατρός").`;
 
 async function startNetworkRun(){
   if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
-  const region=selectedRegion||getTodayRegion();
+  const country=(document.getElementById('country-input').value||'').trim();
+  if(!country){showToast('Please enter a country to search in','error');return;}
   const today=new Date().toISOString().split('T')[0];
 
   // UI: show progress
@@ -822,14 +815,17 @@ async function startNetworkRun(){
 
   const selectedTypes=[...document.querySelectorAll('#type-options .type-chip.selected')].map(c=>c.dataset.type);
   if(!selectedTypes.length){showToast('Select at least one provider type','error');document.getElementById('run-btn').disabled=false;document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';return;}
+  const selectedSpecs=[...document.querySelectorAll('#specialty-options .type-chip.selected')].map(c=>c.dataset.spec);
+
   const typesLine=`Provider types required: ${selectedTypes.join(', ')}`;
+  const specsLine=selectedSpecs.length?`Medical specialties required: ${selectedSpecs.join(', ')}`:'Medical specialties: any';
 
-  const specificCountry=(document.getElementById('country-input').value||'').trim();
-  const locationLine=specificCountry
-    ? `Specific country: ${specificCountry} (search ONLY in this country)`
-    : `Region: ${region.name}\nCountries: ${region.countries||'All'}`;
+  const userMsg=`NETWORK RUN — Date: ${today}
+Country: ${country} (search ONLY in this country)
+${typesLine}
+${specsLine}
 
-  const userMsg=`NETWORK RUN — Date: ${today}\n${locationLine}\n${typesLine}\n\nSearch the web and find 8+ real medical providers matching the specified types${specificCountry?' in '+specificCountry+' only':''}. Return JSON only.`;
+Search the web AND official databases (WHO, national health ministry registry, company registration, JCI directory, medical association directories) to find 8–12 real verified medical providers in ${country} matching the requested types and specialties. Return JSON only.`;
 
   try{
     setStep(0,'done'); setStep(1,'active'); setProgress(20,'Searching Europe & Mediterranean...');
@@ -888,7 +884,7 @@ async function startNetworkRun(){
 
     // Save session
     await db.collection('sessions').add({
-      date:today,region:region.name,providersFound:providers.length,
+      date:today,region:country,providersFound:providers.length,
       runBy:currentUser.displayName,runByEmail:currentUser.email,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -897,7 +893,7 @@ async function startNetworkRun(){
     runResults=providers;
     document.getElementById('run-results').style.display='block';
     document.getElementById('results-title').textContent=`${providers.length} Providers Found`;
-    document.getElementById('results-sub').textContent=`${today} · ${region.name} · Select providers to save`;
+    document.getElementById('results-sub').textContent=`${today} · ${country} · Select providers to save`;
     document.getElementById('run-cards').innerHTML='';
     providers.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*120));
     setTimeout(()=>{

@@ -522,7 +522,8 @@ const FIREBASE_CONFIG = {
   appId: "1:626511878041:web:062538781015c5f5002508",
   measurementId: "G-XQ062RVHG9"
 };
-const ADMIN_EMAIL = "sami@healthwatch.gr";
+const ADMIN_EMAILS = ["sami@healthwatch.gr","medlink.int@gmail.com"];
+const isAdmin = email => ADMIN_EMAILS.includes(email);
 
 // ── Firebase init ──────────────────────────────────────
 firebase.initializeApp(FIREBASE_CONFIG);
@@ -578,7 +579,7 @@ auth.onAuthStateChanged(async user=>{
   if(user){
     // Check if authorized
     const allowed=await isAuthorized(user.email);
-    if(!allowed&&user.email!==ADMIN_EMAIL){
+    if(!allowed&&!isAdmin(user.email)){
       showToast('Access denied. Contact Dr. Sami to request access.','error');
       await auth.signOut(); return;
     }
@@ -588,7 +589,7 @@ auth.onAuthStateChanged(async user=>{
     app.style.display='flex';
     document.getElementById('user-name').textContent=user.displayName||user.email;
     document.getElementById('user-avatar').textContent=(user.displayName||user.email||'?')[0].toUpperCase();
-    if(user.email===ADMIN_EMAIL){
+    if(isAdmin(user.email)){
       document.getElementById('admin-tab-btn').style.display='flex';
       loadAdminData();
     }
@@ -604,7 +605,7 @@ auth.onAuthStateChanged(async user=>{
 });
 
 async function isAuthorized(email){
-  if(email===ADMIN_EMAIL)return true;
+  if(isAdmin(email))return true;
   try{
     const doc=await db.collection('authorized_users').doc(email.replace(/\./g,'_')).get();
     return doc.exists;

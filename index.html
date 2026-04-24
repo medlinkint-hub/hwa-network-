@@ -524,6 +524,11 @@ a{color:inherit;text-decoration:none}
         <option value="">Network Status</option>
         <option>Yes</option><option>No</option><option>Pending</option>
       </select>
+      <select class="filter-select" onchange="filterProviders()" id="db-source">
+        <option value="">All Sources</option>
+        <option value="Google Verified">🟢 Google Verified</option>
+        <option value="AI Found">🤖 AI Found</option>
+      </select>
     </div>
     <div class="providers-table">
       <table><thead><tr>
@@ -1093,6 +1098,7 @@ async function _runDualSource(){
         type:pType,
         country:_searchCountry,
         city:detectedCity||_searchCity||_searchCountry,
+        address:pl.formattedAddress||'',
         website:pl.websiteUri||'',
         email:'',
         phone:pl.internationalPhoneNumber||pl.nationalPhoneNumber||'',
@@ -1103,16 +1109,21 @@ async function _runDualSource(){
         cooperation_score:rating,
         contact_person:'',
         _source:'google',
+        _googlePlaceId:pl.id||'',
         _googleRating:pl.rating||null,
         _googleReviews:pl.userRatingCount||0
       };
     });
     setStep(0,'done'); setProgress(25,`Google Places: ${googleProviders.length} places found`);
   }catch(gpErr){
-    setStep(0,'error');
-    setProgress(20,'Google Places failed — continuing with Claude AI only');
-    showToast('Google Places: '+gpErr.message,'error');
-    // Fall back to AI-only
+    showToast('Google Places: '+gpErr.message+' — falling back to Claude AI','error');
+    // Update step labels to Claude-only mode before falling back
+    document.getElementById('step-0-text').textContent='Connecting to Claude AI';
+    document.getElementById('step-1-text').textContent='Searching databases & web';
+    document.getElementById('step-2-text').textContent='Verifying providers';
+    document.getElementById('step-3-text').textContent='Formatting results';
+    document.getElementById('step-4-text').textContent='Complete';
+    setProgress(0,'');
     [0,1,2,3,4].forEach(i=>setStep(i,'pending'));
     setStep(0,'done'); setStep(1,'active');
     setProgress(15,'Searching databases & web with Claude AI...');
@@ -1531,6 +1542,7 @@ async function saveSelectedProviders(){
       const ref=db.collection('providers').doc(docId);
       batch.set(ref,{
         name:p.name||'',type:p.type||'',country:p.country||'',city:p.city||'',
+        address:p.address||'',
         website:p.website||'',email:p.email||'',phone:p.phone||'',
         accreditations:p.accreditations||[],specialties:p.specialties||[],
         hasInternationalDept:p.has_international_dept||false,
@@ -1540,6 +1552,8 @@ async function saveSelectedProviders(){
         contact_person:p.contact_person||'',
         cooperation_score:p.cooperation_score||null,
         source:p._source==='google'?'Google Verified':'AI Found',
+        google_place_id:p._googlePlaceId||'',
+        google_rating:p._googleRating||null,
         addedBy:currentUser.displayName||'',addedByEmail:currentUser.email||'',
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -1637,11 +1651,13 @@ function filterProviders(){
   const type=document.getElementById('db-type').value;
   const status=document.getElementById('db-status').value;
   const network=document.getElementById('db-network').value;
+  const source=document.getElementById('db-source').value;
   const filtered=currentProviders.filter(p=>{
-    if(q&&!`${p.name}${p.country}${p.city}${p.email}`.toLowerCase().includes(q))return false;
+    if(q&&!`${p.name}${p.country}${p.city}${p.email}${p.contact_person||''}`.toLowerCase().includes(q))return false;
     if(type&&p.type!==type.toLowerCase().replace(/ \/ /,'/').replace(/ /,'_'))return false;
     if(status&&p.status!==status)return false;
     if(network&&p.inNetwork!==network)return false;
+    if(source&&(p.source||'AI Found')!==source)return false;
     return true;
   });
   renderTable(filtered);

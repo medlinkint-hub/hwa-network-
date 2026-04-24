@@ -817,7 +817,7 @@ ALWAYS cross-check each found provider against at least 2 sources before includi
 
 RULES (strictly follow all):
 1. Only return REAL verified providers — confirmed name, address, working website, real contact email/phone. No invented data.
-2. Find 6–10 providers matching the requested country AND specialties/types exactly.
+2. Find exactly 12 of the best providers matching the requested country AND specialties/types. If fewer verified providers exist, return all you can confirm.
 3. For each provider cross-check at least 2 sources to confirm it is active and registered. Use country-specific sources listed above — do NOT rely only on Google Maps.
 4. Prefer accredited providers (JCI, ISO 9001, national health ministry certified).
 5. For type=doctor: name = doctor's full name + title (e.g. "Dr. Nikos Papadopoulos — Cardiologist").
@@ -893,7 +893,7 @@ Country: ${country}${city?' — City: '+city+' (search primarily in '+city+', ex
 ${typesLine}
 ${specsLine}
 
-Search the web AND official databases (WHO, national health ministry registry, company registration, JCI directory, medical association directories) to find 6–10 real verified medical providers in ${location} matching the requested types and specialties. Return JSON only.`;
+Search the web AND official databases (WHO, national health ministry registry, company registration, JCI directory, medical association directories) to find exactly 12 of the best verified medical providers in ${location} matching the requested types and specialties. Prioritize quality and verification — if you cannot confirm 12, return all you can verify. Return JSON only.`;
 
   try{
     setStep(0,'done'); setStep(1,'active'); setProgress(25,'Searching databases & web...');
@@ -917,8 +917,8 @@ Search the web AND official databases (WHO, national health ministry registry, c
       },
       body:JSON.stringify({
         model:'claude-sonnet-4-6',
-        max_tokens:6000,
-        tools:[{type:'web_search_20250305',name:'web_search',max_uses:6}],
+        max_tokens:8000,
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:8}],
         system:SYSTEM_PROMPT,
         messages:[{role:'user',content:userMsg}]
       })

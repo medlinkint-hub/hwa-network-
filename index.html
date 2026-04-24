@@ -701,16 +701,9 @@ async function saveApiKey(){
 function updateKeyStatus(){
   const el=document.getElementById('api-key-status');
   if(!el)return;
-  const claudeOk=!!apiKey;
-  const googleOk=!!googlePlacesKey;
-  let html='';
-  html+=claudeOk
-    ?'<span style="font-size:12px;background:#dcfce7;color:#166534;border-radius:20px;padding:4px 12px;font-weight:600;margin-right:6px">✓ Claude Active</span>'
-    :'<span style="font-size:12px;background:#fee2e2;color:#991b1b;border-radius:20px;padding:4px 12px;font-weight:600;margin-right:6px">⚠ Claude Key Missing</span>';
-  html+=googleOk
-    ?'<span style="font-size:12px;background:#e8f5e9;color:#2e7d32;border-radius:20px;padding:4px 12px;font-weight:600">🟢 Google Places Active</span>'
-    :'<span style="font-size:12px;background:#fff3e0;color:#e65100;border-radius:20px;padding:4px 12px;font-weight:600">⚠ Google Places Key Missing — AI Only</span>';
-  el.innerHTML=html;
+  el.innerHTML=apiKey
+    ?'<span style="font-size:12px;background:#dcfce7;color:#166534;border-radius:20px;padding:4px 12px;font-weight:600">✓ Ready</span>'
+    :'<span style="font-size:12px;background:#fee2e2;color:#991b1b;border-radius:20px;padding:4px 12px;font-weight:600">⚠ API Key Missing</span>';
 }
 
 // ── Google Places Key ───────────────────────────────────
@@ -1258,7 +1251,7 @@ Search official databases and web to find exactly 12 NEW real verified medical p
   }catch(e){
     clearTimeout(abortTimer);stepTimers.forEach(t=>clearTimeout(t));
     const activeStep=document.querySelector('.step.active');
-    if(activeStep)setStep(activeStep.id.replace('step-',''),'error');
+    if(activeStep)setStep(parseInt(activeStep.id.replace('step-','')),  'error');
     const isAbort=e.name==='AbortError'||e.message.toLowerCase().includes('abort');
     const msg=isAbort?`Batch ${batchNum} timed out — ${runResults.length} providers found so far`:e.message;
     setProgress(0,'Error: '+msg);
@@ -1273,9 +1266,9 @@ function setStep(n,state){
   if(!el)return;
   el.className='step '+state;
   const icon=el.querySelector('.step-icon');
-  if(state==='done'||n===2)icon.textContent='✓';
+  if(state==='done')icon.textContent='✓';
   else if(state==='error')icon.textContent='✗';
-  else icon.textContent=n+1;
+  else icon.textContent=Number(n)+1;
 }
 function setProgress(pct,text){
   document.getElementById('progress-bar').style.width=pct+'%';

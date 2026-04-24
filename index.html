@@ -817,7 +817,7 @@ ALWAYS cross-check each found provider against at least 2 sources before includi
 
 RULES (strictly follow all):
 1. Only return REAL verified providers — confirmed name, address, working website, real contact email/phone. No invented data.
-2. Find 8–12 providers matching the requested country AND specialties/types exactly.
+2. Find 6–10 providers matching the requested country AND specialties/types exactly.
 3. For each provider cross-check at least 2 sources to confirm it is active and registered. Use country-specific sources listed above — do NOT rely only on Google Maps.
 4. Prefer accredited providers (JCI, ISO 9001, national health ministry certified).
 5. For type=doctor: name = doctor's full name + title (e.g. "Dr. Nikos Papadopoulos — Cardiologist").
@@ -893,18 +893,18 @@ Country: ${country}${city?' — City: '+city+' (search primarily in '+city+', ex
 ${typesLine}
 ${specsLine}
 
-Search the web AND official databases (WHO, national health ministry registry, company registration, JCI directory, medical association directories) to find 8–12 real verified medical providers in ${location} matching the requested types and specialties. Return JSON only.`;
+Search the web AND official databases (WHO, national health ministry registry, company registration, JCI directory, medical association directories) to find 6–10 real verified medical providers in ${location} matching the requested types and specialties. Return JSON only.`;
 
   try{
     setStep(0,'done'); setStep(1,'active'); setProgress(25,'Searching databases & web...');
 
     const stepTimers=[
-      setTimeout(()=>{setStep(1,'done');setStep(2,'active');setProgress(55,'Verifying providers...');},25000),
-      setTimeout(()=>{setStep(2,'done');setStep(3,'active');setProgress(80,'Formatting results...');},50000),
+      setTimeout(()=>{setStep(1,'done');setStep(2,'active');setProgress(55,'Verifying providers...');},20000),
+      setTimeout(()=>{setStep(2,'done');setStep(3,'active');setProgress(80,'Formatting results...');},40000),
     ];
 
     const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),300000);
+    const timeout=setTimeout(()=>controller.abort(),240000);
 
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',signal:controller.signal,
@@ -917,8 +917,8 @@ Search the web AND official databases (WHO, national health ministry registry, c
       },
       body:JSON.stringify({
         model:'claude-sonnet-4-6',
-        max_tokens:16000,
-        tools:[{type:'web_search_20250305',name:'web_search',max_uses:10}],
+        max_tokens:6000,
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:6}],
         system:SYSTEM_PROMPT,
         messages:[{role:'user',content:userMsg}]
       })
@@ -986,8 +986,10 @@ Search the web AND official databases (WHO, national health ministry registry, c
   }catch(e){
     const activeStep=document.querySelector('.step.active');
     if(activeStep)setStep(activeStep.id.replace('step-',''),'error');
-    setProgress(0,'Error: '+e.message);
-    showToast('Run failed: '+e.message,'error');
+    const isAbort=e.name==='AbortError'||e.message.toLowerCase().includes('abort');
+    const msg=isAbort?'Search timed out — please try again (tip: select fewer specialties or add a city)':e.message;
+    setProgress(0,'Error: '+msg);
+    showToast(isAbort?'Timed out — try again with fewer filters':'Run failed: '+e.message,'error');
   }finally{
     document.getElementById('run-btn').disabled=false;
     document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';

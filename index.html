@@ -112,6 +112,11 @@ a{color:inherit;text-decoration:none}
   display:flex;align-items:center;gap:10px;transition:all .25s}
 .btn-run:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 32px rgba(26,47,94,.5)}
 .btn-run:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-stop{background:#b91c1c;color:#fff;border:none;border-radius:8px;padding:12px 22px;
+  font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-stop:hover{background:#991b1b;transform:translateY(-1px)}
+.batch-sep{text-align:center;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:2px;
+  padding:16px 0 8px;text-transform:uppercase}
 .btn-outlook{background:#0078d4;color:#fff;border:none;border-radius:6px;padding:8px 16px;
   font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
   transition:all .2s;text-decoration:none}
@@ -443,6 +448,9 @@ a{color:inherit;text-decoration:none}
       <div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn-run" id="run-btn" onclick="startNetworkRun()">
           <span>🔍</span> <span>Start Network Run</span>
+        </button>
+        <button class="btn-stop" id="stop-btn" onclick="stopSearch()" style="display:none">
+          ⏹ Stop Search
         </button>
         <div id="api-key-status"></div>
       </div>
@@ -861,138 +869,189 @@ CLOSING:
 
 IMPORTANT: Write the email freshly for this specific provider. Reference the provider's actual name, city, and specialty. Tone: formal, respectful, confident. Length: 250–350 words.`;
 
+let _searchActive=false;
+let _searchCountry='';
+let _searchCity='';
+let _searchTypes=[];
+let _searchSpecs=[];
+
+function stopSearch(){
+  _searchActive=false;
+}
+
+function _resetRunUI(clearCards){
+  document.getElementById('run-btn').disabled=true;
+  document.getElementById('run-btn').innerHTML='<span>⏳</span><span>Searching...</span>';
+  document.getElementById('stop-btn').style.display='inline-flex';
+  document.getElementById('progress-box').classList.add('visible');
+  if(clearCards){
+    document.getElementById('run-results').style.display='none';
+    document.getElementById('run-cards').innerHTML='';
+    document.getElementById('save-bar').classList.remove('visible');
+    runResults=[];
+  }
+}
+
+function _finishRunUI(msg){
+  _searchActive=false;
+  document.getElementById('run-btn').disabled=false;
+  document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';
+  document.getElementById('stop-btn').style.display='none';
+  const total=runResults.length;
+  if(total>0){
+    const loc=_searchCity?`${_searchCity}, ${_searchCountry}`:_searchCountry;
+    const today=new Date().toISOString().split('T')[0];
+    document.getElementById('run-results').style.display='block';
+    document.getElementById('results-title').textContent=`${total} Providers Found`;
+    document.getElementById('results-sub').textContent=`${today} · ${loc} · ${msg||'Search complete'}`;
+    document.getElementById('save-bar').classList.add('visible');
+    updateSaveCount();
+  }
+}
+
+function _parseClaudeJSON(rawText){
+  let clean=rawText.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
+  const m=clean.match(/\{[\s\S]*\}/);
+  if(m)clean=m[0];
+  clean=clean.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,'');
+  try{return JSON.parse(clean);}catch(_){
+    const repaired=clean.replace(/"why_hwa"\s*:\s*"([\s\S]*?)(?=",\s*"\w+"\s*:|"\s*\})/g,(_,val)=>{
+      return `"why_hwa":"${val.replace(/\n/g,' ').replace(/(?<!\\)"/g,'\\"')}`;
+    });
+    return JSON.parse(repaired);
+  }
+}
+
 async function startNetworkRun(){
   if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
-  const country=(document.getElementById('country-input').value||'').trim();
-  const city=(document.getElementById('city-input').value||'').trim();
-  if(!country){showToast('Please enter a country to search in','error');return;}
-  const location=city?`${city}, ${country}`:country;
-  const today=new Date().toISOString().split('T')[0];
-
-  // UI: show progress
-  document.getElementById('run-btn').disabled=true;
-  document.getElementById('run-btn').innerHTML='<span>⏳</span><span>Running...</span>';
-  document.getElementById('progress-box').classList.add('visible');
-  document.getElementById('run-results').style.display='none';
-  document.getElementById('save-bar').classList.remove('visible');
-  document.getElementById('run-cards').innerHTML='';
-  runResults=[];
-
+  _searchCountry=(document.getElementById('country-input').value||'').trim();
+  _searchCity=(document.getElementById('city-input').value||'').trim();
+  if(!_searchCountry){showToast('Please enter a country to search in','error');return;}
+  _searchTypes=[...document.querySelectorAll('#type-options .type-chip.selected')].map(c=>c.dataset.type);
+  if(!_searchTypes.length){showToast('Select at least one provider type','error');return;}
+  _searchSpecs=[...document.querySelectorAll('#specialty-options .type-chip.selected')].map(c=>c.dataset.spec);
+  _searchActive=true;
+  _resetRunUI(true);
   setStep(0,'active');
   setProgress(5,'Connecting to Claude AI...');
+  await _runBatch(1);
+}
 
-  const selectedTypes=[...document.querySelectorAll('#type-options .type-chip.selected')].map(c=>c.dataset.type);
-  if(!selectedTypes.length){showToast('Select at least one provider type','error');document.getElementById('run-btn').disabled=false;document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';return;}
-  const selectedSpecs=[...document.querySelectorAll('#specialty-options .type-chip.selected')].map(c=>c.dataset.spec);
+async function _runBatch(batchNum){
+  if(!_searchActive){_finishRunUI('Search stopped');return;}
+  if(runResults.length>=250){_finishRunUI('250 providers reached');return;}
 
-  const typesLine=`Provider types required: ${selectedTypes.join(', ')}`;
-  const specsLine=selectedSpecs.length?`Medical specialties required: ${selectedSpecs.join(', ')}`:'Medical specialties: any';
+  const today=new Date().toISOString().split('T')[0];
+  const loc=_searchCity?`${_searchCity}, ${_searchCountry}`:_searchCountry;
+  const typesLine=`Provider types required: ${_searchTypes.join(', ')}`;
+  const specsLine=_searchSpecs.length?`Medical specialties required: ${_searchSpecs.join(', ')}`:'Medical specialties: any';
+  const excludeLine=runResults.length>0
+    ?`\nALREADY FOUND — do NOT include any of these (find completely different providers):\n${runResults.map(p=>p.name).join(' | ')}`
+    :'';
 
-  const userMsg=`NETWORK RUN — Date: ${today}
-Country: ${country}${city?' — City: '+city+' (search primarily in '+city+', expand to nearby cities if needed)':' (search across the entire country)'}
+  const userMsg=`NETWORK RUN Batch ${batchNum} — Date: ${today}
+Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity+' (search primarily in '+_searchCity+', expand to nearby areas if needed)':' (search across the entire country)'}
 ${typesLine}
-${specsLine}
+${specsLine}${excludeLine}
 
-Search the web AND official databases (WHO, national health ministry registry, company registration, JCI directory, medical association directories) to find exactly 12 of the best verified medical providers in ${location} matching the requested types and specialties. Order results best-first: JCI/ISO-accredited and fully verified providers at the top, then providers with confirmed email + website. If fewer than 12 can be verified, return all you can confirm. Return JSON only.`;
+Search official databases and web to find exactly 12 NEW real verified medical providers in ${loc} matching the requested types and specialties. Order best-first: JCI/ISO-accredited first, then providers with verified email + website. Do not repeat any provider from the ALREADY FOUND list. Return JSON only.`;
+
+  // Reset steps for this batch
+  [0,1,2,3,4].forEach(i=>setStep(i,'pending'));
+  setStep(0,'done'); setStep(1,'active');
+  setProgress(15, batchNum===1?'Searching databases & web...':'Batch '+batchNum+' — searching for more providers...');
+  document.getElementById('step-5-text').textContent='Complete';
+
+  const stepTimers=[
+    setTimeout(()=>{setStep(1,'done');setStep(2,'active');setProgress(55,'Verifying providers...');},20000),
+    setTimeout(()=>{setStep(2,'done');setStep(3,'active');setProgress(80,'Formatting results...');},40000),
+  ];
+  const controller=new AbortController();
+  const abortTimer=setTimeout(()=>controller.abort(),240000);
 
   try{
-    setStep(0,'done'); setStep(1,'active'); setProgress(25,'Searching databases & web...');
-
-    const stepTimers=[
-      setTimeout(()=>{setStep(1,'done');setStep(2,'active');setProgress(55,'Verifying providers...');},20000),
-      setTimeout(()=>{setStep(2,'done');setStep(3,'active');setProgress(80,'Formatting results...');},40000),
-    ];
-
-    const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),240000);
-
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',signal:controller.signal,
       headers:{
-        'Content-Type':'application/json',
-        'x-api-key':apiKey,
-        'anthropic-version':'2023-06-01',
-        'anthropic-beta':'web-search-2025-03-05',
+        'Content-Type':'application/json','x-api-key':apiKey,
+        'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05',
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:8000,
+        model:'claude-sonnet-4-6',max_tokens:8000,
         tools:[{type:'web_search_20250305',name:'web_search',max_uses:8}],
-        system:SYSTEM_PROMPT,
-        messages:[{role:'user',content:userMsg}]
+        system:SYSTEM_PROMPT,messages:[{role:'user',content:userMsg}]
       })
     });
-    clearTimeout(timeout);
-    stepTimers.forEach(t=>clearTimeout(t));
-
+    clearTimeout(abortTimer);stepTimers.forEach(t=>clearTimeout(t));
     if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error '+resp.status);}
 
     const data=await resp.json();
-    // Concatenate all text blocks — web_search responses interleave text and tool_use blocks
-    let rawText=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const rawText=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
     if(!rawText)throw new Error('No text in response (stop_reason: '+data.stop_reason+')');
 
-    // Parse JSON
-    let clean=rawText.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
-    const match=clean.match(/\{[\s\S]*\}/);
-    if(match)clean=match[0];
+    const parsed=_parseClaudeJSON(rawText);
+    const batch=parsed.providers||[];
 
-    // Strip control characters that break JSON (keep newlines and tabs)
-    clean=clean.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,'');
+    // Deduplicate against all already-found providers
+    const existingNames=new Set(runResults.map(p=>p.name.toLowerCase().trim()));
+    const newProviders=batch.filter(p=>!existingNames.has(p.name.toLowerCase().trim()));
 
-    // Attempt parse; if it fails try sanitising why_hwa field
-    let parsed;
-    try{
-      parsed=JSON.parse(clean);
-    }catch(firstErr){
-      const repaired=clean.replace(/"why_hwa"\s*:\s*"([\s\S]*?)(?=",\s*"\w+"\s*:|"\s*\})/g,(_,val)=>{
-        const safe=val.replace(/\n/g,' ').replace(/(?<!\\)"/g,'\\"');
-        return `"why_hwa":"${safe}`;
-      });
-      try{parsed=JSON.parse(repaired);}
-      catch(secondErr){throw new Error('Could not parse response — try again (JSON error: '+secondErr.message+')');}
+    if(!newProviders.length){
+      [1,2,3].forEach(i=>setStep(i,'done'));setStep(4,'done');
+      document.getElementById('step-5-text').textContent=`Complete — ${runResults.length} providers total`;
+      setProgress(100,'No more unique providers found');
+      _finishRunUI('All available providers found');
+      return;
     }
-    const providers=parsed.providers||[];
-    if(!providers.length)throw new Error('No providers in response');
 
-    // Step complete
-    [1,2,3].forEach(i=>setStep(i,'done'));
-    setStep(4,'done');
-    document.getElementById('step-5-text').textContent=`Complete — ${providers.length} providers found`;
-    setProgress(100,`Found ${providers.length} providers`);
+    // Mark batch steps done
+    [1,2,3].forEach(i=>setStep(i,'done'));setStep(4,'done');
+    const newTotal=runResults.length+newProviders.length;
+    document.getElementById('step-5-text').textContent=`Batch ${batchNum} — ${newTotal} found`;
+    setProgress(100,`Batch ${batchNum} complete — ${newTotal} providers found`);
 
-    // Render cards first — don't block on Firestore
-    runResults=providers;
+    // Show batch separator for batches after the first
     document.getElementById('run-results').style.display='block';
-    document.getElementById('results-title').textContent=`${providers.length} Providers Found`;
-    document.getElementById('results-sub').textContent=`${today} · ${location} · Select providers to save`;
-    document.getElementById('run-cards').innerHTML='';
-    providers.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*120));
-    setTimeout(()=>{
-      document.getElementById('save-bar').classList.add('visible');
-      updateSaveCount();
-    },providers.length*120+200);
+    if(batchNum>1){
+      const sep=document.createElement('div');
+      sep.className='batch-sep';
+      sep.textContent=`Batch ${batchNum} — ${newProviders.length} more providers`;
+      document.getElementById('run-cards').appendChild(sep);
+    }
 
-    // Save session log (non-critical — don't fail the run if Firestore is unavailable)
-    try{
-      await db.collection('sessions').add({
-        date:today,region:location,providersFound:providers.length,
-        runBy:currentUser.displayName,runByEmail:currentUser.email,
-        createdAt:firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }catch(sessionErr){console.warn('Session log save failed:',sessionErr.message);}
+    // Render cards with staggered animation
+    newProviders.forEach((p,i)=>{
+      const globalIdx=runResults.length+i;
+      setTimeout(()=>renderRunCard(p,globalIdx),i*100);
+    });
+    runResults.push(...newProviders);
+
+    // Update header and save bar
+    document.getElementById('results-title').textContent=`${runResults.length} Providers Found`;
+    document.getElementById('results-sub').textContent=`${today} · ${loc} · ${_searchActive&&runResults.length<250?'Searching for more...':'Select providers to save'}`;
+    setTimeout(()=>{document.getElementById('save-bar').classList.add('visible');updateSaveCount();},newProviders.length*100+300);
+
+    // Session log (non-critical)
+    try{await db.collection('sessions').add({date:today,region:loc,providersFound:runResults.length,batchNum,runBy:currentUser.displayName,runByEmail:currentUser.email,createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
+
+    // Auto-continue to next batch
+    if(_searchActive&&runResults.length<250){
+      setTimeout(()=>_runBatch(batchNum+1),800);
+    }else{
+      _finishRunUI(runResults.length>=250?'250 provider limit reached':'Search stopped');
+    }
 
   }catch(e){
+    clearTimeout(abortTimer);stepTimers.forEach(t=>clearTimeout(t));
     const activeStep=document.querySelector('.step.active');
     if(activeStep)setStep(activeStep.id.replace('step-',''),'error');
     const isAbort=e.name==='AbortError'||e.message.toLowerCase().includes('abort');
-    const msg=isAbort?'Search timed out — please try again (tip: select fewer specialties or add a city)':e.message;
+    const msg=isAbort?`Batch ${batchNum} timed out — ${runResults.length} providers found so far`:e.message;
     setProgress(0,'Error: '+msg);
-    showToast(isAbort?'Timed out — try again with fewer filters':'Run failed: '+e.message,'error');
-  }finally{
-    document.getElementById('run-btn').disabled=false;
-    document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';
+    showToast(isAbort?`Timed out after batch ${batchNum} — ${runResults.length} providers saved`:'Run failed: '+e.message,'error');
+    if(runResults.length>0)_finishRunUI('Search ended with error');
+    else{document.getElementById('run-btn').disabled=false;document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';document.getElementById('stop-btn').style.display='none';}
   }
 }
 
@@ -1003,7 +1062,7 @@ function setStep(n,state){
   const icon=el.querySelector('.step-icon');
   if(state==='done')icon.textContent='✓';
   else if(state==='error')icon.textContent='✗';
-  else icon.textContent=n+1;
+  else{icon.textContent=n===4?'✓':n+1;}
 }
 function setProgress(pct,text){
   document.getElementById('progress-bar').style.width=pct+'%';

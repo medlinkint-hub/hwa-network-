@@ -116,6 +116,15 @@ a{color:inherit;text-decoration:none}
   font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
   transition:all .2s;text-decoration:none}
 .btn-outlook:hover{background:#006cbf;transform:translateY(-1px)}
+.btn-gen-email{background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border:none;border-radius:6px;
+  padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;
+  gap:7px;transition:all .2s;white-space:nowrap}
+.btn-gen-email:hover{background:linear-gradient(135deg,#0d6b63,#0b8279);transform:translateY(-1px)}
+.btn-gen-email:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.table-gen-email{background:#0078d4;color:#fff;border:none;border-radius:4px;padding:4px 10px;
+  font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;margin-top:4px}
+.table-gen-email:hover{background:#006cbf}
+.table-gen-email:disabled{opacity:.6;cursor:not-allowed}
 .btn-green{background:var(--green);color:#fff;border:none}
 .btn-green:hover{background:#0a5a45}
 
@@ -174,12 +183,6 @@ a{color:inherit;text-decoration:none}
 .acc-tag{background:var(--teal-bg);color:var(--teal);border-radius:4px;padding:2px 7px;font-size:11px;font-weight:600}
 .why-box{background:#f8f9ff;border-left:3px solid var(--navy);border-radius:0 6px 6px 0;
   padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.5}
-.email-toggle{font-size:12px;color:var(--navy);font-weight:600;cursor:pointer;
-  display:flex;align-items:center;gap:5px;padding:8px 0;border:none;background:none}
-.email-preview{display:none;background:var(--bg);border-radius:8px;padding:14px;
-  font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap;margin-bottom:12px;
-  max-height:200px;overflow-y:auto;border:1px solid var(--border)}
-.email-preview.open{display:block}
 .card-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
   padding:12px 18px;border-top:1px solid var(--border);background:#fafbff}
 .save-check{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;margin-left:auto}
@@ -221,8 +224,6 @@ a{color:inherit;text-decoration:none}
 .network-yes{background:#dcfce7;color:#166534;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
 .network-no{background:var(--red-bg);color:var(--red);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
 .network-pending{background:var(--teal-bg);color:var(--teal);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600}
-.table-outlook{color:#0078d4;font-size:20px;cursor:pointer;text-decoration:none;transition:transform .2s}
-.table-outlook:hover{transform:scale(1.2)}
 
 /* ── ADMIN ── */
 .admin-card{background:#fff;border-radius:var(--r);padding:24px;border:1px solid var(--border);
@@ -266,24 +267,6 @@ a{color:inherit;text-decoration:none}
 .toast.error{border-left-color:var(--red)}
 @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
 
-/* ── MODAL ── */
-#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;
-  display:none;align-items:center;justify-content:center;padding:16px}
-#modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:16px;width:100%;max-width:600px;max-height:80vh;
-  overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:modalIn .25s ease}
-@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:16px 16px 0 0}
-.modal-title{font-size:16px;font-weight:700;color:#fff}
-.modal-close{color:rgba(255,255,255,.7);font-size:22px;cursor:pointer;
-  background:none;border:none;padding:4px 8px;border-radius:6px}
-.modal-close:hover{background:rgba(255,255,255,.15);color:#fff}
-.modal-body{padding:24px}
-.modal-email{background:var(--bg);border-radius:8px;padding:16px;font-size:13px;
-  color:var(--text2);line-height:1.7;white-space:pre-wrap;margin-bottom:16px;border:1px solid var(--border)}
-
 /* ── RESPONSIVE ── */
 @media(max-width:640px){
   .tab-content{padding:14px}
@@ -304,8 +287,7 @@ a{color:inherit;text-decoration:none}
   .card-header{background:linear-gradient(135deg,#1a2f5e,#2d4a8e)}
   .app-header{background:#111827}
   .search-input,.filter-select,.form-input{background:#1a1d2e;color:var(--text)}
-  .email-preview{background:#111827}
-  .btn-outline{background:#1a1d2e;color:#a0c4f8}
+.btn-outline{background:#1a1d2e;color:#a0c4f8}
   .why-box{background:#111827}
 }
 </style>
@@ -472,7 +454,7 @@ a{color:inherit;text-decoration:none}
         <div class="step" id="step-0"><div class="step-icon">1</div><span>Connecting to Claude AI</span></div>
         <div class="step" id="step-1"><div class="step-icon">2</div><span>Searching databases & web</span></div>
         <div class="step" id="step-2"><div class="step-icon">3</div><span>Verifying providers</span></div>
-        <div class="step" id="step-3"><div class="step-icon">4</div><span>Writing cooperation emails</span></div>
+        <div class="step" id="step-3"><div class="step-icon">4</div><span>Formatting results</span></div>
         <div class="step" id="step-4"><div class="step-icon">✓</div><span id="step-5-text">Complete</span></div>
       </div>
       <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
@@ -566,23 +548,6 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <!-- MODAL -->
-<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="modal-title">Email Draft</div>
-      <button class="modal-close" onclick="closeModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <div id="modal-subject" style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)"></div>
-      <div class="modal-email" id="modal-body-text"></div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <a class="btn-outlook" id="modal-outlook-btn" href="#" target="_blank">📧 Open in Outlook</a>
-        <button class="btn btn-outline btn-sm" onclick="copyEmail()">📋 Copy Email</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div id="toasts"></div>
 
 <script>
@@ -790,7 +755,7 @@ HWA is a leading medical TPA serving: AegisInsurance, Canopius, Argo, HDI Global
 Contact: Dr. Sami, Medical Officer | sami@healthwatch.gr
 
 OUTPUT MUST BE VALID JSON ONLY — no markdown, no backticks, no prose before or after.
-CRITICAL JSON RULES: All string values must be properly escaped. Use \\n for line breaks inside strings. Never use raw double-quotes inside a string value — escape them as \\". Keep email_body as a single continuous string with \\n for paragraph breaks.
+CRITICAL JSON RULES: All string values must be properly escaped. Use \\n for line breaks inside strings. Never use raw double-quotes inside a string value — escape them as \\".
 
 {
   "session_date": "YYYY-MM-DD",
@@ -807,9 +772,7 @@ CRITICAL JSON RULES: All string values must be properly escaped. Use \\n for lin
       "accreditations": ["JCI","ISO","EACCME"],
       "specialties": ["Cardiology","Orthopedics","Physical Therapy","General Medicine"],
       "has_international_dept": true,
-      "why_hwa": "1-2 sentences on the specific value this provider brings to HWA's insurer clients",
-      "email_subject": "Network Partnership Invitation — HealthWatch Assistance & [Provider Name]",
-      "email_body": "SEE EMAIL RULES BELOW"
+      "why_hwa": "1-2 sentences on the specific value this provider brings to HWA's insurer clients"
     }
   ],
   "summary": "2-sentence summary"
@@ -860,39 +823,43 @@ RULES (strictly follow all):
 5. For type=doctor: name = doctor's full name + title (e.g. "Dr. Nikos Papadopoulos — Cardiologist").
 6. ALWAYS search in the local language of the country using the local-language terms listed above — this is mandatory for Greece, Italy, Spain, Portugal, Croatia, Serbia, Bulgaria, Turkey.
 7. For Greece specifically: search iatronet.gr and isat.gr or isa.gr depending on city, and cross-reference with GEMI for clinic registration status.
-8. Prioritize providers with a verified email address — this is the most important contact field.
+8. Prioritize providers with a verified email address — this is the most important contact field.`;
 
-EMAIL RULES — every email_body MUST follow this structure and logic:
+const EMAIL_PROMPT=`You are Dr. Sami's email assistant at HealthWatch Assistance S.A. (HWA), Thermi, Thessaloniki, Greece.
+HWA is a leading international medical assistance and TPA company serving: AegisInsurance, Canopius, Argo Group, HDI Global, Prime Cyprus Group, GBG Group.
 
-PARAGRAPH 1 — Introduction (2 sentences):
-"Dear [Dr./Mr./Ms. Last Name or Medical Director of Provider Name],
-My name is Dr. Sami, Medical Officer at HealthWatch Assistance S.A. (HWA), a leading international medical assistance and TPA company based in Thessaloniki, Greece, serving major Lloyd's and global insurers including AegisInsurance, Canopius, Argo Group, HDI Global, Prime Cyprus Group, and GBG Group."
+Generate a professional cooperation invitation email from Dr. Sami to the given medical provider, inviting them to join the HWA Medical Network.
 
-PARAGRAPH 2 — Why we are contacting THIS provider specifically (specialty-driven, 3 sentences):
-Explain exactly WHY this provider's specialty is relevant to HWA's clients. Be specific:
-- For a cardiology clinic: "Our insured members traveling to [city] frequently require urgent cardiac consultations, stress tests, and interventional cardiology services. Having a trusted, accredited cardiology partner in [city] allows us to guarantee our clients rapid access to specialist care without navigating unknown facilities."
-- For physical therapy: "Rehabilitation and physical therapy represent one of the most common post-injury and post-surgical needs among our internationally mobile patients. A certified physiotherapy center in [city] with experience treating international patients is essential to completing our network."
-- For a hospital: "As a major referral destination in [city/region], [Provider Name] is positioned to serve as our primary hospital partner for emergency admissions, surgical procedures, and specialist consultations for insured patients in your area."
-- For a doctor/specialist: "Dr. [Name]'s expertise in [specialty] is precisely the type of specialist access our insurers require for their policyholders traveling to or residing in [city]."
-- Adapt the logic to the actual specialty found for each provider.
+Return ONLY valid JSON — no markdown, no backticks, no prose:
+{"subject": "...", "body": "..."}
 
-PARAGRAPH 3 — What we offer the provider (3 sentences):
+CRITICAL JSON RULES: Use \\n for line breaks inside strings. Escape any double-quotes inside strings as \\". Both subject and body must be single-line JSON strings.
+
+EMAIL STRUCTURE — follow exactly:
+
+SUBJECT: "Network Partnership Invitation — HealthWatch Assistance & [Provider Name]"
+
+PARAGRAPH 1 — Salutation + Introduction (2 sentences):
+"Dear [Dr./Mr./Ms. Last Name or Medical Director of Provider Name],\\nMy name is Dr. Sami, Medical Officer at HealthWatch Assistance S.A. (HWA), a leading international medical assistance and TPA company based in Thessaloniki, Greece, serving major Lloyd's and global insurers including AegisInsurance, Canopius, Argo Group, HDI Global, Prime Cyprus Group, and GBG Group."
+
+PARAGRAPH 2 — Why THIS provider specifically (specialty-driven, 3 sentences):
+Explain WHY this provider's specialty is relevant to HWA's insured patients. Be specific to the provider's type and specialty:
+- Hospital: focus on emergency admissions, surgical procedures, specialist consultations
+- Clinic / specialist: focus on the specific specialty and the patient needs in that area
+- Physical therapy: focus on post-injury and post-surgical rehabilitation for internationally mobile patients
+- Doctor: focus on the specialist's expertise and the need for reliable specialist access in that city
+Reference the actual city and specialty. Do NOT use generic filler.
+
+PARAGRAPH 3 — What we offer (3 sentences):
 "Joining the HWA Medical Network means your facility/practice will receive direct patient referrals from international insurance companies, guaranteed payment through our cashless or reimbursement system with no administrative burden on your side. We handle all pre-authorizations, documentation, and insurer coordination so your team focuses only on providing excellent care. Our network currently covers patients from over 30 countries, and we are actively growing our provider base in [country]."
 
 PARAGRAPH 4 — Call to action (2 sentences):
 "I would welcome the opportunity to schedule a brief call or video meeting at your convenience to discuss the terms of our cooperation agreement and answer any questions you may have. Please feel free to reply to this email or contact me directly at sami@healthwatch.gr."
 
 CLOSING:
-"Warm regards,
-Dr. Sami
-Medical Officer
-HealthWatch Assistance S.A.
-Thermi, Thessaloniki, Greece
-Tel: +30 2310 000000
-Email: sami@healthwatch.gr
-www.healthwatch.gr"
+"Warm regards,\\nDr. Sami\\nMedical Officer\\nHealthWatch Assistance S.A.\\nThermi, Thessaloniki, Greece\\nTel: +30 2310 000000\\nEmail: sami@healthwatch.gr\\nwww.healthwatch.gr"
 
-IMPORTANT: Write each email freshly — do NOT copy-paste the same email for all providers. Each email must reference the provider's actual name, city, and specific specialty. Tone: formal, respectful, confident. Length: 250–350 words.`;
+IMPORTANT: Write the email freshly for this specific provider. Reference the provider's actual name, city, and specialty. Tone: formal, respectful, confident. Length: 250–350 words.`;
 
 async function startNetworkRun(){
   if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
@@ -933,7 +900,7 @@ Search the web AND official databases (WHO, national health ministry registry, c
 
     const stepTimers=[
       setTimeout(()=>{setStep(1,'done');setStep(2,'active');setProgress(55,'Verifying providers...');},25000),
-      setTimeout(()=>{setStep(2,'done');setStep(3,'active');setProgress(80,'Writing cooperation emails...');},50000),
+      setTimeout(()=>{setStep(2,'done');setStep(3,'active');setProgress(80,'Formatting results...');},50000),
     ];
 
     const controller=new AbortController();
@@ -974,26 +941,17 @@ Search the web AND official databases (WHO, national health ministry registry, c
     // Strip control characters that break JSON (keep newlines and tabs)
     clean=clean.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,'');
 
-    // Attempt parse; if it fails try aggressive string-field sanitisation
+    // Attempt parse; if it fails try sanitising why_hwa field
     let parsed;
     try{
       parsed=JSON.parse(clean);
     }catch(firstErr){
-      // Sanitise every string value: replace unescaped quotes and bare newlines
-      const repaired=clean
-        .replace(/"email_body"\s*:\s*"([\s\S]*?)(?=",\s*"\w+"\s*:|"\s*\})/g,(_,body)=>{
-          const safe=body.replace(/\n/g,'\\n').replace(/\r/g,'').replace(/(?<!\\)"/g,'\\"');
-          return `"email_body":"${safe}`;
-        })
-        .replace(/"why_hwa"\s*:\s*"([\s\S]*?)(?=",\s*"\w+"\s*:|"\s*\})/g,(_,val)=>{
-          const safe=val.replace(/\n/g,' ').replace(/(?<!\\)"/g,'\\"');
-          return `"why_hwa":"${safe}`;
-        });
-      try{
-        parsed=JSON.parse(repaired);
-      }catch(secondErr){
-        throw new Error('Could not parse response — try again (JSON error: '+secondErr.message+')');
-      }
+      const repaired=clean.replace(/"why_hwa"\s*:\s*"([\s\S]*?)(?=",\s*"\w+"\s*:|"\s*\})/g,(_,val)=>{
+        const safe=val.replace(/\n/g,' ').replace(/(?<!\\)"/g,'\\"');
+        return `"why_hwa":"${safe}`;
+      });
+      try{parsed=JSON.parse(repaired);}
+      catch(secondErr){throw new Error('Could not parse response — try again (JSON error: '+secondErr.message+')');}
     }
     const providers=parsed.providers||[];
     if(!providers.length)throw new Error('No providers in response');
@@ -1051,7 +1009,6 @@ function setProgress(pct,text){
 function renderRunCard(p,idx){
   const id='card-'+idx;
   const accHtml=(p.accreditations||[]).map(a=>`<span class="acc-tag">${a}</span>`).join('');
-  const emailEncoded=buildMailto(p);
   const card=document.createElement('div');
   card.className='provider-card'; card.id=id;
   card.style.animationDelay=(idx*0.08)+'s';
@@ -1069,12 +1026,9 @@ function renderRunCard(p,idx){
       ${p.website?`<div class="card-row"><span class="card-row-icon">🌐</span><span class="card-row-val"><a href="${p.website}" target="_blank">${p.website.replace('https://','')}</a></span></div>`:''}
       ${accHtml?`<div class="card-row"><span class="card-row-icon">🏅</span><span class="card-row-val"><div class="accs">${accHtml}</div></span></div>`:''}
       ${p.why_hwa?`<div class="why-box">${p.why_hwa}</div>`:''}
-      <button class="email-toggle" onclick="toggleEmail('email-${idx}',this)">📄 View Email Draft ▼</button>
-      <div class="email-preview" id="email-${idx}">${p.email_body||''}</div>
     </div>
     <div class="card-actions">
-      <a class="btn-outlook" href="${emailEncoded}" target="_blank">📧 Open in Outlook</a>
-      <button class="btn btn-outline btn-sm" onclick="openModal(${idx})">👁 Full View</button>
+      <button class="btn-gen-email" onclick="generateEmailForRun(${idx},this)">✉ Generate & Send Email</button>
       <label class="save-check">
         <input type="checkbox" checked id="chk-${idx}" onchange="updateSaveCount()">
         Save to DB
@@ -1083,11 +1037,6 @@ function renderRunCard(p,idx){
   document.getElementById('run-cards').appendChild(card);
 }
 
-function toggleEmail(id,btn){
-  const el=document.getElementById(id);
-  el.classList.toggle('open');
-  btn.textContent=el.classList.contains('open')?'📄 Hide Email ▲':'📄 View Email Draft ▼';
-}
 function updateSaveCount(){
   const checked=document.querySelectorAll('[id^="chk-"]:checked').length;
   document.getElementById('save-bar-sub').textContent=`${checked} provider${checked!==1?'s':''} selected`;
@@ -1101,21 +1050,70 @@ function buildMailto(p){
   return `mailto:${p.email||''}?subject=${subj}&body=${body}`;
 }
 
-// ── Modal ───────────────────────────────────────────────
-function openModal(idx){
+// ── Email Generation ────────────────────────────────────
+async function generateEmail(p,btnEl,docId){
+  if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
+  const orig=btnEl.innerHTML;
+  btnEl.disabled=true;
+  btnEl.innerHTML='⏳ Generating...';
+  const specs=(p.specialties||p.specialty||[]);
+  const specsStr=Array.isArray(specs)?specs.join(', '):(specs||'General');
+  const userMsg=`Generate cooperation email for:
+Provider: ${p.name}
+Type: ${p.type||''}
+City: ${p.city||''}, ${p.country||''}
+Specialties: ${specsStr||'General'}
+Provider email: ${p.email||'[not available]'}`;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system:EMAIL_PROMPT,messages:[{role:'user',content:userMsg}]})
+    });
+    if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error '+resp.status);}
+    const data=await resp.json();
+    let raw=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    if(!raw)throw new Error('No response from Claude');
+    let clean=raw.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
+    const m=clean.match(/\{[\s\S]*\}/);
+    if(m)clean=m[0];
+    clean=clean.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,'');
+    const emailData=JSON.parse(clean);
+    p.email_subject=emailData.subject||'Network Partnership — HealthWatch Assistance';
+    p.email_body=emailData.body||'';
+    if(docId){
+      const today=new Date().toISOString().split('T')[0];
+      await db.collection('providers').doc(docId).update({
+        email_subject:p.email_subject,email_body:p.email_body,
+        status:'Email Sent',lastContact:today
+      });
+      const idx=currentProviders.findIndex(x=>x.id===docId);
+      if(idx>=0){currentProviders[idx].email_subject=p.email_subject;currentProviders[idx].email_body=p.email_body;}
+      await loadProviders();loadDashboard();
+    }
+    const a=document.createElement('a');
+    a.href=buildMailto(p);a.click();
+    showToast('Email generated — Outlook opened ✓','success');
+  }catch(e){
+    showToast('Email generation failed: '+e.message,'error');
+  }finally{
+    btnEl.disabled=false;btnEl.innerHTML=orig;
+  }
+}
+async function generateEmailForRun(idx,btn){
   const p=runResults[idx];
   if(!p)return;
-  document.getElementById('modal-title').textContent=p.name;
-  document.getElementById('modal-subject').textContent='Subject: '+(p.email_subject||'');
-  document.getElementById('modal-body-text').textContent=p.email_body||'';
-  document.getElementById('modal-outlook-btn').href=buildMailto(p);
-  window._modalEmail=p.email_body;
-  document.getElementById('modal-overlay').classList.add('open');
+  await generateEmail(p,btn,null);
 }
-function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
-function copyEmail(){
-  navigator.clipboard.writeText(window._modalEmail||'');
-  showToast('Email copied to clipboard ✓','success');
+async function generateEmailForDb(docId,btn){
+  const p=currentProviders.find(x=>x.id===docId);
+  if(!p)return;
+  await generateEmail(p,btn,docId);
 }
 
 // ── Save to Firestore ───────────────────────────────────
@@ -1141,7 +1139,7 @@ async function saveSelectedProviders(){
         website:p.website||'',email:p.email||'',phone:p.phone||'',
         accreditations:p.accreditations||[],specialties:p.specialties||[],
         hasInternationalDept:p.has_international_dept||false,
-        whyHWA:p.why_hwa||'',emailSubject:p.email_subject||'',emailBody:p.email_body||'',
+        whyHWA:p.why_hwa||'',email_subject:'',email_body:'',
         outreachDate:today,status:'New',inNetwork:'Pending',
         lastContact:'',responseNotes:'',agreementDate:'',
         addedBy:currentUser.displayName||'',addedByEmail:currentUser.email||'',
@@ -1176,7 +1174,6 @@ function renderTable(providers){
     return;
   }
   tbody.innerHTML=providers.map(p=>{
-    const mailto=buildMailto(p);
     const statusClass='status-'+(p.status||'New').replace(/ /g,'-');
     const netClass=p.inNetwork==='Yes'?'network-yes':p.inNetwork==='No'?'network-no':'network-pending';
     return `<tr>
@@ -1185,7 +1182,7 @@ function renderTable(providers){
       <td style="font-size:13px">${p.country||''}</td>
       <td>
         ${p.email?`<div style="font-size:12px;color:var(--text2)">${p.email}</div>`:''}
-        ${p.email?`<a class="table-outlook" href="${buildMailto(p)}" target="_blank" title="Open in Outlook — auto-marks Email Sent" onclick="trackEmailSent('${p.id}')">📧 Send</a>`:''}
+        <button class="table-gen-email" onclick="generateEmailForDb('${p.id}',this)">✉ Generate & Send</button>
       </td>
       <td>
         <select class="status-sel ${statusClass}" onchange="updateStatus('${p.id}',this)">

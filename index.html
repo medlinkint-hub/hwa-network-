@@ -962,14 +962,7 @@ Search the web AND official databases (WHO, national health ministry registry, c
     document.getElementById('step-5-text').textContent=`Complete — ${providers.length} providers found`;
     setProgress(100,`Found ${providers.length} providers`);
 
-    // Save session
-    await db.collection('sessions').add({
-      date:today,region:location,providersFound:providers.length,
-      runBy:currentUser.displayName,runByEmail:currentUser.email,
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    // Render cards
+    // Render cards first — don't block on Firestore
     runResults=providers;
     document.getElementById('run-results').style.display='block';
     document.getElementById('results-title').textContent=`${providers.length} Providers Found`;
@@ -981,8 +974,18 @@ Search the web AND official databases (WHO, national health ministry registry, c
       updateSaveCount();
     },providers.length*120+200);
 
+    // Save session log (non-critical — don't fail the run if Firestore is unavailable)
+    try{
+      await db.collection('sessions').add({
+        date:today,region:location,providersFound:providers.length,
+        runBy:currentUser.displayName,runByEmail:currentUser.email,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }catch(sessionErr){console.warn('Session log save failed:',sessionErr.message);}
+
   }catch(e){
-    setStep(document.querySelectorAll('.step.active')[0]?.id.replace('step-',''),'error');
+    const activeStep=document.querySelector('.step.active');
+    if(activeStep)setStep(activeStep.id.replace('step-',''),'error');
     setProgress(0,'Error: '+e.message);
     showToast('Run failed: '+e.message,'error');
   }finally{

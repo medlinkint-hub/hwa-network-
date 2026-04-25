@@ -1145,75 +1145,134 @@ HWA is a leading medical TPA serving: AegisInsurance, Canopius, Argo, HDI Global
 Contact: Dr. Sami, Medical Officer | sami@healthwatch.gr
 
 OUTPUT MUST BE VALID JSON ONLY — no markdown, no backticks, no prose before or after.
-CRITICAL JSON RULES: All string values must be properly escaped. Use \\n for line breaks inside strings. Never use raw double-quotes inside a string value — escape them as \\".
+CRITICAL JSON RULES: All string values must be properly escaped. Use \\n for line breaks. Never use raw double-quotes inside strings — escape as \\".
 
-{
-  "session_date": "YYYY-MM-DD",
-  "country_focus": "string",
-  "providers": [
-    {
-      "name": "string",
-      "type": "hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi",
-      "country": "string",
-      "city": "string",
-      "website": "https://...",
-      "email": "contact@provider.com",
-      "phone": "+XX XXX XXX XXXX",
-      "accreditations": ["JCI","ISO","EACCME"],
-      "specialties": ["Cardiology","Orthopedics","Physical Therapy","General Medicine"],
-      "has_international_dept": true,
-      "why_hwa": "1-2 sentences on the specific value this provider brings to HWA's insurer clients"
-    }
-  ],
-  "summary": "2-sentence summary"
-}
+GLOBAL INDUSTRY DATABASES — search your training knowledge of these first:
+• itic.net — ITIC member directory (TPAs, assistance companies, medical providers worldwide)
+• itij.com — ITIJ international assistance & travel insurance provider directory
+• jointcommissioninternational.org — JCI-accredited hospitals globally
+• eurami.org — EURAMI-accredited air ambulance operators (Europe & worldwide)
+• iamat.org — IAMAT international medical assistance travellers network
+• imtj.com — International Medical Travel Journal provider database
+• camts.org — CAMTS-accredited air medical transport services
+• mtqua.org — Medical Travel Quality Alliance accredited facilities
+• globalhealth.org — Global Healthcare Accreditation (GHA) certified providers
+• isqua.org — ISQua-accredited health organisations
+• ihhc.com — International Hospital & Healthcare Consortium members
+• treatmentabroad.com — verified international medical providers
+• patientsbeyondborders.com — medical tourism hospital database
+• bookimed.com — verified clinic network (Europe, Asia, Middle East)
+• medigo.com — curated international clinic database
+• topdoctors.com — verified specialist directory (Europe, Latin America)
+• doctoralia.com — physician & clinic directory (Europe, Latin America, Middle East)
 
-SEARCH STRATEGY — use web_search to cross-reference ALL of the following sources for each provider:
+EUROPE — COUNTRY SOURCES:
 
-UNIVERSAL SOURCES (always search):
-- General web search (provider website, Google Maps listing)
-- WHO Global Health Observatory and WHO country health profiles (who.int)
-- JCI-accredited organizations list (jointcommissioninternational.org)
-- International medical directories: Bookimed, Medigo, WhatClinic, Doctoralia, Zocdoc, Healthgrades
+GREECE: isa.gr (Athens Medical Assoc), isat.gr (Thessaloniki), pis.gr (Panhellenic), esidi.gr (private hospitals), moh.gov.gr, iatronet.gr, ygeiaonline.gr, findadoctor.gr, businessregistry.gr (GEMI). Search: "ιδιωτική κλινική","διαγνωστικό κέντρο","φυσικοθεραπεία","ασθενοφόρο","αεροδιακομιδή"
+GERMANY: Bundesärztekammer (bundesaerztekammer.de), KBV hospital directory (kbv.de), G-BA hospital quality reports, DKG (dkgev.de), jameda.de, doctolib.de. Search: "Privatklinik","Krankenhaus","Physiotherapie","Krankentransport"
+FRANCE: Conseil National de l'Ordre des Médecins (conseil-national.medecin.fr), HAS quality database (has-sante.fr), doctolib.fr, ameli.fr hospital list. Search: "clinique privée","cabinet médical","kinésithérapie","ambulance"
+ITALY: FNOMCeO (fnomceo.it), AGENAS hospital quality, ISS (iss.it), paginemediche.it, doveecomemicuro.it, salutedigitale.it. Search: "clinica privata","poliambulatorio","fisioterapia","ambulanza privata"
+SPAIN: CGCOM (cgcom.es), SNS hospital directory (sanidad.gob.es), topdoctors.es, doctoralia.es, saludmadrid.org. Search: "clínica privada","centro médico","fisioterapia","ambulancia privada"
+PORTUGAL: Ordem dos Médicos (ordemdosmedicos.pt), ACSS (acss.min-saude.pt), sns.gov.pt, doctoralia.pt. Search: "clínica privada","centro médico","fisioterapia"
+UK: GMC register (gmc-uk.org), CQC registered providers (cqc.org.uk), NHS Choices, privatehealth.co.uk, whatclinic.com/uk. Search: "private hospital","private clinic","physiotherapy","ambulance service"
+NETHERLANDS: BIG-register (bigregister.nl), NVZA, zorgkaartNederland.nl, independer.nl. Search: "privékliniek","fysiotherapie","ambulancedienst"
+BELGIUM: INAMI/RIZIV (inami.fgov.be), domus-medica.be, zocdoc.be. Search: "clinique privée","kinesitherapie"
+SWITZERLAND: FMH (fmh.ch), Swiss Medical Association, sante.ch, doctorfmh.ch. Search: "Privatklinik","Physiotherapie","Ambulanz"
+AUSTRIA: Österreichische Ärztekammer (aerztekammer.at), ÖBIG hospital list, docfinder.at. Search: "Privatklinik","Physiotherapie"
+POLAND: NIL (nil.org.pl), NFZ hospital list (nfz.gov.pl), znany-lekarz.pl, medme.pl. Search: "prywatna klinika","fizjoterapia","prywatny transport medyczny"
+CZECH REPUBLIC: Czech Medical Chamber (lkcr.cz), ÚZIS hospital list, znamylekar.cz. Search: "soukromá klinika","fyzioterapie"
+HUNGARY: Magyar Orvosi Kamara (mok.hu), NEAK hospital list, doklist.hu. Search: "magánklinika","fizioterápia"
+ROMANIA: Colegiul Medicilor (cmr.ro), MS hospital list (ms.ro), doc.ro, romedic.ro. Search: "clinică privată","fizioterapie"
+UKRAINE: MOZ Ukraine (moz.gov.ua), liky.ua, health.co.ua. Search: "приватна клініка","фізіотерапія"
+RUSSIA: Minzdrav (rosminzdrav.ru), prodoctorov.ru, napopravku.ru. Search: "частная клиника","физиотерапия","скорая помощь"
+TURKEY: TTB (ttb.org.tr), saglik.gov.tr health tourism list, doktortakvimi.com, hospitalar.com.tr. Search: "özel hastane","klinik","fizyoterapi","özel ambulans"
+SERBIA: LKS (lks.org.rs), zdravlje.gov.rs, dr-max.rs. Search: "privatna klinika","fizioterapija"
+CROATIA: HLK (hlk.hr), zdravlje.gov.hr, poliklinika.hr. Search: "privatna klinika","fizioterapija"
+BULGARIA: BLS (blsm.bg), mh.government.bg, doctorbg.com. Search: "частна клиника","физиотерапия"
+SLOVENIA: ZZS (zdravniskazbornica.si), NIJZ, mojizdravniki.si. Search: "zasebna klinika","fizioterapija"
+ALBANIA: Ministry of Health Albania (shendetesia.gov.al), Albanian Medical Association
+NORTH MACEDONIA: MOH North Macedonia (zdravstvo.gov.mk), Macedonian Medical Chamber
+BOSNIA: Komora doktora medicine (komoraljecnika.ba), FMoH Bosnia
+MONTENEGRO: Medical Chamber Montenegro, Ministry of Health Montenegro
+KOSOVO: Kosovo Medical Chamber, Ministry of Health Kosovo
+MALTA: Medical Council Malta (medicalcouncil.gov.mt), Ministry of Health Malta
+CYPRUS: CMA (cma.org.cy), Ministry of Health Cyprus (moh.gov.cy)
+ESTONIA: Arstideliit (arstideliit.ee), Haigekassa (haigekassa.ee)
+LATVIA: Latvijas Ārstu biedrība (arstubiedriba.lv), VOAVA hospital list
+LITHUANIA: Lietuvos gydytojų sąjunga (lgs.lt), VASPVT register
+SWEDEN: Socialstyrelsen (socialstyrelsen.se), 1177.se hospital list. Search: "privat klinik","fysioterapi"
+NORWAY: Helsedirektoratet (helsedirektoratet.no), nhi.no. Search: "privat klinikk","fysioterapi"
+DENMARK: Sundhedsstyrelsen (sst.dk), laeger.dk. Search: "privat klinik","fysioterapi"
+FINLAND: Valvira (valvira.fi), terveyskirjasto.fi. Search: "yksityinen klinikka","fysioterapia"
+IRELAND: Medical Council Ireland (medicalcouncil.ie), hse.ie, privatehealth.ie
+ICELAND: Landlæknir (landlaeknir.is), heilsugaeslan.is
+LUXEMBOURG: Ordre des Médecins (cmd.lu), CHL, Zitha Klinik
 
-GREECE-SPECIFIC SOURCES (use when country = Greece or city is Greek):
-- Ιατρικός Σύλλογος Αθηνών (Medical Association of Athens): isa.gr — search for specialist doctors and clinics
-- Ιατρικός Σύλλογος Θεσσαλονίκης (Medical Association of Thessaloniki): isat.gr
-- Πανελλήνιος Ιατρικός Σύλλογος (Panhellenic Medical Association): pis.gr
-- Πανελλήνιος Σύλλογος Φυσικοθεραπευτών (Greek Physical Therapy Association): psf.gr
-- ΕΣΙΔΙ — Association of Private Hospitals of Greece: esidi.gr
-- Greek Ministry of Health provider registry: moh.gov.gr
-- ΓΕΜΙ / GEMI business registry (Greek company registration): businessregistry.gr
-- iatronet.gr — Greek medical directory with verified specialist profiles
-- ygeiaonline.gr — Greek health portal with clinic/doctor listings
-- findadoctor.gr — doctor search portal in Greece
-- Search in Greek using terms: "ιδιωτική κλινική", "διαγνωστικό κέντρο", "φυσικοθεραπεία", "ιατρός ειδικός", "καρδιολόγος", "ορθοπεδικός", "νευρολόγος", "ογκολόγος" + city name
+NORTH AFRICA — COUNTRY SOURCES:
 
-SOUTH EUROPE — COUNTRY-SPECIFIC SOURCES:
-- ITALY: FNOMCeO national medical register (fnomceo.it), AGENAS hospital quality database, ARS Toscana/Lombardia regional registries, ISS (Istituto Superiore di Sanità), Paginemediche.it, search in Italian: "clinica privata", "poliambulatorio", "fisioterapia", "specialista"
-- SPAIN: CGCOM national medical council (cgcom.es), SNS hospital directory (sanidad.gob.es), TOP Doctors Spain (topdoctors.es), Doctoralia Spain, Salud180, search in Spanish: "clínica privada", "centro médico", "fisioterapia", "especialista"
-- PORTUGAL: Ordem dos Médicos (ordemdosmedicos.pt), ACSS hospital listing (acss.min-saude.pt), SNS hospital directory (sns.gov.pt), search in Portuguese: "clínica privada", "centro médico", "fisioterapia"
-- CYPRUS: Cyprus Medical Association (cma.org.cy), Ministry of Health Cyprus (moh.gov.cy/en), JCC Medical Cyprus, private hospital directories Limassol/Nicosia/Larnaca
-- CROATIA: Croatian Medical Chamber (hlk.hr), HZZO hospital network, Ministry of Health Croatia (zdravlje.gov.hr), search: "privatna klinika", "fizioterapija"
-- SERBIA: Serbian Medical Chamber (lks.org.rs), Ministry of Health Serbia (zdravlje.gov.rs), search: "privatna klinika", "fizioterapija"
-- NORTH MACEDONIA: Macedonian Medical Association, Ministry of Health North Macedonia
-- ALBANIA: Medical Chamber of Albania, Ministry of Health Albania (shendetesia.gov.al)
-- MALTA: Medical Council of Malta (medicalcouncil.gov.mt), Malta Health Network, Ministry of Health Malta
-- SLOVENIA: Medical Chamber of Slovenia (zdravniskazbornica.si), NIJZ health data
-- BULGARIA: Bulgarian Medical Association (blsm.bg), Ministry of Health Bulgaria, search: "частна клиника", "физиотерапия"
-- TURKEY: Turkish Medical Association (ttb.org.tr), Health Tourism accreditation list (saglik.gov.tr), search: "özel hastane", "klinik", "fizyoterapi"
+ALGERIA: Conseil National de l'Ordre des Médecins d'Algérie (cnom-dz.org), Ministry of Health Algeria (sante.gov.dz), Clinique El Azhar, Clinique Tafat, Clinique des Pins. Search: "clinique privée","cabinet médical","كليnik خاص","مستشفى خاص" + city
+MOROCCO: Conseil National de l'Ordre des Médecins du Maroc (cnom.ma), Ministry of Health Morocco (sante.gov.ma), Clinique du Parc, AMSM, doctolib.ma. Search: "clinique privée","cabinet médical","عيادة خاصة","مستشفى خاص","مصحة خاصة"
+TUNISIA: Ordre des Médecins de Tunisie (ordremedecins.tn), Ministry of Health Tunisia (santetunisie.rns.tn), doclib.com.tn. Search: "clinique privée","cabinet","عيادة","مصحة خاصة"
+EGYPT: Egyptian Medical Syndicate (ems.org.eg), Ministry of Health Egypt (mohp.gov.eg), Vezeeta (vezeeta.com), Darersa.com, Shezlong. Search: "مستشفى خاص","عيادة","مركز طبي","كلينيك"
+LIBYA: Libyan Medical Syndicate (lms.org.ly), Ministry of Health Libya (mohlibia.gov.ly). Search: "مستشفى خاص","عيادة خاصة"
+MAURITANIA: Ministry of Health Mauritania (sante.gov.mr). Search: "clinique privée","centre médical"
+SUDAN: Sudan Medical Council (smc.gov.sd), Federal Ministry of Health Sudan. Search: "مستشفى خاص","عيادة خاصة"
 
-ALWAYS cross-check each found provider against at least 2 sources before including.
+ASIA — COUNTRY SOURCES:
 
-RULES (strictly follow all):
-1. Only return REAL verified providers — confirmed name, address, working website, real contact email/phone. No invented data.
-2. Find exactly 12 of the best providers matching the requested country AND specialties/types. Return them ordered best-first: accredited (JCI/ISO) providers first, then facilities with verified email + website, then others. If fewer than 12 verified providers exist, return all you can confirm.
-3. For each provider cross-check at least 2 sources to confirm it is active and registered. Use country-specific sources listed above — do NOT rely only on Google Maps.
-4. Prefer accredited providers (JCI, ISO 9001, national health ministry certified).
-5. For type=doctor: name = doctor's full name + title (e.g. "Dr. Nikos Papadopoulos — Cardiologist").
-6. ALWAYS search in the local language of the country using the local-language terms listed above — this is mandatory for Greece, Italy, Spain, Portugal, Croatia, Serbia, Bulgaria, Turkey.
-7. For Greece specifically: search iatronet.gr and isat.gr or isa.gr depending on city, and cross-reference with GEMI for clinic registration status.
-8. Prioritize providers with a verified email address — this is the most important contact field.`;
+MIDDLE EAST:
+UAE: Dubai Health Authority (dha.gov.ae), HAAD/DOH Abu Dhabi (doh.gov.ae), MOH UAE (mohap.gov.ae), Mediclinic Middle East, NMC Healthcare, Aster DM Healthcare. Search: "private hospital","private clinic","physiotherapy","medical center"
+SAUDI ARABIA: Saudi Commission for Health Specialties (schs.com.sa), MOH Saudi (moh.gov.sa), CBAHI accredited hospitals, Saudi German Hospital, Kingdom Hospital. Search: "مستشفى خاص","عيادة","مركز طبي"
+QATAR: Qatar Council for Healthcare Practitioners (qchp.org.qa), Supreme Council of Health Qatar (hamad.qa), Sidra Medicine, Hamad Medical. Search: "private clinic","مستشفى","عيادة"
+KUWAIT: Kuwait Medical Association (kma.org.kw), MOH Kuwait (moh.gov.kw), Dar Al Shifa, Royale Hayat. Search: "مستشفى خاص","عيادة خاصة","كلينيك"
+BAHRAIN: National Health Regulatory Authority (nhra.bh), MOH Bahrain, American Mission Hospital, Bahrain Specialist Hospital. Search: "private hospital","عيادة","مركز طبي"
+OMAN: Oman Medical Specialty Board (omsb.org), MOH Oman (moh.gov.om), Badr Al Sama Hospital group. Search: "مستشفى خاص","عيادة","مركز طبي"
+JORDAN: Jordan Medical Association (jma.org.jo), MOH Jordan (moh.gov.jo), Jordan Hospital, Specialty Hospital, Istishari. Search: "مستشفى خاص","عيادة","مركز طبي"
+LEBANON: Lebanese Medical Council (lmc.org.lb), MOH Lebanon (public-health.gov.lb), Clemenceau Medical Center, Hotel-Dieu de France, AUBMC. Search: "مستشفى خاص","عيادة","clinique privée"
+ISRAEL: Israeli Medical Association (ima.org.il), MOH Israel (health.gov.il), Hadassah, Sheba Medical Center, Tel Aviv Sourasky. Search: "בית חולים פרטי","מרפאה פרטית","physiotherapy"
+IRAQ: Iraq Medical Association (iraqimed.org), MOH Iraq (moh.gov.iq). Search: "مستشفى خاص","عيادة خاصة"
+IRAN: Iranian Medical Council (irimc.org), MOH Iran. Search: "بیمارستان خصوصی","درمانگاه خصوصی"
+
+SOUTH ASIA:
+INDIA: Medical Council of India (mciindia.org), NABH accredited hospitals (nabh.co), NMC (nmc.org.in), Practo (practo.com), Lybrate, JCI India list. Major networks: Apollo Hospitals, Fortis, Medanta, Max Healthcare, Manipal. Search: "private hospital","multispecialty","physiotherapy","air ambulance"
+PAKISTAN: Pakistan Medical Commission (pmc.org.pk), SHIFA International, Aga Khan University Hospital, CMH hospitals. Search: "private hospital","clinic","physiotherapy","نجی ہسپتال"
+BANGLADESH: Bangladesh Medical & Dental Council (bmdc.org.bd), Square Hospitals, United Hospital. Search: "private hospital","clinic","physiotherapy"
+SRI LANKA: SLMC (slmc.lk), Ministry of Health Sri Lanka, Durdans Hospital, Lanka Hospitals. Search: "private hospital","clinic","physiotherapy"
+NEPAL: Nepal Medical Council (nmc.org.np), Ministry of Health Nepal, B&B Hospital, HAMS. Search: "private hospital","clinic"
+
+SOUTHEAST ASIA:
+THAILAND: Medical Council of Thailand (tmc.or.th), Thailand Board of Trade Medical Tourism, Bumrungrad International, Bangkok Hospital Group, Samitivej. Search: "private hospital","international hospital","physiotherapy","โรงพยาบาลเอกชน"
+SINGAPORE: Singapore Medical Council (smc.gov.sg), MOH Singapore (moh.gov.sg), Mount Elizabeth, Gleneagles, Raffles Medical. Search: "private hospital","specialist clinic","physiotherapy"
+MALAYSIA: Malaysian Medical Council (mmc.gov.my), MOH Malaysia (moh.gov.my), KPJ Healthcare, Pantai Hospital, Prince Court. Search: "hospital swasta","klinik","physiotherapy"
+PHILIPPINES: PRC (prc.gov.ph), Philippine Hospital Association (pha.com.ph), Makati Medical Center, St. Luke's, Asian Hospital. Search: "private hospital","medical center","physical therapy"
+INDONESIA: IDI (idionline.org), KEMENKES hospital list (kemkes.go.id), Siloam Hospitals, RS Pondok Indah. Search: "rumah sakit swasta","klinik","fisioterapi"
+VIETNAM: Vietnam Medical Association (vma.org.vn), MOH Vietnam, Vinmec International, FV Hospital, Hoan My Medical. Search: "bệnh viện tư","phòng khám","vật lý trị liệu"
+CAMBODIA: Medical Council of Cambodia, Royal Phnom Penh Hospital, Raffles Medical Cambodia. Search: "private hospital","clinic"
+MYANMAR: Myanmar Medical Association (mmamyanmar.net), Asia Royal Hospital, Pun Hlaing Hospitals
+
+EAST ASIA:
+CHINA: National Health Commission (nhc.gov.cn), Wjw.gov.cn hospital list, United Family Healthcare, Raffles Medical China, Beijing United. Search: "私立医院","国际医院","诊所","物理治疗"
+JAPAN: Japan Medical Association (med.or.jp), MOH Japan (mhlw.go.jp), St. Luke's International, Tokyo Medical University. Search: "私立病院","クリニック","理学療法","救急"
+SOUTH KOREA: Korean Medical Association (kma.org), MOHW (mohw.go.kr), Samsung Medical Center, Severance Hospital, Asan Medical. Search: "개인병원","클리닉","물리치료"
+TAIWAN: Taiwan Medical Association (tma.tw), MOHW Taiwan, National Taiwan University Hospital, Chang Gung Memorial. Search: "私立醫院","診所","物理治療"
+HONG KONG: HKMA (hkma.org), Department of Health HK, Hong Kong Sanatorium, Matilda International. Search: "private hospital","clinic","physiotherapy"
+
+CENTRAL ASIA & CAUCASUS:
+KAZAKHSTAN: Ministry of Health Kazakhstan (mz.gov.kz), Kazakhstan Medical Association. Search: "частная клиника","физиотерапия"
+GEORGIA: Medical Chamber of Georgia, MOH Georgia (moh.gov.ge), Evex Hospitals, Aversi Clinic. Search: "კერძო კლინიკა","ფიზიოთერაპია"
+ARMENIA: Armenian Medical Association, MOH Armenia (moh.am), Erebouni Medical Center. Search: "մասնավոր կլինիկա","ֆիզիոթերապիա"
+AZERBAIJAN: Azerbaijan Medical Association, MOH Azerbaijan (mednet.az), Bona Dea International Hospital. Search: "özəl klinika","fizioterapiya"
+UZBEKISTAN: Ministry of Health Uzbekistan (minzdrav.uz). Search: "частная клиника","физиотерапия"
+
+RULES:
+1. Return ONLY real, verified providers — real name, address, website, contact. No invented data.
+2. Use training knowledge of the above databases. Cross-reference multiple sources per provider.
+3. Return providers ordered best-first: JCI/NABH/GHA-accredited → verified email+website → others.
+4. Prefer providers with international departments, English-speaking staff, and direct billing capability.
+5. For type=doctor: name = full name + title (e.g. "Dr. Ahmed Al-Rashid — Cardiologist").
+6. Use local-language search terms listed for each country.
+7. Prioritize email address — most critical contact field for HWA outreach.
+8. industry_source values: itic|itij|jci|eurami|iamat|imtj|camts|mtqua|gha|bookimed|medigo|topdoctors|web`;
 
 const EMAIL_PROMPT=`You are Dr. Sami's email assistant at HealthWatch Assistance S.A. (HWA), Thermi, Thessaloniki, Greece.
 HWA is a leading international medical assistance and TPA company serving: AegisInsurance, Canopius, Argo Group, HDI Global, Prime Cyprus Group, GBG Group.
@@ -1860,23 +1919,8 @@ Location: ${loc}
 Provider types: ${typeStr}
 ${specStr?'Specialties: '+specStr:''}
 Google Places found ${googleProviders.length} providers. Your tasks:
-1. Enrich each provider below with:
-   - email: official contact email
-   - contact_person: full name of medical director or international patients coordinator
-   - contact_title: their exact job title
-   - linkedin_url: their LinkedIn profile URL (search "[name] [provider] linkedin" — only include if genuinely found)
-   - linkedin_verified: true if LinkedIn confirms they are currently at this provider
-   - specialties[], accreditations[], has_international_dept, why_hwa, cooperation_score (1-100)
-2. Find up to ${additionalCount} ADDITIONAL verified providers in ${loc} not already in the list.
-   PRIORITY SOURCES — search these industry databases first:
-   • itic.net — ITIC member directory (assistance companies, TPAs, medical providers)
-   • itij.com — ITIJ international assistance & travel insurance directory
-   • jointcommissioninternational.org — JCI-accredited hospitals
-   • eurami.org — EURAMI-accredited air ambulance operators
-   • iamat.org — IAMAT international medical assistance network
-   • imtj.com — International Medical Travel Journal provider directory
-   • camts.org — CAMTS-accredited air medical services
-   Supplement with Google/web if needed for comprehensive coverage.
+1. Enrich each provider: find email, contact_person (medical director or international coordinator), contact_title, linkedin_url, linkedin_verified, specialties[], accreditations[], has_international_dept, why_hwa (1-2 sentences), cooperation_score (1-100), industry_source (itic|itij|jci|eurami|iamat|imtj|camts|mtqua|gha|bookimed|medigo|topdoctors|web).
+2. Find up to ${additionalCount} ADDITIONAL verified providers in ${loc} not in the list above — draw from ITIC, ITIJ, JCI, EURAMI, IAMAT, IMTJ, CAMTS, MTQUA, GHA, Bookimed, Medigo, TopDoctors, national medical association registries, and ministry of health hospital lists for ${_searchCountry}.
 
 PROVIDERS TO ENRICH:
 ${providerList}
@@ -1891,16 +1935,17 @@ Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity+' (search prim
 Provider types required: ${typeStr}
 ${specStr?'Medical specialties: '+specStr:'Medical specialties: any'}
 
-Search these industry databases first, then supplement with Google/web:
-• itic.net — ITIC member directory (assistance companies, TPAs)
-• itij.com — ITIJ international assistance & travel insurance directory
-• jointcommissioninternational.org — JCI-accredited hospitals
-• eurami.org — EURAMI-accredited air ambulance operators
-• iamat.org — IAMAT international medical assistance network
-• imtj.com — International Medical Travel Journal provider directory
-• camts.org — CAMTS air medical services
+Using your training knowledge of global medical provider databases, find exactly 12 real verified medical providers in ${loc} matching the requested types and specialties.
 
-Find exactly 12 real verified medical providers in ${loc} matching the requested types. Order best-first: JCI/EURAMI-accredited first, then ITIC/ITIJ members, then providers with verified email + website. Return JSON only.`;
+Draw from (in priority order):
+1. ITIC (itic.net), ITIJ (itij.com), EURAMI (eurami.org), CAMTS (camts.org) — assistance & air medical networks
+2. JCI (jointcommissioninternational.org), NABH, GHA (globalhealth.org), MTQUA — accredited hospitals
+3. IAMAT (iamat.org), IMTJ (imtj.com) — international medical assistance & travel networks
+4. Bookimed, Medigo, TopDoctors, Doctoralia — verified clinic directories
+5. National medical association registry and Ministry of Health hospital list for ${_searchCountry}
+6. Major known hospital networks/chains operating in ${_searchCountry}
+
+Order best-first: accreditation-listed → verified email+website → others. Return JSON only.`;
     }
 
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
@@ -2039,16 +2084,7 @@ Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity+' (search prim
 ${typesLine}
 ${specsLine}${excludeLine}
 
-Search these industry databases first, then supplement with Google/web:
-• itic.net — ITIC member directory (assistance companies, TPAs)
-• itij.com — ITIJ international assistance & travel insurance directory
-• jointcommissioninternational.org — JCI-accredited hospitals
-• eurami.org — EURAMI-accredited air ambulance operators
-• iamat.org — IAMAT international medical assistance network
-• imtj.com — International Medical Travel Journal provider directory
-• camts.org — CAMTS air medical services
-
-Find exactly 12 NEW real verified providers in ${loc} matching the requested types. Order: JCI/EURAMI-accredited first, then ITIC/ITIJ members, then verified email + website. Do NOT repeat any provider from the ALREADY FOUND list. Return JSON only.`;
+Using your training knowledge of global medical databases, find exactly 12 NEW verified providers in ${loc} matching the requested types and specialties. Draw from: ITIC, ITIJ, JCI, EURAMI, CAMTS, IAMAT, IMTJ, MTQUA, GHA, Bookimed, Medigo, TopDoctors, national medical association registry and Ministry of Health hospital list for ${_searchCountry}, and major hospital chains/networks operating there. Order: accreditation-listed first → verified email+website → others. Do NOT repeat any ALREADY FOUND provider. Return JSON only.`;
 
   // Reset steps and progress bar for this batch
   setProgress(0,'');

@@ -1323,13 +1323,18 @@ CRITICAL LOCATION RULES — read carefully:
    Stored country data can be WRONG — trust the provider name and city, not the stored country field.
 
 FILL IN only where blank / "none" (do not overwrite real data):
-- email, contact_person, accreditations[], specialties[], has_international_dept, why_hwa, cooperation_score (1-100)
+- email: official contact email
+- contact_person: full name of medical director or international patients coordinator
+- contact_title: their exact job title (e.g. "Medical Director", "Head of International Patients Department")
+- linkedin_url: their LinkedIn profile URL if found via web search (search "[name] [provider] linkedin")
+- linkedin_verified: true if you confirmed via LinkedIn that this person is currently at this provider
+- accreditations[], specialties[], has_international_dept, why_hwa, cooperation_score (1-100)
 
 PROVIDERS:
 ${list}
 
 Return ONLY valid JSON (no markdown):
-{"enriched":[{"index":0,"email":"","contact_person":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","cooperation_score":75,"city_verified":"","country_verified":"","location_match":true}]}`}]
+{"enriched":[{"index":0,"email":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","cooperation_score":75,"city_verified":"","country_verified":"","location_match":true}]}`}]
             })
           });
           if(aiResp.ok){
@@ -1343,18 +1348,22 @@ Return ONLY valid JSON (no markdown):
                 if(!p)return;
                 if(e.email&&!p.email)p.email=e.email;
                 if(e.contact_person&&!p.contact_person)p.contact_person=e.contact_person;
+                if(e.contact_title)p.contact_title=e.contact_title;
+                if(e.linkedin_url)p.linkedin_url=e.linkedin_url;
+                if(e.linkedin_verified)p.linkedin_verified=e.linkedin_verified;
                 if(e.accreditations?.length)p.accreditations=e.accreditations;
                 if(e.specialties?.length)p.specialties=e.specialties;
                 if(e.has_international_dept)p.has_international_dept=e.has_international_dept;
                 if(e.why_hwa&&!p.whyHWA)p.whyHWA=e.why_hwa;
                 if(e.cooperation_score)p.cooperation_score=e.cooperation_score;
-                // Always apply Claude AI's verified location (corrects wrong Firestore data)
                 if(e.city_verified)p.city=e.city_verified;
                 if(e.country_verified)p.country=e.country_verified;
                 if(e.location_match===false)p._locationMismatch=true;
                 if(p.id){
                   firestoreBatch.update(db.collection('providers').doc(p.id),{
                     email:p.email||'',contact_person:p.contact_person||'',
+                    contact_title:p.contact_title||'',
+                    linkedin_url:p.linkedin_url||'',linkedin_verified:p.linkedin_verified||false,
                     accreditations:p.accreditations||[],specialties:p.specialties||[],
                     hasInternationalDept:p.has_international_dept||false,
                     whyHWA:p.whyHWA||'',cooperation_score:p.cooperation_score||null,
@@ -1494,7 +1503,13 @@ Location: ${loc}
 Provider types: ${typeStr}
 ${specStr?'Specialties: '+specStr:''}
 Google Places found ${googleProviders.length} providers. Your tasks:
-1. Enrich each provider below: find email, contact_person (medical director or international coordinator), specialties array, accreditations array, has_international_dept boolean, why_hwa (1-2 sentences on value to HWA's insurer clients), cooperation_score (integer 1-100, higher = better international partner).
+1. Enrich each provider below with:
+   - email: official contact email
+   - contact_person: full name of medical director or international patients coordinator
+   - contact_title: their exact job title
+   - linkedin_url: their LinkedIn profile URL (search "[name] [provider] linkedin" — only include if genuinely found)
+   - linkedin_verified: true if LinkedIn confirms they are currently at this provider
+   - specialties[], accreditations[], has_international_dept, why_hwa, cooperation_score (1-100)
 2. Find up to ${additionalCount} ADDITIONAL verified providers in ${loc} not already in the list.
 
 PROVIDERS TO ENRICH:
@@ -1503,7 +1518,7 @@ ${providerList}
 ALREADY FOUND — do NOT repeat: ${googleProviders.map(p=>p.name).join(' | ')}
 
 Return ONLY valid JSON (no markdown, no backticks):
-{"enriched":[{"index":0,"email":"","contact_person":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","cooperation_score":65}]}`;
+{"enriched":[{"index":0,"email":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":65}]}`;
     }else{
       claudeMsg=`NETWORK RUN — Date: ${today}
 Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity+' (search primarily here, expand to nearby if needed)':' (search across the entire country)'}
@@ -1545,6 +1560,9 @@ Search official databases and web to find exactly 12 real verified medical provi
           if(!p)return;
           p.email=e.email||p.email||'';
           p.contact_person=e.contact_person||'';
+          p.contact_title=e.contact_title||'';
+          p.linkedin_url=e.linkedin_url||'';
+          p.linkedin_verified=e.linkedin_verified||false;
           p.specialties=e.specialties||p.specialties||[];
           p.accreditations=e.accreditations||[];
           p.has_international_dept=e.has_international_dept||false;
@@ -1554,7 +1572,7 @@ Search official databases and web to find exactly 12 real verified medical provi
         const existingNames=new Set(googleProviders.map(p=>p.name.toLowerCase().trim()));
         const additional=(parsed.additional||[])
           .filter(p=>p.name&&!existingNames.has(p.name.toLowerCase().trim()))
-          .map(p=>({...p,cooperation_score:p.cooperation_score||65,contact_person:p.contact_person||''}));
+          .map(p=>({...p,cooperation_score:p.cooperation_score||65,contact_person:p.contact_person||'',contact_title:p.contact_title||'',linkedin_url:p.linkedin_url||'',linkedin_verified:p.linkedin_verified||false}));
         finalProviders=[...googleProviders,...additional];
       }catch(_){
         finalProviders=[...googleProviders];
@@ -1767,8 +1785,18 @@ function renderRunCard(p,idx){
   const hwaBadge=p._isHWA?'<span class="hwa-badge">⭐ HWA Partner</span>':'';
   const scoreHtml=p.cooperation_score
     ?`<div class="card-row"><span class="card-row-icon">⭐</span><span class="card-row-val">Cooperation score: <strong>${p.cooperation_score}/100</strong></span></div>`:'';
-  const contactHtml=p.contact_person
-    ?`<div class="card-row"><span class="card-row-icon">👤</span><span class="card-row-val">${p.contact_person}</span></div>`:'';
+  let contactHtml='';
+  if(p.contact_person){
+    const title=p.contact_title?`<span style="color:var(--text3);font-size:11px;margin-left:4px">${p.contact_title}</span>`:'';
+    let liBadge='';
+    if(p.linkedin_url){
+      const liLabel=p.linkedin_verified
+        ?'<span style="background:#0077b5;color:#fff;font-size:10px;font-weight:700;border-radius:3px;padding:1px 5px;margin-left:6px">✓ LinkedIn</span>'
+        :'<span style="background:#e0f0fb;color:#0077b5;font-size:10px;font-weight:700;border-radius:3px;padding:1px 5px;margin-left:6px">LinkedIn</span>';
+      liBadge=`<a href="${p.linkedin_url}" target="_blank" rel="noopener" style="text-decoration:none">${liLabel}</a>`;
+    }
+    contactHtml=`<div class="card-row"><span class="card-row-icon">👤</span><span class="card-row-val">${p.contact_person}${title}${liBadge}</span></div>`;
+  }
 
   // Location mismatch warning: flag if stored country doesn't match search
   let locationWarn='';
@@ -1936,6 +1964,9 @@ async function saveSelectedProviders(){
         outreachDate:today,status:'New',inNetwork:'Pending',
         lastContact:'',responseNotes:'',agreementDate:'',
         contact_person:p.contact_person||'',
+        contact_title:p.contact_title||'',
+        linkedin_url:p.linkedin_url||'',
+        linkedin_verified:p.linkedin_verified||false,
         cooperation_score:p.cooperation_score||null,
         google_place_id:p._googlePlaceId||'',
         google_rating:p._googleRating||null,
@@ -1984,7 +2015,11 @@ function renderTable(providers){
       <td><div style="font-weight:600;font-size:13px">${p.name||''}</div><div style="font-size:11px;color:var(--text3)">${p.city||''}, ${p.country||''}</div></td>
       <td><span style="font-size:11px;background:var(--teal-bg);color:var(--teal);border-radius:4px;padding:2px 7px;font-weight:600">${typeLabel(p.type||'')}</span></td>
       <td style="font-size:13px">${p.country||''}</td>
-      <td style="font-size:12px;color:var(--text2)">${p.contact_person||'<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-size:12px;color:var(--text2)">
+        ${p.contact_person||'<span style="color:var(--text3)">—</span>'}
+        ${p.contact_title?`<div style="font-size:10px;color:var(--text3)">${p.contact_title}</div>`:''}
+        ${p.linkedin_url?`<a href="${p.linkedin_url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:${p.linkedin_verified?'#0077b5':'#8db4ce'};text-decoration:none;margin-top:2px">${p.linkedin_verified?'✓':''} LinkedIn</a>`:''}
+      </td>
       <td>
         ${p.email?`<div style="font-size:12px;color:var(--text2)">${p.email}</div>`:''}
         <button class="table-gen-email" onclick="generateEmailForDb('${p.id}',this)">✉ Generate & Send</button>

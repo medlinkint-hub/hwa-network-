@@ -1550,16 +1550,16 @@ async function _runHwaOnly(){
     }
 
     // City filter — normalize both sides to handle Greek/Latin script differences
+    // Nationwide providers (no city, or "All over X" country) match any city within their country
     if(_searchCity){
       const citySearch=_searchCity.toLowerCase().trim();
-      all=all.filter(p=>
-        _cityMatch((p.city||'').toLowerCase(),citySearch)||
-        _cityMatch((p.address||'').toLowerCase(),citySearch)
-      );
+      all=all.filter(p=>{
+        const pCity=(p.city||'').toLowerCase().trim();
+        const pCountry=(p.country||'').toLowerCase().trim();
+        if(_searchCountry&&(!pCity||pCountry.includes('all over')||pCity.includes('all over')||pCity.includes('nationwide')))return true;
+        return _cityMatch(pCity,citySearch)||_cityMatch((p.address||'').toLowerCase(),citySearch);
+      });
     }
-
-    // Type filter — skip if all types selected
-    const allTypes=['hospital','clinic','physical_therapy','doctor','ground_ambulance','air_ambulance','tpa','taxi'];
     if(_searchTypes.length&&_searchTypes.length<allTypes.length){
       all=all.filter(p=>!p.type||_searchTypes.includes(p.type));
     }
@@ -1699,10 +1699,12 @@ Return ONLY valid JSON (no markdown):
     }
     if(_searchCity){
       const citySearch=_searchCity.toLowerCase().trim();
-      all=all.filter(p=>
-        _cityMatch((p.city||'').toLowerCase(),citySearch)||
-        _cityMatch((p.address||'').toLowerCase(),citySearch)
-      );
+      all=all.filter(p=>{
+        const pCity=(p.city||'').toLowerCase().trim();
+        const pCountry=(p.country||'').toLowerCase().trim();
+        if(_searchCountry&&(!pCity||pCountry.includes('all over')||pCity.includes('all over')||pCity.includes('nationwide')))return true;
+        return _cityMatch(pCity,citySearch)||_cityMatch((p.address||'').toLowerCase(),citySearch);
+      });
     }
     // Final sort
     all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));

@@ -279,16 +279,98 @@ a{color:inherit;text-decoration:none}
 @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
 
 /* ── RESPONSIVE ── */
-@media(max-width:640px){
-  .tab-content{padding:14px}
-  .kpi-grid{grid-template-columns:repeat(2,1fr)}
-  .providers-grid{grid-template-columns:1fr}
-  .login-card{padding:32px 24px}
-  .header-title{font-size:14px}
-  .tab-btn{padding:0 14px;font-size:12px}
-  .db-toolbar{gap:8px}
-  .providers-table{overflow-x:auto}
-  .providers-table table{min-width:600px}
+/* ── MOBILE — phones & small tablets (≤768px) ── */
+@media(max-width:768px){
+  /* Header */
+  .app-header{padding:0 14px;height:52px}
+  .header-sub{display:none}
+  .user-name{display:none}
+  .btn-signout{font-size:12px;padding:6px 10px}
+
+  /* Tab bar — horizontal scroll, larger tap targets */
+  .tab-bar{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 6px}
+  .tab-bar::-webkit-scrollbar{display:none}
+  .tab-btn{padding:0 12px;font-size:11px;height:44px;white-space:nowrap;flex-shrink:0}
+
+  /* Content padding */
+  .tab-content{padding:14px 12px}
+
+  /* KPI grid: 2 columns */
+  .kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .kpi-value{font-size:26px}
+  .kpi-card{padding:14px}
+
+  /* Section headers: stack on mobile */
+  .section-header{flex-direction:column;align-items:flex-start;gap:10px}
+  .section-header>div:last-child{width:100%;display:flex;flex-wrap:wrap;gap:8px}
+  .section-header .btn{flex:1;justify-content:center;text-align:center;min-width:120px}
+
+  /* Run config */
+  .run-config{padding:16px 14px}
+  .run-header{flex-direction:column;align-items:flex-start;gap:8px}
+  .run-header .region-badge{align-self:flex-start}
+
+  /* Country / city input row: full width */
+  #country-input,#city-input,.search-input{width:100%;max-width:none;box-sizing:border-box}
+  [style*="max-width:340px"]{max-width:100%!important}
+  [style*="max-width:260px"]{max-width:100%!important}
+
+  /* Type chips: smaller, wrap naturally */
+  .type-chip,.region-chip{font-size:11px;padding:5px 10px}
+  .filter-chips{gap:6px}
+
+  /* Provider cards: 1 column */
+  .providers-grid{grid-template-columns:1fr;gap:12px}
+
+  /* Card actions: wrap, full-width email button */
+  .card-actions{flex-direction:column;align-items:stretch;gap:8px}
+  .btn-gen-email{width:100%;justify-content:center;text-align:center;font-size:13px;padding:10px}
+  .save-check{margin-left:0;justify-content:flex-start}
+
+  /* Save bar: stack vertically */
+  .save-bar{flex-direction:column;align-items:stretch;gap:10px;padding:14px 16px}
+  .save-bar>div:last-child{display:flex;flex-direction:column;gap:8px}
+  #dl-emails-btn,#save-all-btn{width:100%;justify-content:center;text-align:center}
+
+  /* DB toolbar */
+  .db-toolbar{flex-wrap:wrap}
+  .db-toolbar input[type=text],.db-toolbar .search-input{width:100%;flex:none}
+  .filter-select{flex:1;min-width:130px}
+
+  /* Providers table: scroll */
+  .providers-table{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .providers-table table{min-width:700px}
+
+  /* Admin cards */
+  .admin-card{padding:16px 14px}
+  .import-drop{padding:24px 14px}
+
+  /* Progress box */
+  .progress-box{padding:16px}
+
+  /* Run results header row */
+  #results-header-row,
+  div[style*="justify-content:space-between"][style*="align-items:center"]{
+    flex-wrap:wrap;gap:8px
+  }
+
+  /* Login card */
+  .login-card{padding:28px 20px;margin:16px}
+
+  /* Why box */
+  .why-box{font-size:12px}
+
+  /* JSON/Sheets panel */
+  .json-panel{font-size:9px}
+}
+
+/* ── Very small phones (≤420px) ── */
+@media(max-width:420px){
+  .kpi-grid{grid-template-columns:1fr}
+  .tab-btn{padding:0 9px;font-size:10px}
+  .app-header{height:48px}
+  .header-logo{width:30px;height:30px;font-size:12px}
+  .header-title{font-size:13px}
 }
 @media(prefers-color-scheme:dark){
   :root{--bg:#0e1220;--bg2:#151929;--white:#fff;--text:#e8eaf0;--text2:#a0aabb;--text3:#68748a;
@@ -1351,6 +1433,7 @@ Return ONLY valid JSON (no markdown):
                 if(e.contact_title)p.contact_title=e.contact_title;
                 if(e.linkedin_url)p.linkedin_url=e.linkedin_url;
                 if(e.linkedin_verified)p.linkedin_verified=e.linkedin_verified;
+                if(e.industry_source)p.industry_source=e.industry_source;
                 if(e.accreditations?.length)p.accreditations=e.accreditations;
                 if(e.specialties?.length)p.specialties=e.specialties;
                 if(e.has_international_dept)p.has_international_dept=e.has_international_dept;
@@ -1511,6 +1594,15 @@ Google Places found ${googleProviders.length} providers. Your tasks:
    - linkedin_verified: true if LinkedIn confirms they are currently at this provider
    - specialties[], accreditations[], has_international_dept, why_hwa, cooperation_score (1-100)
 2. Find up to ${additionalCount} ADDITIONAL verified providers in ${loc} not already in the list.
+   PRIORITY SOURCES — search these industry databases first:
+   • itic.net — ITIC member directory (assistance companies, TPAs, medical providers)
+   • itij.com — ITIJ international assistance & travel insurance directory
+   • jointcommissioninternational.org — JCI-accredited hospitals
+   • eurami.org — EURAMI-accredited air ambulance operators
+   • iamat.org — IAMAT international medical assistance network
+   • imtj.com — International Medical Travel Journal provider directory
+   • camts.org — CAMTS-accredited air medical services
+   Supplement with Google/web if needed for comprehensive coverage.
 
 PROVIDERS TO ENRICH:
 ${providerList}
@@ -1518,14 +1610,23 @@ ${providerList}
 ALREADY FOUND — do NOT repeat: ${googleProviders.map(p=>p.name).join(' | ')}
 
 Return ONLY valid JSON (no markdown, no backticks):
-{"enriched":[{"index":0,"email":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":65}]}`;
+{"enriched":[{"index":0,"email":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70,"industry_source":""}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":65,"industry_source":"itic|itij|jci|eurami|iamat|imtj|camts|web"}]}`;
     }else{
       claudeMsg=`NETWORK RUN — Date: ${today}
 Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity+' (search primarily here, expand to nearby if needed)':' (search across the entire country)'}
 Provider types required: ${typeStr}
 ${specStr?'Medical specialties: '+specStr:'Medical specialties: any'}
 
-Search official databases and web to find exactly 12 real verified medical providers in ${loc} matching the requested types and specialties. Order best-first: JCI/ISO-accredited first, then providers with verified email + website. Return JSON only.`;
+Search these industry databases first, then supplement with Google/web:
+• itic.net — ITIC member directory (assistance companies, TPAs)
+• itij.com — ITIJ international assistance & travel insurance directory
+• jointcommissioninternational.org — JCI-accredited hospitals
+• eurami.org — EURAMI-accredited air ambulance operators
+• iamat.org — IAMAT international medical assistance network
+• imtj.com — International Medical Travel Journal provider directory
+• camts.org — CAMTS air medical services
+
+Find exactly 12 real verified medical providers in ${loc} matching the requested types. Order best-first: JCI/EURAMI-accredited first, then ITIC/ITIJ members, then providers with verified email + website. Return JSON only.`;
     }
 
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
@@ -1563,6 +1664,7 @@ Search official databases and web to find exactly 12 real verified medical provi
           p.contact_title=e.contact_title||'';
           p.linkedin_url=e.linkedin_url||'';
           p.linkedin_verified=e.linkedin_verified||false;
+          p.industry_source=e.industry_source||'';
           p.specialties=e.specialties||p.specialties||[];
           p.accreditations=e.accreditations||[];
           p.has_international_dept=e.has_international_dept||false;
@@ -1666,7 +1768,16 @@ Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity+' (search prim
 ${typesLine}
 ${specsLine}${excludeLine}
 
-Search official databases and web to find exactly 12 NEW real verified medical providers in ${loc} matching the requested types and specialties. Order best-first: JCI/ISO-accredited first, then providers with verified email + website. Do not repeat any provider from the ALREADY FOUND list. Return JSON only.`;
+Search these industry databases first, then supplement with Google/web:
+• itic.net — ITIC member directory (assistance companies, TPAs)
+• itij.com — ITIJ international assistance & travel insurance directory
+• jointcommissioninternational.org — JCI-accredited hospitals
+• eurami.org — EURAMI-accredited air ambulance operators
+• iamat.org — IAMAT international medical assistance network
+• imtj.com — International Medical Travel Journal provider directory
+• camts.org — CAMTS air medical services
+
+Find exactly 12 NEW real verified providers in ${loc} matching the requested types. Order: JCI/EURAMI-accredited first, then ITIC/ITIJ members, then verified email + website. Do NOT repeat any provider from the ALREADY FOUND list. Return JSON only.`;
 
   // Reset steps and progress bar for this batch
   setProgress(0,'');
@@ -1783,6 +1894,10 @@ function renderRunCard(p,idx){
   const id='card-'+idx;
   const accHtml=(p.accreditations||[]).map(a=>`<span class="acc-tag">${a}</span>`).join('');
   const hwaBadge=p._isHWA?'<span class="hwa-badge">⭐ HWA Partner</span>':'';
+  const srcColors={itic:'#1a3a5c',itij:'#0d5c63',jci:'#1d4ed8',eurami:'#15803d',iamat:'#7c3aed',imtj:'#b45309',camts:'#0f766e'};
+  const srcKey=(p.industry_source||'').toLowerCase().replace(/[^a-z]/g,'');
+  const srcBadge=srcColors[srcKey]?`<span style="background:${srcColors[srcKey]};color:#fff;font-size:9px;font-weight:700;border-radius:3px;padding:1px 5px;letter-spacing:.3px;vertical-align:middle">${(p.industry_source||'').toUpperCase()}</span>`:'';
+
   const scoreHtml=p.cooperation_score
     ?`<div class="card-row"><span class="card-row-icon">⭐</span><span class="card-row-val">Cooperation score: <strong>${p.cooperation_score}/100</strong></span></div>`:'';
   let contactHtml='';
@@ -1815,7 +1930,7 @@ function renderRunCard(p,idx){
   card.innerHTML=`
     <div class="card-header">
       <div>
-        <div class="card-name">${p.name}</div>
+        <div class="card-name">${p.name} ${srcBadge}</div>
         <div class="card-location">📍 ${p.city||'—'}, ${p.country||'—'}</div>
         ${hwaBadge}
       </div>

@@ -1481,6 +1481,7 @@ function _finishRunUI(msg){
   }
 }
 
+function _toArr(v){if(Array.isArray(v))return v;if(!v)return[];return String(v).split(',').map(s=>s.trim()).filter(Boolean);}
 function _parseClaudeJSON(rawText){
   let clean=rawText.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
   const m=clean.match(/\{[\s\S]*\}/);
@@ -1697,8 +1698,8 @@ Return ONLY valid JSON (no markdown):
                 if(e.linkedin_url)p.linkedin_url=e.linkedin_url;
                 if(e.linkedin_verified)p.linkedin_verified=e.linkedin_verified;
                 if(e.industry_source)p.industry_source=e.industry_source;
-                if(e.accreditations?.length)p.accreditations=e.accreditations;
-                if(e.specialties?.length)p.specialties=e.specialties;
+                if(e.accreditations)p.accreditations=_toArr(e.accreditations);
+                if(e.specialties)p.specialties=_toArr(e.specialties);
                 if(e.has_international_dept)p.has_international_dept=e.has_international_dept;
                 if(e.why_hwa&&!p.whyHWA)p.whyHWA=e.why_hwa;
                 if(e.cooperation_score)p.cooperation_score=e.cooperation_score;
@@ -1710,7 +1711,7 @@ Return ONLY valid JSON (no markdown):
                     email:p.email||'',contact_person:p.contact_person||'',
                     contact_title:p.contact_title||'',
                     linkedin_url:p.linkedin_url||'',linkedin_verified:p.linkedin_verified||false,
-                    accreditations:p.accreditations||[],specialties:p.specialties||[],
+                    accreditations:_toArr(p.accreditations),specialties:_toArr(p.specialties),
                     hasInternationalDept:p.has_international_dept||false,
                     whyHWA:p.whyHWA||'',cooperation_score:p.cooperation_score||null,
                     city:p.city||'',country:p.country||''
@@ -1929,8 +1930,8 @@ Find exactly 12 real verified medical providers in ${loc} matching the requested
           p.linkedin_url=e.linkedin_url||'';
           p.linkedin_verified=e.linkedin_verified||false;
           p.industry_source=e.industry_source||'';
-          p.specialties=e.specialties||p.specialties||[];
-          p.accreditations=e.accreditations||[];
+          p.specialties=_toArr(e.specialties||p.specialties);
+          p.accreditations=_toArr(e.accreditations);
           p.has_international_dept=e.has_international_dept||false;
           p.why_hwa=e.why_hwa||'';
           p.cooperation_score=e.cooperation_score||p.cooperation_score||70;
@@ -2150,7 +2151,8 @@ function setProgress(pct,text){
 // ── Provider Card (Run tab) ─────────────────────────────
 function renderRunCard(p,idx){
   const id='card-'+idx;
-  const accHtml=(p.accreditations||[]).map(a=>`<span class="acc-tag">${a}</span>`).join('');
+  const accs=Array.isArray(p.accreditations)?p.accreditations:(p.accreditations?String(p.accreditations).split(',').map(s=>s.trim()).filter(Boolean):[]);
+  const accHtml=accs.map(a=>`<span class="acc-tag">${a}</span>`).join('');
   const hwaBadge=p._isHWA?'<span class="hwa-badge">⭐ HWA Partner</span>':'';
   const srcColors={itic:'#1a3a5c',itij:'#0d5c63',jci:'#1d4ed8',eurami:'#15803d',iamat:'#7c3aed',imtj:'#b45309',camts:'#0f766e'};
   const srcKey=(p.industry_source||'').toLowerCase().replace(/[^a-z]/g,'');
@@ -2331,7 +2333,7 @@ async function saveSelectedProviders(){
         name:p.name||'',type:p.type||'',country:p.country||'',city:p.city||'',
         address:p.address||'',
         website:p.website||'',email:p.email||'',phone:p.phone||'',
-        accreditations:p.accreditations||[],specialties:p.specialties||[],
+        accreditations:_toArr(p.accreditations),specialties:_toArr(p.specialties),
         hasInternationalDept:p.has_international_dept||false,
         whyHWA:p.why_hwa||'',email_subject:'',email_body:'',
         outreachDate:today,status:'New',inNetwork:'Pending',
@@ -2774,8 +2776,8 @@ Return ONLY valid JSON:
         linkedin_url:e.linkedin_url||p.linkedin_url||'',
         linkedin_verified:e.linkedin_verified||p.linkedin_verified||false,
         industry_source:e.industry_source||p.industry_source||'',
-        specialties:e.specialties?.length?e.specialties:(p.specialties||[]),
-        accreditations:e.accreditations||[],
+        specialties:_toArr(e.specialties?.length?e.specialties:p.specialties),
+        accreditations:_toArr(e.accreditations),
         hasInternationalDept:e.has_international_dept||false,
         whyHWA:e.why_hwa||'',
         cooperation_score:e.cooperation_score||null

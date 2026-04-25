@@ -535,7 +535,10 @@ a{color:inherit;text-decoration:none}
         <div class="save-bar-text">💾 Save to HWA Database</div>
         <div class="save-bar-sub" id="save-bar-sub">0 providers selected</div>
       </div>
-      <button class="btn btn-primary" onclick="saveSelectedProviders()" id="save-all-btn">Save Selected</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)" onclick="downloadAllEmails()" id="dl-emails-btn">📧 Download All Emails</button>
+        <button class="btn btn-primary" onclick="saveSelectedProviders()" id="save-all-btn">Save Selected</button>
+      </div>
     </div>
   </div>
 
@@ -1437,6 +1440,7 @@ function _parseClaudeJSON(rawText){
 }
 
 let _hwaOnlyMode=false;
+let _noHwaMsg='';
 
 function toggleHwaOnlyMode(){
   _hwaOnlyMode=!_hwaOnlyMode;
@@ -1568,60 +1572,15 @@ async function _runHwaOnly(){
 
     if(!all.length){
       setStep(0,'done');
-      setProgress(40,'No HWA partners matched — searching for assistance companies...');
-      // ── Fallback: find TPA/assistance companies in the same location ──
-      let fallback=[];
-      try{
-        const fbSnap=await db.collection('providers').get();
-        const cNorm=_searchCountry?_normalizeCountry(_searchCountry):'';
-        fallback=fbSnap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>{
-          if(p.inNetwork==='Yes')return false; // already shown above, skip HWA partners
-          if(p.type!=='tpa'&&p.type!=='assistance')return false;
-          if(cNorm){
-            const pNorm=_normalizeCountry(p.country||'');
-            if(pNorm!==cNorm)return false;
-          }
-          if(_searchCity){
-            const cityLow=_searchCity.toLowerCase();
-            const pCity=(p.city||'').toLowerCase().trim();
-            const pCountry=(p.country||'').toLowerCase().trim();
-            const isNationwide=!pCity||pCountry.includes('all over')||pCity.includes('all over')||pCity.includes('nationwide');
-            if(!isNationwide&&!pCity.includes(cityLow)&&!(p.address||'').toLowerCase().includes(cityLow))return false;
-          }
-          return true;
-        });
-      }catch(_){}
-
-      document.getElementById('run-results').style.display='block';
       const locMsg=loc||'all countries';
-
-      if(fallback.length){
-        // Show fallback assistance companies
-        runResults=[...fallback];
-        document.getElementById('results-title').textContent=`No HWA Partners — ${fallback.length} Assistance Compan${fallback.length!==1?'ies':'y'} Available`;
-        document.getElementById('results-sub').textContent=`${today} · ${locMsg} · No HWA partners matched — showing assistance companies from database`;
-        document.getElementById('run-cards').innerHTML=`
-          <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px 18px;margin-bottom:12px;font-size:13px;color:#856404">
-            <strong>No HWA partners found in "${locMsg}".</strong> Showing ${fallback.length} assistance compan${fallback.length!==1?'ies':'y'} available in this location that may provide coverage.
-          </div>`;
-        fallback.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*60));
-        setTimeout(()=>{setStep(2,'done');setProgress(100,'Fallback results shown');_restoreRunBtn();},fallback.length*60+300);
-      }else{
-        // No fallback either — show countries with HWA partners
-        const rawCountries=snap.docs.map(d=>d.data().country).filter(c=>c&&c.length<=50&&!/^\d/.test(c));
-        const countries=[...new Set(rawCountries)].sort();
-        document.getElementById('results-title').textContent='No Matches Found';
-        document.getElementById('results-sub').textContent=`${totalInDb} HWA partners in database — none matched filters`;
-        document.getElementById('run-cards').innerHTML=`
-          <div style="background:#fff;border-radius:12px;padding:24px;border:1px solid var(--border)">
-            <div style="font-weight:700;color:var(--navy);margin-bottom:8px">No partners matched "${locMsg}"</div>
-            <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${totalInDb} HWA partners exist in your database. Countries available:</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px">${countries.map(c=>`<span style="background:var(--teal-bg);color:var(--teal);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer" onclick="document.getElementById('country-input').value='${c}';updateCityOptions();document.getElementById('city-input').value='';document.getElementById('city-custom-wrap').style.display='none';updateCountryBadge()">${c}</span>`).join('')}</div>
-            <div style="font-size:12px;color:var(--text3);margin-top:12px">Tap a country above to search it, or clear the filters to see all partners.</div>
-          </div>`;
-        setStep(2,'done'); setProgress(100,'No matches — see available countries above');
-      }
-      _restoreRunBtn(); return;
+      // No HWA partners matched — automatically fall through to Claude AI search
+      _noHwaMsg=locMsg;
+      setProgress(35,`No HWA partners in "${locMsg}" — running Claude AI search...`);
+      document.getElementById('step-0-text').textContent='Locating providers';
+      document.getElementById('step-1-text').textContent='Enriching & qualifying';
+      document.getElementById('step-2-text').textContent='Complete';
+      await _runUnified();
+      return;
     }
 
     all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
@@ -1658,13 +1617,13 @@ For EACH provider return:
 1. city_verified: real city (always fill)
 2. country_verified: real country in English (always fill — look up by provider name+city if needed)
 3. location_match: TRUE only if provider is physically in "${_searchCountry||'any'}${_searchCity?' / '+_searchCity:''}". Set FALSE if real location is any other country.
-4. Fill only where blank: email, contact_person, accreditations[], specialties[], has_international_dept, why_hwa, cooperation_score (1-100)
+4. Fill only where blank: email, contact_person, contact_title (job title e.g. "Medical Director"), linkedin_url (LinkedIn profile URL if findable), linkedin_verified (true if you confirmed the LinkedIn URL is correct), accreditations[], specialties[], has_international_dept, why_hwa, cooperation_score (1-100)
 
 PROVIDERS:
 ${list}
 
 Return ONLY valid JSON:
-{"enriched":[{"index":0,"email":"","contact_person":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","cooperation_score":75,"city_verified":"","country_verified":"","location_match":true}]}`}]
+{"enriched":[{"index":0,"email":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","cooperation_score":75,"city_verified":"","country_verified":"","location_match":true}]}`}]
             })
           });
           if(aiResp.ok){
@@ -1678,18 +1637,22 @@ Return ONLY valid JSON:
                 if(!p)return;
                 if(e.email&&!p.email)p.email=e.email;
                 if(e.contact_person&&!p.contact_person)p.contact_person=e.contact_person;
+                if(e.contact_title&&!p.contact_title)p.contact_title=e.contact_title;
+                if(e.linkedin_url&&!p.linkedin_url)p.linkedin_url=e.linkedin_url;
+                if(e.linkedin_verified)p.linkedin_verified=e.linkedin_verified;
                 if(e.accreditations?.length)p.accreditations=e.accreditations;
                 if(e.specialties?.length)p.specialties=e.specialties;
                 if(e.has_international_dept)p.has_international_dept=e.has_international_dept;
                 if(e.why_hwa&&!p.whyHWA)p.whyHWA=e.why_hwa;
                 if(e.cooperation_score)p.cooperation_score=e.cooperation_score;
-                // Always trust Claude's verified location over stored data
                 if(e.city_verified)p.city=e.city_verified;
                 if(e.country_verified)p.country=e.country_verified;
                 if(e.location_match===false)p._locationMismatch=true;
                 if(p.id){
                   firestoreBatch.update(db.collection('providers').doc(p.id),{
                     email:p.email||'',contact_person:p.contact_person||'',
+                    contact_title:p.contact_title||'',
+                    linkedin_url:p.linkedin_url||'',linkedin_verified:p.linkedin_verified||false,
                     accreditations:p.accreditations||[],specialties:p.specialties||[],
                     hasInternationalDept:p.has_international_dept||false,
                     whyHWA:p.whyHWA||'',cooperation_score:p.cooperation_score||null,
@@ -1820,8 +1783,17 @@ Location: ${loc}
 Provider types: ${typeStr}
 ${specStr?'Specialties: '+specStr:''}
 Google Places found ${googleProviders.length} providers. Your tasks:
-1. Enrich each provider below: find email, contact_person (medical director or international coordinator), specialties array, accreditations array, has_international_dept boolean, why_hwa (1-2 sentences on value to HWA's insurer clients), cooperation_score (integer 1-100, higher = better international partner).
+1. Enrich each provider: find email, contact_person (medical director or international coordinator), contact_title (their job title), linkedin_url (LinkedIn profile URL), linkedin_verified (true if confirmed), specialties[], accreditations[], has_international_dept, why_hwa (1-2 sentences), cooperation_score (1-100), industry_source (itic|itij|jci|eurami|iamat|imtj|camts|web).
 2. Find up to ${additionalCount} ADDITIONAL verified providers in ${loc} not already in the list.
+
+PRIORITY SOURCES — search these industry databases first:
+   • itic.net — ITIC member directory (assistance companies, TPAs, medical providers)
+   • itij.com — ITIJ international assistance & travel insurance directory
+   • jointcommissioninternational.org — JCI-accredited hospitals
+   • eurami.org — EURAMI-accredited air ambulance operators
+   • iamat.org — IAMAT international medical assistance network
+   • imtj.com — International Medical Travel Journal provider directory
+   • camts.org — CAMTS-accredited air medical services
 
 PROVIDERS TO ENRICH:
 ${providerList}
@@ -1829,14 +1801,25 @@ ${providerList}
 ALREADY FOUND — do NOT repeat: ${googleProviders.map(p=>p.name).join(' | ')}
 
 Return ONLY valid JSON (no markdown, no backticks):
-{"enriched":[{"index":0,"email":"","contact_person":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","cooperation_score":65}]}`;
+{"enriched":[{"index":0,"email":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70,"industry_source":""}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":65,"industry_source":"itic|itij|jci|eurami|iamat|imtj|camts|web"}]}`;
     }else{
       claudeMsg=`NETWORK RUN — Date: ${today}
 Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity+' (search primarily here, expand to nearby if needed)':' (search across the entire country)'}
 Provider types required: ${typeStr}
 ${specStr?'Medical specialties: '+specStr:'Medical specialties: any'}
 
-Search official databases and web to find exactly 12 real verified medical providers in ${loc} matching the requested types and specialties. Order best-first: JCI/ISO-accredited first, then providers with verified email + website. Return JSON only.`;
+Search industry databases and web to find exactly 12 real verified medical providers in ${loc} matching the requested types and specialties.
+
+PRIORITY SOURCES — search these first:
+• itic.net — ITIC member directory
+• itij.com — ITIJ assistance & travel insurance directory
+• jointcommissioninternational.org — JCI-accredited hospitals
+• eurami.org — EURAMI-accredited air ambulance operators
+• iamat.org — IAMAT network
+• imtj.com — International Medical Travel Journal
+• camts.org — CAMTS-accredited air medical services
+
+Order best-first: industry-database listed first, then JCI/ISO-accredited, then verified email + website. Return JSON only.`;
     }
 
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
@@ -1918,10 +1901,24 @@ Search official databases and web to find exactly 12 real verified medical provi
 
     setProgress(95,'Rendering providers...');
     runResults=[...finalProviders];
+    const hwaCount=finalProviders.filter(p=>p._isHWA).length;
+    const noHwaLoc=_noHwaMsg;
+    _noHwaMsg='';
     document.getElementById('run-results').style.display='block';
+    document.getElementById('run-cards').innerHTML='';
+    if(noHwaLoc||(!hwaCount&&(_searchCountry||_searchCity))){
+      const bannerLoc=noHwaLoc||loc;
+      document.getElementById('results-title').textContent=`Claude AI Results — No HWA Partners in "${bannerLoc}"`;
+      document.getElementById('results-sub').textContent=`${today} · ${bannerLoc} · No HWA partners available — ${finalProviders.length} Claude AI suggestions shown`;
+      document.getElementById('run-cards').insertAdjacentHTML('beforeend',`
+        <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px 18px;margin-bottom:12px;font-size:13px;color:#856404;display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:20px;line-height:1.2">⚠</span>
+          <div><strong>No HWA partners are currently available in "${bannerLoc}".</strong> The results below are Claude AI suggestions — verify before use and consider adding suitable providers to your HWA network.</div>
+        </div>`);
+    }
     finalProviders.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*80));
 
-    try{await db.collection('sessions').add({date:today,region:loc,providersFound:finalProviders.length,batchNum:1,runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
+    try{await db.collection('runSessions').add({date:today,country:_searchCountry,city:_searchCity,region:loc,found:finalProviders.length,types:_searchTypes,runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
 
     setTimeout(()=>{
       setStep(1,'done');setStep(2,'done');
@@ -2073,10 +2070,23 @@ function renderRunCard(p,idx){
   const id='card-'+idx;
   const accHtml=(p.accreditations||[]).map(a=>`<span class="acc-tag">${a}</span>`).join('');
   const hwaBadge=p._isHWA?'<span class="hwa-badge">⭐ HWA Partner</span>':'';
+  const srcColors={itic:'#1a3a5c',itij:'#0d5c63',jci:'#1d4ed8',eurami:'#15803d',iamat:'#7c3aed',imtj:'#b45309',camts:'#0f766e'};
+  const srcKey=(p.industry_source||'').toLowerCase().replace(/[^a-z]/g,'');
+  const srcBadge=srcColors[srcKey]?`<span style="background:${srcColors[srcKey]};color:#fff;font-size:9px;font-weight:700;border-radius:3px;padding:1px 5px;letter-spacing:.3px;vertical-align:middle;margin-left:4px">${(p.industry_source||'').toUpperCase()}</span>`:'';
   const scoreHtml=p.cooperation_score
     ?`<div class="card-row"><span class="card-row-icon">⭐</span><span class="card-row-val">Cooperation score: <strong>${p.cooperation_score}/100</strong></span></div>`:'';
-  const contactHtml=p.contact_person
-    ?`<div class="card-row"><span class="card-row-icon">👤</span><span class="card-row-val">${p.contact_person}</span></div>`:'';
+  let contactHtml='';
+  if(p.contact_person){
+    const titleSpan=p.contact_title?`<span style="color:var(--text3);font-size:11px;margin-left:4px">${p.contact_title}</span>`:'';
+    let liBadge='';
+    if(p.linkedin_url){
+      const liLabel=p.linkedin_verified
+        ?'<span style="background:#0077b5;color:#fff;font-size:10px;font-weight:700;border-radius:3px;padding:1px 5px;margin-left:6px">✓ LinkedIn</span>'
+        :'<span style="background:#e0f0fb;color:#0077b5;font-size:10px;font-weight:700;border-radius:3px;padding:1px 5px;margin-left:6px">LinkedIn</span>';
+      liBadge=`<a href="${p.linkedin_url}" target="_blank" rel="noopener" style="text-decoration:none">${liLabel}</a>`;
+    }
+    contactHtml=`<div class="card-row"><span class="card-row-icon">👤</span><span class="card-row-val">${p.contact_person}${titleSpan}${liBadge}</span></div>`;
+  }
   // Location mismatch warning — visible even without enrichment
   let locationWarn='';
   if(_searchCountry&&p.country){
@@ -2095,7 +2105,7 @@ function renderRunCard(p,idx){
       <div>
         <div class="card-name">${p.name}</div>
         <div class="card-location">📍 ${p.city||'—'}, ${p.country||'—'}</div>
-        ${hwaBadge}
+        ${hwaBadge}${srcBadge}
       </div>
       <span class="type-badge">${typeLabel(p.type)}</span>
     </div>
@@ -2213,6 +2223,16 @@ function sendEmailDirect(idx){
 }
 
 // ── Save to Firestore ───────────────────────────────────
+function downloadAllEmails(){
+  const emails=runResults.filter(p=>p.email).map(p=>`${p.name}\t${p.email}\t${p.city||''}\t${p.country||''}`);
+  if(!emails.length){showToast('No emails found in current results','error');return;}
+  const tsv='Name\tEmail\tCity\tCountry\n'+emails.join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/tab-separated-values;charset=utf-8,'+encodeURIComponent(tsv);
+  a.download=`hwa-emails-${new Date().toISOString().slice(0,10)}.tsv`;
+  a.click();
+  showToast(`Downloaded ${emails.length} email${emails.length!==1?'s':''}  ✓`,'success');
+}
 async function saveSelectedProviders(){
   const saveBtn=document.getElementById('save-all-btn');
   if(saveBtn)saveBtn.disabled=true;
@@ -2242,6 +2262,10 @@ async function saveSelectedProviders(){
         outreachDate:today,status:'New',inNetwork:'Pending',
         lastContact:'',responseNotes:'',agreementDate:'',
         contact_person:p.contact_person||'',
+        contact_title:p.contact_title||'',
+        linkedin_url:p.linkedin_url||'',
+        linkedin_verified:p.linkedin_verified||false,
+        industry_source:p.industry_source||'',
         cooperation_score:p.cooperation_score||null,
         google_place_id:p._googlePlaceId||'',
         google_rating:p._googleRating||null,
@@ -2263,21 +2287,21 @@ async function saveSelectedProviders(){
 // ── Provider Database ────────────────────────────────────
 async function loadProviders(){
   const tbody=document.getElementById('db-tbody');
-  tbody.innerHTML='<tr><td colspan="9"><div class="skeleton" style="height:40px;margin:8px"></div></td></tr>';
+  tbody.innerHTML='<tr><td colspan="11"><div class="skeleton" style="height:40px;margin:8px"></div></td></tr>';
   try{
     const snap=await db.collection('providers').orderBy('createdAt','desc').limit(500).get();
     currentProviders=snap.docs.map(d=>({id:d.id,...d.data()}));
     document.getElementById('db-count').textContent=`${currentProviders.length} providers in database`;
     renderTable(currentProviders);
   }catch(e){
-    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text3)">Could not load providers: ${e.message}</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">Could not load providers: ${e.message}</td></tr>`;
   }
 }
 
 function renderTable(providers){
   const tbody=document.getElementById('db-tbody');
   if(!providers.length){
-    tbody.innerHTML='<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No providers yet</div><div class="empty-sub">Run a Network Search to find providers</div></div></td></tr>';
+    tbody.innerHTML='<tr><td colspan="11"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No providers yet</div><div class="empty-sub">Run a Network Search to find providers</div></div></td></tr>';
     return;
   }
   tbody.innerHTML=providers.map(p=>{
@@ -2634,14 +2658,16 @@ async function _enrichImported(providers){
         model:'claude-sonnet-4-6',max_tokens:2500,
         system:SYSTEM_PROMPT,
         messages:[{role:'user',content:`ENRICH HWA PARTNER PROVIDERS — for each below, search the web and find:
-email (official contact email), contact_person (medical director or international coordinator name),
-specialties (array), accreditations (JCI/ISO/national), has_international_dept (boolean),
-why_hwa (2-3 sentences on value to HWA's insurer clients), cooperation_score (1-100).
+email, contact_person (medical director or international coordinator), contact_title (job title),
+linkedin_url (LinkedIn profile URL), linkedin_verified (true if confirmed),
+specialties[], accreditations (JCI/ISO/national), has_international_dept (boolean),
+why_hwa (2-3 sentences on value to HWA's insurer clients), cooperation_score (1-100),
+industry_source (itic|itij|jci|eurami|iamat|imtj|camts|web).
 
 ${list}
 
 Return ONLY valid JSON:
-{"enriched":[{"index":0,"email":"","contact_person":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":75}]}`}]
+{"enriched":[{"index":0,"email":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":75,"industry_source":""}]}`}]
       })
     });
     if(!resp.ok)return;
@@ -2859,13 +2885,16 @@ async function loadAdminData(){
     }
   }catch(e){}
   try{
-    const snap=await db.collection('sessions').orderBy('createdAt','desc').limit(10).get();
+    const snap=await db.collection('runSessions').orderBy('createdAt','desc').limit(15).get();
     const cont=document.getElementById('sessions-list');
     if(snap.empty){cont.innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px">No sessions yet</div>';return;}
-    cont.innerHTML=snap.docs.map(d=>{const s=d.data();return`
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">
-        <div><strong>${s.date}</strong> · ${s.region||''}</div>
-        <div style="color:var(--text3)">${s.providersFound||0} providers found</div>
+    cont.innerHTML=snap.docs.map(d=>{const s=d.data();
+      const loc=[s.city,s.country].filter(Boolean).join(', ')||s.region||'—';
+      const types=(s.types||[]).join(', ')||'all';
+      const dt=s.createdAt?new Date(s.createdAt).toLocaleString():(s.date||'');
+      return`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <div><strong>${d.id}</strong> · ${loc}<div style="color:var(--text3);font-size:11px">${types} · ${dt}</div></div>
+        <div style="color:var(--green);font-weight:600">${s.found||0} found</div>
       </div>`;}).join('');
   }catch(e){}
 }

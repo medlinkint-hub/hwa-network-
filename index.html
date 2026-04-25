@@ -703,7 +703,7 @@ function openApp(user){
     loadApiKey();
     loadGooglePlacesKey();
     loadDashboard();
-    loadProviders();
+    loadProviders().catch(()=>{});
     initRegion();
 }
 
@@ -781,7 +781,7 @@ function showTab(tab){
   if(el)el.style.display='block';
   const btn=document.querySelector(`[data-tab="${tab}"]`);
   if(btn)btn.classList.add('active');
-  if(tab==='providers')loadProviders();
+  if(tab==='providers')loadProviders().catch(()=>{});
   if(tab==='dashboard')loadDashboard();
 }
 
@@ -1610,7 +1610,9 @@ function renderRunCard(p,idx){
         ? (p.email
             ? `<button class="btn-gen-email" onclick="sendEmailDirect(${idx})">✉ Send Email</button>`
             : `<button class="btn-gen-email" disabled style="opacity:.5;cursor:not-allowed" title="No email address on file">✉ No Email on File</button>`)
-        : `<button class="btn-gen-email" onclick="generateEmailForRun(${idx},this)">✉ Generate & Send Email</button>`}
+        : (p.email
+            ? `<button class="btn-gen-email" onclick="generateEmailForRun(${idx},this)">✉ Generate & Send Email</button>`
+            : `<button class="btn-gen-email" onclick="generateEmailForRun(${idx},this)">✉ Generate Email</button>`)}
       <label class="save-check">
         <input type="checkbox" ${p._isHWA?'style="display:none"':'checked'} id="chk-${idx}" onchange="updateSaveCount()">
         ${p._isHWA?'':'Save to DB'}
@@ -1620,7 +1622,7 @@ function renderRunCard(p,idx){
 }
 
 function updateSaveCount(){
-  const checked=document.querySelectorAll('[id^="chk-"]:checked').length;
+  const checked=document.querySelectorAll('[id^="chk-"]:checked:not([style*="display:none"])').length;
   document.getElementById('save-bar-sub').textContent=`${checked} provider${checked!==1?'s':''} selected`;
 }
 function typeLabel(t){
@@ -1638,6 +1640,7 @@ async function generateEmail(p,btnEl,docId){
   const orig=btnEl.innerHTML;
   btnEl.disabled=true;
   btnEl.innerHTML='⏳ Generating...';
+  if(!p.email){showToast('No email address for this provider','error');btnEl.disabled=false;btnEl.innerHTML=orig;return;}
   const specs=(p.specialties||p.specialty||[]);
   const specsStr=Array.isArray(specs)?specs.join(', '):(specs||'General');
   const userMsg=`Generate cooperation email for:
@@ -1707,12 +1710,14 @@ function sendEmailDirect(idx){
 
 // ── Save to Firestore ───────────────────────────────────
 async function saveSelectedProviders(){
+  const saveBtn=document.getElementById('save-all-btn');
+  if(saveBtn)saveBtn.disabled=true;
   const today=new Date().toISOString().split('T')[0];
   const toSave=[];
-  document.querySelectorAll('[id^="chk-"]').forEach(chk=>{
+  document.querySelectorAll('[id^="chk-"]:not([style*="display:none"])').forEach(chk=>{
     if(chk.checked){
       const idx=parseInt(chk.id.replace('chk-',''));
-      if(runResults[idx])toSave.push(runResults[idx]);
+      if(!isNaN(idx)&&runResults[idx]&&!runResults[idx]._isHWA)toSave.push(runResults[idx]);
     }
   });
   if(!toSave.length){showToast('No providers selected','error');return;}
@@ -1745,6 +1750,10 @@ async function saveSelectedProviders(){
     document.getElementById('save-bar').classList.remove('visible');
     loadDashboard();
   }catch(e){showToast('Save failed: '+e.message,'error');}
+  finally{
+    const btn=document.getElementById('save-all-btn');
+    if(btn)btn.disabled=false;
+  }
 }
 
 // ── Provider Database ────────────────────────────────────

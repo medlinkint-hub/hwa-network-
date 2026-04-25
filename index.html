@@ -227,6 +227,13 @@ a{color:inherit;text-decoration:none}
 .network-yes{background:#dcfce7;color:#166534;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
 .network-no{background:var(--red-bg);color:var(--red);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
 .network-pending{background:var(--teal-bg);color:var(--teal);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600}
+.hwa-badge{display:inline-flex;align-items:center;gap:5px;background:#1a2f5e;color:#fff;border-radius:20px;padding:4px 11px;font-size:11px;font-weight:700;letter-spacing:.3px;margin-top:5px}
+.import-drop{border:2px dashed var(--border2);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.import-drop:hover,.import-drop.drag{border-color:var(--navy);background:#f0f3ff}
+.import-drop input[type=file]{display:none}
+.import-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.import-row:last-child{border-bottom:none}
+.col-map{padding:4px 8px;border:1.5px solid var(--border2);border-radius:6px;font-size:12px;color:var(--text);background:#fff;cursor:pointer}
 
 
 /* ── ADMIN ── */
@@ -504,6 +511,7 @@ a{color:inherit;text-decoration:none}
         <option value="">Network Status</option>
         <option>Yes</option><option>No</option><option>Pending</option>
       </select>
+      <button class="filter-select" id="hwa-filter-btn" onclick="toggleHwaFilter()" style="background:var(--bg);border:1.5px solid var(--border2);cursor:pointer;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px">⭐ HWA Partners</button>
     </div>
     <div class="providers-table">
       <table><thead><tr>
@@ -552,6 +560,35 @@ a{color:inherit;text-decoration:none}
         <button class="btn btn-primary" onclick="changeAppPassword()" style="flex-shrink:0;margin-bottom:1px">Save</button>
       </div>
       <div style="font-size:12px;color:var(--text3)">Shared password for all team members. Default: <code>hwa2026</code></div>
+    </div>
+    <div class="admin-card">
+      <h3>📥 Import HWA Network from Excel</h3>
+      <div class="import-drop" id="import-drop" onclick="document.getElementById('import-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleImportDrop(event)">
+        <input type="file" id="import-file-input" accept=".xlsx,.xls" onchange="loadImportFile(this)">
+        <div style="font-size:32px;margin-bottom:8px">📂</div>
+        <div style="font-weight:600;color:var(--navy);margin-bottom:4px">Drop your Excel file here or click to browse</div>
+        <div style="font-size:12px;color:var(--text3)">.xlsx or .xls — your HWA network provider list</div>
+      </div>
+      <div id="import-preview" style="margin-top:16px;display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-weight:600;font-size:14px;color:var(--navy)"><span id="import-count">0</span> rows detected</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary" onclick="document.getElementById('import-preview').style.display='none'">Cancel</button>
+            <button class="btn btn-primary" id="import-btn" onclick="importFromExcel()">⭐ Import as HWA Partners</button>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Column mapping — select which Excel column matches each field:</div>
+        <div id="import-map-rows"></div>
+        <div style="margin-top:16px;background:var(--bg);border-radius:8px;padding:12px;overflow-x:auto;max-height:220px;overflow-y:auto">
+          <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Preview (first 5 rows)</div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px" id="import-preview-table"></table>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--text3)">All imported providers will be marked as <strong>HWA Partners (In Network)</strong> and enriched with Claude AI if an API key is set.</div>
+      </div>
+      <div id="import-progress" style="display:none;margin-top:12px">
+        <div class="progress-bar-wrap" style="margin-bottom:8px"><div class="progress-bar" id="import-progress-bar" style="width:0%"></div></div>
+        <div id="import-status" style="font-size:13px;color:var(--text2)">Importing...</div>
+      </div>
     </div>
     <div class="admin-card">
       <h3>📋 Recent Sessions</h3>
@@ -1120,8 +1157,21 @@ Search official databases and web to find exactly 12 real verified medical provi
       seen.add(key);return true;
     });
 
-    // Sort by cooperation_score descending
-    finalProviders.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
+    // Cross-reference with HWA network (mark existing partners)
+    try{
+      const hwaSnap=await db.collection('providers').where('inNetwork','==','Yes').get();
+      const hwaNames=new Set(hwaSnap.docs.map(d=>(d.data().name||'').toLowerCase().trim()));
+      finalProviders.forEach(p=>{
+        if(hwaNames.has((p.name||'').toLowerCase().trim()))p._isHWA=true;
+      });
+    }catch(_){}
+
+    // Sort: HWA partners first, then by cooperation_score
+    finalProviders.sort((a,b)=>{
+      const aHwa=a._isHWA?1:0, bHwa=b._isHWA?1:0;
+      if(aHwa!==bHwa)return bHwa-aHwa;
+      return (b.cooperation_score||0)-(a.cooperation_score||0);
+    });
 
     setProgress(95,'Rendering providers...');
     runResults=[...finalProviders];
@@ -1279,6 +1329,7 @@ function setProgress(pct,text){
 function renderRunCard(p,idx){
   const id='card-'+idx;
   const accHtml=(p.accreditations||[]).map(a=>`<span class="acc-tag">${a}</span>`).join('');
+  const hwaBadge=p._isHWA?'<span class="hwa-badge">⭐ HWA Partner</span>':'';
   const scoreHtml=p.cooperation_score
     ?`<div class="card-row"><span class="card-row-icon">⭐</span><span class="card-row-val">Cooperation score: <strong>${p.cooperation_score}/100</strong></span></div>`:'';
   const contactHtml=p.contact_person
@@ -1291,6 +1342,7 @@ function renderRunCard(p,idx){
       <div>
         <div class="card-name">${p.name}</div>
         <div class="card-location">📍 ${p.city}, ${p.country}</div>
+        ${hwaBadge}
       </div>
       <span class="type-badge">${typeLabel(p.type)}</span>
     </div>
@@ -1475,7 +1527,7 @@ function renderTable(providers){
           ${['New','Email Sent','Agreement Sent','Agreement Signed','In Network','No Response','Declined'].map(s=>`<option${s===p.status?' selected':''}>${s}</option>`).join('')}
         </select>
       </td>
-      <td><span class="${netClass}">${p.inNetwork||'Pending'}</span></td>
+      <td>${p.inNetwork==='Yes'?'<span class="hwa-badge" style="font-size:10px;padding:3px 9px">⭐ HWA</span>':'<span class="'+netClass+'">'+(p.inNetwork||'Pending')+'</span>'}</td>
       <td style="font-size:11px;color:var(--text3)">${p.outreachDate||''}</td>
     </tr>`;
   }).join('');
@@ -1508,6 +1560,16 @@ async function trackEmailSent(docId){
   }catch(e){}
 }
 
+let _hwaFilterOn=false;
+function toggleHwaFilter(){
+  _hwaFilterOn=!_hwaFilterOn;
+  const btn=document.getElementById('hwa-filter-btn');
+  btn.style.background=_hwaFilterOn?'var(--navy)':'var(--bg)';
+  btn.style.color=_hwaFilterOn?'#fff':'var(--text2)';
+  btn.style.borderColor=_hwaFilterOn?'var(--navy)':'var(--border2)';
+  filterProviders();
+}
+
 function filterProviders(){
   const q=(document.getElementById('db-search').value||'').toLowerCase();
   const type=document.getElementById('db-type').value;
@@ -1518,10 +1580,216 @@ function filterProviders(){
     if(type&&p.type!==type.toLowerCase().replace(/ \/ /,'/').replace(/ /,'_'))return false;
     if(status&&p.status!==status)return false;
     if(network&&p.inNetwork!==network)return false;
+    if(_hwaFilterOn&&p.inNetwork!=='Yes')return false;
     return true;
   });
   renderTable(filtered);
   document.getElementById('db-count').textContent=`${filtered.length} of ${currentProviders.length} providers`;
+}
+
+// ── Excel Import ─────────────────────────────────────────
+let _importRows=[];
+let _importHeaders=[];
+
+function handleImportDrop(e){
+  e.preventDefault();
+  document.getElementById('import-drop').classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(file)_readImportFile(file);
+}
+
+function loadImportFile(input){
+  if(input.files[0])_readImportFile(input.files[0]);
+}
+
+function _readImportFile(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const wb=XLSX.read(ev.target.result,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(!data||data.length<2){showToast('File appears empty or invalid','error');return;}
+    _importHeaders=(data[0]||[]).map(h=>String(h).trim());
+    _importRows=data.slice(1).filter(r=>r.some(c=>c!==''));
+    _showImportPreview();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+const IMPORT_FIELDS=[
+  {key:'name',label:'Provider Name'},
+  {key:'country',label:'Country'},
+  {key:'city',label:'City'},
+  {key:'type',label:'Type'},
+  {key:'email',label:'Email'},
+  {key:'phone',label:'Phone'},
+  {key:'website',label:'Website'},
+  {key:'contact_person',label:'Contact Person'},
+  {key:'specialties',label:'Specialties'},
+  {key:'address',label:'Address'},
+];
+
+function _guessCol(fieldKey){
+  const aliases={
+    name:['name','provider','hospital','clinic','facility','institution','organization'],
+    country:['country','nation','pays','land'],
+    city:['city','town','village','location','municipality'],
+    type:['type','category','kind','service'],
+    email:['email','e-mail','mail','contact email'],
+    phone:['phone','tel','telephone','mobile','fax'],
+    website:['website','web','url','site','homepage'],
+    contact_person:['contact','contact person','contact name','director','manager','coordinator'],
+    specialties:['specialty','specialties','specialization','department','services'],
+    address:['address','addr','street','location','full address'],
+  };
+  const opts=aliases[fieldKey]||[fieldKey];
+  return _importHeaders.findIndex(h=>opts.some(a=>h.toLowerCase().includes(a)));
+}
+
+function _showImportPreview(){
+  document.getElementById('import-count').textContent=_importRows.length;
+  document.getElementById('import-preview').style.display='block';
+
+  // Column mapping UI
+  const mapEl=document.getElementById('import-map-rows');
+  mapEl.innerHTML=IMPORT_FIELDS.map(f=>{
+    const guess=_guessCol(f.key);
+    const opts=_importHeaders.map((h,i)=>`<option value="${i}"${i===guess?' selected':''}>${h}</option>`).join('');
+    return `<div class="import-row">
+      <div style="width:140px;font-weight:600;font-size:12px;color:var(--text2)">${f.label}</div>
+      <select class="col-map" id="map-${f.key}">
+        <option value="-1">— skip —</option>${opts}
+      </select>
+    </div>`;
+  }).join('');
+
+  // Preview table
+  const tbl=document.getElementById('import-preview-table');
+  const previewRows=_importRows.slice(0,5);
+  tbl.innerHTML=`<tr>${_importHeaders.map(h=>`<th style="background:var(--navy);color:#fff;padding:5px 8px;font-size:11px;white-space:nowrap">${h}</th>`).join('')}</tr>`+
+    previewRows.map(r=>`<tr>${r.map(c=>`<td style="padding:4px 8px;border-bottom:1px solid var(--border)">${c}</td>`).join('')}</tr>`).join('');
+}
+
+async function importFromExcel(){
+  if(!_importRows.length){showToast('No data to import','error');return;}
+  const btn=document.getElementById('import-btn');
+  btn.disabled=true; btn.textContent='Importing...';
+  document.getElementById('import-progress').style.display='block';
+
+  // Build field→column index map
+  const colMap={};
+  IMPORT_FIELDS.forEach(f=>{
+    const idx=parseInt(document.getElementById('map-'+f.key)?.value??-1);
+    if(idx>=0)colMap[f.key]=idx;
+  });
+
+  const today=new Date().toISOString().split('T')[0];
+  const TYPE_MAP={'hospital':'hospital','clinic':'clinic','ambulance':'ground_ambulance','air ambulance':'air_ambulance','tpa':'tpa','assistance':'tpa','physical therapy':'physical_therapy','physiotherapy':'physical_therapy','doctor':'doctor','specialist':'doctor'};
+
+  function mapType(raw){
+    const r=(raw||'').toLowerCase();
+    for(const [k,v] of Object.entries(TYPE_MAP)){if(r.includes(k))return v;}
+    return 'clinic';
+  }
+  function getCell(row,field){return colMap[field]!==undefined?String(row[colMap[field]]||'').trim():'';}
+
+  const total=_importRows.length;
+  let saved=0,errors=0;
+  const batch=db.batch();
+
+  for(let i=0;i<_importRows.length;i++){
+    const row=_importRows[i];
+    const name=getCell(row,'name');
+    if(!name)continue;
+    const country=getCell(row,'country');
+    const city=getCell(row,'city');
+    const typeRaw=getCell(row,'type');
+    const cc=(country||'XX').slice(0,2).toLowerCase();
+    const slug=name.toLowerCase().replace(/[^a-z0-9]/g,'-').slice(0,18);
+    const docId=`${cc}-${slug}-hwa`;
+    const ref=db.collection('providers').doc(docId);
+    try{
+      batch.set(ref,{
+        name,country,city,
+        type:mapType(typeRaw),
+        email:getCell(row,'email'),
+        phone:getCell(row,'phone'),
+        website:getCell(row,'website'),
+        address:getCell(row,'address'),
+        contact_person:getCell(row,'contact_person'),
+        specialties:getCell(row,'specialties').split(/[;,]/).map(s=>s.trim()).filter(Boolean),
+        accreditations:[],hasInternationalDept:false,whyHWA:'',
+        email_subject:'',email_body:'',
+        outreachDate:today,status:'In Network',inNetwork:'Yes',
+        lastContact:'',responseNotes:'',agreementDate:'',
+        cooperation_score:null,google_place_id:'',google_rating:null,
+        addedBy:currentUser.displayName||'Import',addedByEmail:currentUser.email||'',
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      },{merge:true});
+      saved++;
+    }catch(e){errors++;}
+    const pct=Math.round((i+1)/total*80);
+    document.getElementById('import-progress-bar').style.width=pct+'%';
+    document.getElementById('import-status').textContent=`Saving ${i+1} of ${total}...`;
+  }
+
+  try{
+    await batch.commit();
+    document.getElementById('import-progress-bar').style.width='90%';
+    document.getElementById('import-status').textContent=`${saved} providers saved — enriching with Claude AI...`;
+
+    // Enrich if API key available
+    if(apiKey)await _enrichImported();
+
+    document.getElementById('import-progress-bar').style.width='100%';
+    document.getElementById('import-status').textContent=`✓ ${saved} HWA partners imported${errors?' ('+errors+' skipped)':''}`;
+    showToast(`${saved} HWA partners imported successfully ✓`,'success');
+    document.getElementById('import-preview').style.display='none';
+    await loadProviders();
+  }catch(e){
+    showToast('Import failed: '+e.message,'error');
+  }
+  btn.disabled=false; btn.textContent='⭐ Import as HWA Partners';
+}
+
+async function _enrichImported(){
+  if(!apiKey)return;
+  try{
+    const snap=await db.collection('providers').where('inNetwork','==','Yes').where('whyHWA','==','').limit(20).get();
+    if(snap.empty)return;
+    const toEnrich=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.name);
+    const list=toEnrich.map((p,i)=>`${i+1}. ${p.name} | ${p.city||''}, ${p.country||''} | ${p.website||'no website'} | ${p.email||'no email'}`).join('\n');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',max_tokens:4000,
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:4}],
+        system:SYSTEM_PROMPT,
+        messages:[{role:'user',content:`ENRICH HWA PARTNER PROVIDERS — for each below, find: email (if missing), contact_person, specialties array, accreditations array, has_international_dept boolean, why_hwa (1-2 sentences on value for HWA insurers), cooperation_score (1-100).\n\n${list}\n\nReturn ONLY valid JSON:\n{"enriched":[{"index":0,"email":"","contact_person":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":80}]}`}]
+      })
+    });
+    if(!resp.ok)return;
+    const data=await resp.json();
+    const rawText=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    if(!rawText)return;
+    const parsed=_parseClaudeJSON(rawText);
+    const enrichBatch=db.batch();
+    (parsed.enriched||[]).forEach(e=>{
+      const p=toEnrich[e.index];
+      if(!p)return;
+      enrichBatch.update(db.collection('providers').doc(p.id),{
+        email:e.email||p.email||'',
+        contact_person:e.contact_person||p.contact_person||'',
+        specialties:e.specialties||p.specialties||[],
+        accreditations:e.accreditations||[],
+        hasInternationalDept:e.has_international_dept||false,
+        whyHWA:e.why_hwa||'',
+        cooperation_score:e.cooperation_score||null
+      });
+    });
+    await enrichBatch.commit();
+  }catch(_){}
 }
 
 // ── Excel Export ─────────────────────────────────────────

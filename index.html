@@ -1086,12 +1086,13 @@ async function _runHwaOnly(){
 
     setProgress(25,`${totalInDb} HWA partners in database — filtering...`);
 
-    // Country filter — bidirectional fuzzy match (skip if no country entered)
+    // Country filter — strict: provider country must contain the search term, not the other way round
     if(_searchCountry){
       const cLow=_searchCountry.toLowerCase().trim();
       all=all.filter(p=>{
         const pC=(p.country||'').toLowerCase().trim();
-        return pC===cLow||pC.includes(cLow)||cLow.includes(pC);
+        if(!pC)return false; // exclude providers with no country when searching by country
+        return pC===cLow||pC.includes(cLow)||cLow===pC;
       });
     }
 
@@ -1144,7 +1145,7 @@ async function _runHwaOnly(){
     // ── Claude AI enrichment for providers missing key data ─
     if(apiKey){
       setStep(1,'active');
-      const needsInfo=all.filter(p=>!p.whyHWA||!p.cooperation_score||!p.email||!p.contact_person);
+      const needsInfo=all; // validate location for all providers; also enrich missing data
       if(needsInfo.length>0){
         try{
           const list=needsInfo.map((p,i)=>`${i+1}. ${p.name} | ${p.city||''}, ${p.country||''} | ${p.website||'no website'} | ${p.email||'no email'} | ${p.phone||'no phone'}`).join('\n');
@@ -1159,20 +1160,22 @@ async function _runHwaOnly(){
             body:JSON.stringify({
               model:'claude-sonnet-4-6',max_tokens:3000,
               system:SYSTEM_PROMPT,
-              messages:[{role:'user',content:`ENRICH HWA PARTNER PROVIDERS — Date: ${today}
-Search filter: ${_searchCity?_searchCity+', ':''}${_searchCountry||'any location'}
+              messages:[{role:'user',content:`VALIDATE AND ENRICH HWA PROVIDERS — Date: ${today}
+Location filter: ${_searchCity?_searchCity+', ':''}${_searchCountry||'any location'}
 
-For each provider below, using your knowledge:
-- email: official contact/international department email
-- contact_person: name of medical director, international coordinator, or CEO
-- accreditations: array of certifications (JCI, ISO, national accreditations)
-- specialties: array of medical specialties offered
-- has_international_dept: boolean — does this facility have an international patient department?
-- why_hwa: 2-3 sentences on why this provider is valuable for HWA's insurer clients
+REQUIRED FOR ALL providers (location validation):
+- city_verified: the real city where this provider is actually located
+- country_verified: the real country where this provider is actually located (full name, e.g. "Germany" not "DE")
+- location_match: true ONLY if provider is physically located in "${_searchCity?_searchCity+', ':''}${_searchCountry||'any location'}". Set false if the provider is in a DIFFERENT country or city.
+
+FILL IN only where the value is "no email" / "no phone" / blank (do not overwrite existing data):
+- email: official contact email
+- contact_person: medical director or international coordinator name
+- accreditations: certifications array (JCI, ISO, etc.)
+- specialties: medical specialties array
+- has_international_dept: boolean
+- why_hwa: 2-3 sentences on value to HWA insurer clients
 - cooperation_score: integer 1-100
-- city_verified: the correct city name for this provider based on your knowledge
-- country_verified: the correct country name for this provider based on your knowledge
-- location_match: true if provider is actually located in ${_searchCity?_searchCity+', ':''}${_searchCountry||'any location'}, false if not
 
 PROVIDERS:
 ${list}

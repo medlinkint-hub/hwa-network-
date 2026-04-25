@@ -428,6 +428,7 @@ a{color:inherit;text-decoration:none}
           <span class="type-chip" data-type="ground_ambulance" onclick="this.classList.toggle('selected')">🚑 Ground Ambulance</span>
           <span class="type-chip" data-type="air_ambulance" onclick="this.classList.toggle('selected')">✈️ Air Ambulance</span>
           <span class="type-chip" data-type="tpa" onclick="this.classList.toggle('selected')">🤝 TPA / Assistance</span>
+          <span class="type-chip" data-type="taxi" onclick="this.classList.toggle('selected')">🚖 Taxi</span>
         </div>
       </div>
       <div style="margin-top:16px">
@@ -844,7 +845,7 @@ CRITICAL JSON RULES: All string values must be properly escaped. Use \\n for lin
   "providers": [
     {
       "name": "string",
-      "type": "hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor",
+      "type": "hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi",
       "country": "string",
       "city": "string",
       "website": "https://...",
@@ -1104,7 +1105,7 @@ async function _runHwaOnly(){
     }
 
     // Type filter — skip if all types selected
-    const allTypes=['hospital','clinic','physical_therapy','doctor','ground_ambulance','air_ambulance','tpa'];
+    const allTypes=['hospital','clinic','physical_therapy','doctor','ground_ambulance','air_ambulance','tpa','taxi'];
     if(_searchTypes.length&&_searchTypes.length<allTypes.length){
       all=all.filter(p=>!p.type||_searchTypes.includes(p.type));
     }
@@ -1263,7 +1264,8 @@ async function _runUnified(){
       const typeQueries=_searchTypes.map(t=>({
         hospital:'hospital',clinic:'medical clinic',ground_ambulance:'ambulance service',
         air_ambulance:'air ambulance',tpa:'insurance assistance company',
-        physical_therapy:'physiotherapy clinic',doctor:'specialist doctor clinic'
+        physical_therapy:'physiotherapy clinic',doctor:'specialist doctor clinic',
+        taxi:'medical taxi transport service'
       })[t]||t);
       const baseQuery=typeQueries.join(' OR ')+' '+(specStr?specStr+' ':'')+'medical';
       const locationStr=_searchCity?`${_searchCity} ${_searchCountry}`:_searchCountry;
@@ -1288,6 +1290,7 @@ async function _runUnified(){
         if(plTypes.some(t=>t.includes('hospital')))pType='hospital';
         else if(plTypes.some(t=>t.includes('physiotherapist')||t.includes('physical_therapy')))pType='physical_therapy';
         else if(plTypes.some(t=>t.includes('doctor')||t.includes('physician')))pType='doctor';
+        else if(plTypes.some(t=>t.includes('taxi')||t.includes('transportation')))pType='taxi';
         return{
           name:pl.displayName?.text||'Unknown',type:pType,
           country:_searchCountry,city:detectedCity||_searchCity||_searchCountry,
@@ -1330,7 +1333,7 @@ ${providerList}
 ALREADY FOUND — do NOT repeat: ${googleProviders.map(p=>p.name).join(' | ')}
 
 Return ONLY valid JSON (no markdown, no backticks):
-{"enriched":[{"index":0,"email":"","contact_person":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","cooperation_score":65}]}`;
+{"enriched":[{"index":0,"email":"","contact_person":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","cooperation_score":65}]}`;
     }else{
       claudeMsg=`NETWORK RUN — Date: ${today}
 Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity+' (search primarily here, expand to nearby if needed)':' (search across the entire country)'}
@@ -1618,7 +1621,7 @@ function updateSaveCount(){
   document.getElementById('save-bar-sub').textContent=`${checked} provider${checked!==1?'s':''} selected`;
 }
 function typeLabel(t){
-  return{hospital:'🏥 Hospital',clinic:'🏢 Clinic',ground_ambulance:'🚑 Ground Amb.',air_ambulance:'✈️ Air Amb.',tpa:'🤝 TPA',physical_therapy:'🏋️ Physical Therapy',doctor:'👨‍⚕️ Doctor/Specialist'}[t]||t;
+  return{hospital:'🏥 Hospital',clinic:'🏢 Clinic',ground_ambulance:'🚑 Ground Amb.',air_ambulance:'✈️ Air Amb.',tpa:'🤝 TPA',physical_therapy:'🏋️ Physical Therapy',doctor:'👨‍⚕️ Doctor/Specialist',taxi:'🚖 Taxi'}[t]||t;
 }
 function buildMailto(p){
   const subj=encodeURIComponent(p.email_subject||'Partnership Proposal — HealthWatch Assistance');
@@ -2008,7 +2011,7 @@ async function importFromExcel(){
     'physical therapy':'physical_therapy','physiotherapy':'physical_therapy',
     'rehab':'physical_therapy','φυσικ':'physical_therapy',
     'doctor':'doctor','ιατρ':'doctor','γιατρ':'doctor',
-    'specialist':'doctor','physician':'doctor','taxi':'ground_ambulance'
+    'specialist':'doctor','physician':'doctor','taxi':'taxi','ταξί':'taxi','ταξι':'taxi'
   };
   function mapType(raw){
     // Handle comma-separated types (e.g. "Doctor, Clinic, Ambulance") — use first match

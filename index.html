@@ -1491,12 +1491,15 @@ async function _runHwaOnly(){
     }
 
     // City filter — normalize both sides to handle Greek/Latin script differences
+    // Nationwide providers (no city, or "All over X" country) match any city within their country
     if(_searchCity){
       const citySearch=_searchCity.toLowerCase().trim();
-      all=all.filter(p=>
-        _cityMatch((p.city||'').toLowerCase(),citySearch)||
-        _cityMatch((p.address||'').toLowerCase(),citySearch)
-      );
+      all=all.filter(p=>{
+        const pCity=(p.city||'').toLowerCase().trim();
+        const pCountry=(p.country||'').toLowerCase().trim();
+        if(_searchCountry&&(!pCity||pCountry.includes('all over')||pCity.includes('all over')||pCity.includes('nationwide')))return true;
+        return _cityMatch(pCity,citySearch)||_cityMatch((p.address||'').toLowerCase(),citySearch);
+      });
     }
 
     // Type filter — skip if all types selected
@@ -1531,7 +1534,10 @@ async function _runHwaOnly(){
           }
           if(_searchCity){
             const cityLow=_searchCity.toLowerCase();
-            if(!(p.city||'').toLowerCase().includes(cityLow)&&!(p.address||'').toLowerCase().includes(cityLow))return false;
+            const pCity=(p.city||'').toLowerCase().trim();
+            const pCountry=(p.country||'').toLowerCase().trim();
+            const isNationwide=!pCity||pCountry.includes('all over')||pCity.includes('all over')||pCity.includes('nationwide');
+            if(!isNationwide&&!pCity.includes(cityLow)&&!(p.address||'').toLowerCase().includes(cityLow))return false;
           }
           return true;
         });
@@ -1561,8 +1567,8 @@ async function _runHwaOnly(){
           <div style="background:#fff;border-radius:12px;padding:24px;border:1px solid var(--border)">
             <div style="font-weight:700;color:var(--navy);margin-bottom:8px">No partners matched "${locMsg}"</div>
             <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${totalInDb} HWA partners exist in your database. Countries available:</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px">${countries.map(c=>`<span style="background:var(--teal-bg);color:var(--teal);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer" onclick="document.getElementById('country-input').value='${c}';updateCityOptions();updateCountryBadge()">${c}</span>`).join('')}</div>
-            <div style="font-size:12px;color:var(--text3);margin-top:12px">Click a country above to search it, or clear the country field to see all partners.</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">${countries.map(c=>`<span style="background:var(--teal-bg);color:var(--teal);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer" onclick="document.getElementById('country-input').value='${c}';updateCityOptions();document.getElementById('city-input').value='';document.getElementById('city-custom-wrap').style.display='none';updateCountryBadge()">${c}</span>`).join('')}</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:12px">Tap a country above to search it, or clear the filters to see all partners.</div>
           </div>`;
         setStep(2,'done'); setProgress(100,'No matches — see available countries above');
       }

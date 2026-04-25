@@ -1000,21 +1000,19 @@ let _hwaOnlyMode=false;
 
 function toggleHwaOnlyMode(){
   _hwaOnlyMode=!_hwaOnlyMode;
-  const btn=document.getElementById('hwa-only-toggle');
+  const toggle=document.getElementById('hwa-only-toggle');
   const icon=document.getElementById('hwa-only-icon');
   const hint=document.getElementById('hwa-only-hint');
-  const label=document.getElementById('run-btn-label');
   if(_hwaOnlyMode){
-    btn.style.background='#1a2f5e'; btn.style.color='#fff'; btn.style.borderColor='#1a2f5e';
+    toggle.style.cssText='display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--r2);border:2px solid #1a2f5e;background:#1a2f5e;font-size:13px;font-weight:600;cursor:pointer;color:#fff;transition:all .2s';
     icon.textContent='☑';
     hint.style.display='block';
-    label.textContent='Search HWA Network';
   }else{
-    btn.style.background='#fff'; btn.style.color='var(--text2)'; btn.style.borderColor='var(--border2)';
+    toggle.style.cssText='display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--r2);border:2px solid var(--border2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .2s';
     icon.textContent='☐';
     hint.style.display='none';
-    label.textContent='Start Network Run';
   }
+  _restoreRunBtn();
 }
 
 async function startNetworkRun(){
@@ -1022,13 +1020,13 @@ async function startNetworkRun(){
   _searchCity=(document.getElementById('city-input').value||'').trim();
   if(!_searchCountry){showToast('Please enter a country to search in','error');return;}
   _searchTypes=[...document.querySelectorAll('#type-options .type-chip.selected')].map(c=>c.dataset.type);
-  if(!_searchTypes.length){showToast('Select at least one provider type','error');return;}
   _searchSpecs=[...document.querySelectorAll('#specialty-options .type-chip.selected')].map(c=>c.dataset.spec);
 
   if(_hwaOnlyMode){
     await _runHwaOnly();
     return;
   }
+  if(!_searchTypes.length){showToast('Select at least one provider type','error');return;}
   if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
   _searchActive=true;
   _resetRunUI(true);
@@ -1037,11 +1035,19 @@ async function startNetworkRun(){
   await _runUnified();
 }
 
+function _restoreRunBtn(){
+  const btn=document.getElementById('run-btn');
+  btn.disabled=false;
+  const label=_hwaOnlyMode?'Search HWA Network':'Start Network Run';
+  btn.innerHTML=`<span>🔍</span><span id="run-btn-label">${label}</span>`;
+}
+
 async function _runHwaOnly(){
   const today=new Date().toISOString().split('T')[0];
   const loc=_searchCity?`${_searchCity}, ${_searchCountry}`:_searchCountry;
   const btn=document.getElementById('run-btn');
-  btn.disabled=true; btn.innerHTML='<span>⏳</span><span>Searching HWA Network...</span>';
+  btn.disabled=true;
+  btn.innerHTML='<span>⏳</span><span>Searching HWA Network...</span>';
   document.getElementById('run-results').style.display='none';
   document.getElementById('run-cards').innerHTML='';
   document.getElementById('save-bar').classList.remove('visible');
@@ -1058,57 +1064,65 @@ async function _runHwaOnly(){
     let all=snap.docs.map(d=>({id:d.id,...d.data(),_isHWA:true}));
     setStep(0,'done'); setStep(1,'active'); setProgress(60,'Filtering results...');
 
-    // Filter by country
-    const cLow=_searchCountry.toLowerCase();
-    all=all.filter(p=>(p.country||'').toLowerCase().includes(cLow));
+    // Country filter — flexible: match word boundary, handle partial names
+    const cLow=_searchCountry.toLowerCase().trim();
+    all=all.filter(p=>{
+      const pCountry=(p.country||'').toLowerCase().trim();
+      return pCountry===cLow||pCountry.includes(cLow)||cLow.includes(pCountry);
+    });
 
-    // Filter by city (if set)
+    // City filter (optional)
     if(_searchCity){
-      const cityLow=_searchCity.toLowerCase();
-      all=all.filter(p=>(p.city||'').toLowerCase().includes(cityLow)||(p.address||'').toLowerCase().includes(cityLow));
+      const cityLow=_searchCity.toLowerCase().trim();
+      all=all.filter(p=>
+        (p.city||'').toLowerCase().includes(cityLow)||
+        (p.address||'').toLowerCase().includes(cityLow)
+      );
     }
 
-    // Filter by types (if any selected)
-    if(_searchTypes.length){
-      all=all.filter(p=>_searchTypes.includes(p.type));
+    // Type filter — only if types are selected AND not all types are selected
+    const allTypes=['hospital','clinic','physical_therapy','doctor','ground_ambulance','air_ambulance','tpa'];
+    if(_searchTypes.length && _searchTypes.length<allTypes.length){
+      all=all.filter(p=>!p.type||_searchTypes.includes(p.type));
     }
 
-    // Filter by specialties (if any selected)
+    // Specialties filter
     if(_searchSpecs.length){
       all=all.filter(p=>{
+        if(!(p.specialties||[]).length)return true; // no specialty data → always include
         const sp=(p.specialties||[]).map(s=>s.toLowerCase());
         return _searchSpecs.some(sel=>sp.some(s=>s.includes(sel.toLowerCase())));
       });
     }
 
-    // Sort by cooperation_score descending
     all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
-
     setStep(1,'done'); setProgress(90,'Rendering...');
 
     if(!all.length){
-      showToast(`No HWA partners found in ${loc} matching your filters`,'error');
+      const hint=_searchCity?` in ${loc}`:(` in ${_searchCountry}`);
+      showToast(`No HWA partners found${hint}. Try broader filters or import your HWA network list in Admin.`,'error');
       setStep(2,'done'); setProgress(100,'No results');
-      btn.disabled=false; btn.innerHTML='<span>🔍</span><span id="run-btn-label">Search HWA Network</span>';
+      document.getElementById('progress-status').textContent=`0 partners found in ${loc}`;
+      _restoreRunBtn();
       return;
     }
 
     runResults=[...all];
     document.getElementById('run-results').style.display='block';
-    document.getElementById('results-title').textContent=`${all.length} HWA Partners Found`;
+    document.getElementById('results-title').textContent=`${all.length} HWA Partner${all.length!==1?'s':''} Found`;
     document.getElementById('results-sub').textContent=`${today} · ${loc} · HWA Network`;
     all.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*60));
     setTimeout(()=>{
       setStep(2,'done'); setProgress(100,'Search complete');
-      document.getElementById('save-bar').classList.add('visible');
-      updateSaveCount();
-      btn.disabled=false; btn.innerHTML='<span>🔍</span><span id="run-btn-label">Search HWA Network</span>';
+      // Hide save bar — these providers are already in the database
+      document.getElementById('save-bar').classList.remove('visible');
+      _restoreRunBtn();
     },all.length*60+300);
 
   }catch(e){
-    showToast('Search failed: '+e.message,'error');
-    setProgress(0,'Error');
-    btn.disabled=false; btn.innerHTML='<span>🔍</span><span id="run-btn-label">Search HWA Network</span>';
+    showToast('HWA search failed: '+e.message,'error');
+    setProgress(0,'Error: '+e.message);
+    _restoreRunBtn();
   }
 }
 

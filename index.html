@@ -1152,12 +1152,11 @@ async function _runHwaOnly(){
             method:'POST',
             headers:{
               'Content-Type':'application/json','x-api-key':apiKey,
-              'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05',
+              'anthropic-version':'2023-06-01',
               'anthropic-dangerous-direct-browser-access':'true'
             },
             body:JSON.stringify({
-              model:'claude-sonnet-4-6',max_tokens:5000,
-              tools:[{type:'web_search_20250305',name:'web_search',max_uses:6}],
+              model:'claude-sonnet-4-6',max_tokens:3000,
               system:SYSTEM_PROMPT,
               messages:[{role:'user',content:`ENRICH HWA PARTNER PROVIDERS — Date: ${today}
 These are confirmed HWA network partners. For each, search the web and find:
@@ -1335,8 +1334,8 @@ Search official databases and web to find exactly 12 real verified medical provi
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',max_tokens:6000,
-        tools:[{type:'web_search_20250305',name:'web_search',max_uses:6}],
+        model:'claude-sonnet-4-6',max_tokens:4000,
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:3}],
         system:SYSTEM_PROMPT,
         messages:[{role:'user',content:claudeMsg}]
       })
@@ -1467,8 +1466,8 @@ Search official databases and web to find exactly 12 NEW real verified medical p
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',max_tokens:8000,
-        tools:[{type:'web_search_20250305',name:'web_search',max_uses:8}],
+        model:'claude-sonnet-4-6',max_tokens:5000,
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:4}],
         system:SYSTEM_PROMPT,messages:[{role:'user',content:userMsg}]
       })
     });
@@ -2084,12 +2083,11 @@ async function _enrichImported(providers){
       method:'POST',
       headers:{
         'Content-Type':'application/json','x-api-key':apiKey,
-        'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05',
+        'anthropic-version':'2023-06-01',
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',max_tokens:4000,
-        tools:[{type:'web_search_20250305',name:'web_search',max_uses:5}],
+        model:'claude-sonnet-4-6',max_tokens:2500,
         system:SYSTEM_PROMPT,
         messages:[{role:'user',content:`ENRICH HWA PARTNER PROVIDERS — for each below, search the web and find:
 email (official contact email), contact_person (medical director or international coordinator name),

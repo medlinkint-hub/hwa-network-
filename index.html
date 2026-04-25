@@ -1241,14 +1241,15 @@ async function _runHwaOnly(){
 
     setProgress(25,`${totalInDb} HWA partners in database — filtering...`);
 
-    // Country filter — normalize both sides (handles ISO codes, Greek names, etc.)
+    // Country filter — ISO exact match + full-name substring (not ISO code substring)
     if(_searchCountry){
       const cNorm=_normalizeCountry(_searchCountry);
+      const cFull=_searchCountry.toLowerCase().trim();
       all=all.filter(p=>{
         const pC=(p.country||'').toLowerCase().trim();
         if(!pC)return false;
         const pNorm=_normalizeCountry(pC);
-        return pNorm===cNorm||pC.includes(cNorm)||pNorm.includes(cNorm);
+        return pNorm===cNorm||pC.includes(cFull)||cFull.includes(pC);
       });
     }
 
@@ -1383,7 +1384,7 @@ Return ONLY valid JSON (no markdown):
         if(p._locationMismatch){removedByMismatch.push(p.name);return false;}
         const pNorm=_normalizeCountry(p.country||'');
         const pC=(p.country||'').toLowerCase();
-        const matches=pNorm===cNorm||pNorm.includes(cNorm)||pC.includes(cNorm);
+        const matches=pNorm===cNorm||pC.includes(cFull)||cFull.includes(pC);
         if(!matches)removedByMismatch.push(p.name);
         return matches;
       });
@@ -1773,9 +1774,10 @@ function renderRunCard(p,idx){
   let locationWarn='';
   if(_searchCountry&&p.country){
     const cNorm=_normalizeCountry(_searchCountry);
+    const cFull=_searchCountry.toLowerCase().trim();
     const pNorm=_normalizeCountry(p.country);
     const pC=(p.country||'').toLowerCase();
-    const matches=pNorm===cNorm||pNorm.includes(cNorm)||pC.includes(cNorm);
+    const matches=pNorm===cNorm||pC.includes(cFull)||cFull.includes(pC);
     if(!matches) locationWarn=`<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:6px 10px;font-size:11px;color:#b91c1c;margin:6px 0">⚠ Location mismatch — provider is in <strong>${p.country}</strong>, searched for <strong>${_searchCountry}</strong>. Data may be incorrect — run "Fix All HWA Partner Data" in Admin.</div>`;
   }
 

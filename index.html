@@ -1030,6 +1030,67 @@ function _normalizeCountry(raw){
   return _countryAliasFwd[r]||r; // returns ISO code if known, else original
 }
 
+// City alias table — maps Greek and local-language city names to canonical Latin key
+const CITY_ALIASES={
+  thessaloniki:['θεσσαλονίκη','thessalonica','salonika','salonica','thermi thessaloniki','θεσσαλονικη'],
+  athens:['αθήνα','athina','athen','athènes','atenas','αθηνα','attica','αττική'],
+  piraeus:['πειραιάς','pireas','pireus','πειραιας'],
+  patras:['πάτρα','patra','pátra','πατρα'],
+  heraklion:['ηράκλειο','iraklio','iraklion','heraclion','irakleio','ηρακλειο','ηρακλεio'],
+  larissa:['λάρισα','larisa','λαρισα'],
+  volos:['βόλος','βολος'],
+  rhodes:['ρόδος','rodos','rod','ρoδoς'],
+  ioannina:['ιωάννινα','yannena','ιωαννινα','giannena'],
+  corfu:['κέρκυρα','kerkyra','corfou','κερκυρα'],
+  kos:['κως'],
+  chania:['χανιά','xania','χανια'],
+  kavala:['καβάλα','καβαλα'],
+  alexandroupolis:['αλεξανδρούπολη','αλεξανδρουπολη'],
+  serres:['σέρρες','σερρες'],
+  kozani:['κοζάνη','κοζανη'],
+  katerini:['κατερίνη','κατερινη'],
+  trikala:['τρίκαλα','τρικαλα'],
+  lamia:['λαμία','λαμια'],
+  kalamata:['καλαμάτα','καλαματα'],
+  tripolis:['τρίπολη','τριπολη','tripoli'],
+  chalkida:['χαλκίδα','χαλκιδα','chalcis'],
+  mytilene:['μυτιλήνη','mytilini','lesbos','λέσβος','μυτιληνη'],
+  sparta:['σπάρτη','σπαρτη'],
+  corinth:['κόρινθος','korinthos','κορινθος'],
+  nafplio:['ναύπλιο','nauplio','ναυπλιο'],
+  drama:['δράμα','δραμα'],
+  agrinio:['αγρίνιο','αγρινιο'],
+  // Major European cities with umlaut/accent variants
+  munich:['münchen','muenchen','munchen'],
+  dusseldorf:['düsseldorf','duesseldorf'],
+  cologne:['köln','koeln','koln'],
+  frankfurt:['frankfurt am main','frankfurt/main'],
+  nuremberg:['nürnberg','nuernberg','nurnberg'],
+  zurich:['zürich','zuerich','zuerich'],
+  vienna:['wien','vienne'],
+  brussels:['bruxelles','brüssel','brussel'],
+  istanbul:['κωνσταντινούπολη','konstantinoupolis'],
+  nicosia:['λευκωσία','lefkosia','lefkoşa'],
+  limassol:['λεμεσός','lemesos'],
+  larnaca:['λάρνακα','larnaka'],
+  paphos:['πάφος','pafos'],
+};
+const _cityAliasFwd={};
+Object.entries(CITY_ALIASES).forEach(([canonical,aliases])=>{
+  _cityAliasFwd[canonical]=canonical;
+  aliases.forEach(a=>{_cityAliasFwd[a.toLowerCase()]=canonical;});
+});
+function _normalizeCity(raw){
+  const r=(raw||'').toLowerCase().trim();
+  return _cityAliasFwd[r]||r;
+}
+function _cityMatch(stored,search){
+  const sNorm=_normalizeCity(search);
+  const pNorm=_normalizeCity(stored);
+  return pNorm===sNorm||stored.includes(search)||pNorm.includes(sNorm)||
+    stored.includes(sNorm)||pNorm.includes(search);
+}
+
 function _resetRunUI(clearCards){
   document.getElementById('run-btn').disabled=true;
   document.getElementById('run-btn').innerHTML='<span>⏳</span><span>Searching...</span>';
@@ -1178,12 +1239,12 @@ async function _runHwaOnly(){
       });
     }
 
-    // City filter (optional)
+    // City filter — normalize both sides to handle Greek/Latin script differences
     if(_searchCity){
-      const cityLow=_searchCity.toLowerCase().trim();
+      const citySearch=_searchCity.toLowerCase().trim();
       all=all.filter(p=>
-        (p.city||'').toLowerCase().includes(cityLow)||
-        (p.address||'').toLowerCase().includes(cityLow)
+        _cityMatch((p.city||'').toLowerCase(),citySearch)||
+        _cityMatch((p.address||'').toLowerCase(),citySearch)
       );
     }
 

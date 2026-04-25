@@ -1685,6 +1685,7 @@ Return ONLY valid JSON (no markdown):
     // Also catches wrong Firestore data that slipped through the initial filter.
     if(_searchCountry){
       const cNorm=_normalizeCountry(_searchCountry);
+      const cFull=_searchCountry.toLowerCase().trim();
       const removedByMismatch=[];
       all=all.filter(p=>{
         if(p._locationMismatch){removedByMismatch.push(p.name);return false;}

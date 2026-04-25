@@ -598,6 +598,15 @@ a{color:inherit;text-decoration:none}
       </div>
     </div>
     <div class="admin-card">
+      <h3>🔧 Fix All HWA Partner Data</h3>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Correct city names, country names, and service types for all HWA partners using Claude AI. Converts Greek/local-language values to English and fixes wrong types. Runs in batches — may take a few minutes for large databases.</div>
+      <button class="btn btn-primary" id="fix-data-btn" onclick="fixAllHwaData()">🔧 Fix Location &amp; Service Data for All Partners</button>
+      <div id="fix-progress" style="display:none;margin-top:14px">
+        <div class="progress-bar-wrap" style="margin-bottom:8px"><div class="progress-bar" id="fix-progress-bar" style="width:0%"></div></div>
+        <div id="fix-status" style="font-size:13px;color:var(--text2)">Starting...</div>
+      </div>
+    </div>
+    <div class="admin-card">
       <h3>📋 Recent Sessions</h3>
       <div id="sessions-list"><div class="empty-state" style="padding:20px"><div class="empty-sub">No sessions yet</div></div></div>
     </div>
@@ -2363,6 +2372,115 @@ function downloadExcel(){
   XLSX.utils.book_append_sheet(wb,ws,'Providers');
   XLSX.writeFile(wb,`HWA_Network_Tracker_${new Date().toISOString().split('T')[0]}.xlsx`);
   showToast('Excel downloaded ✓','success');
+}
+
+// ── Fix All HWA Partner Data ───────────────────────────────
+async function fixAllHwaData(){
+  if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
+  const btn=document.getElementById('fix-data-btn');
+  const progressEl=document.getElementById('fix-progress');
+  const bar=document.getElementById('fix-progress-bar');
+  const status=document.getElementById('fix-status');
+  btn.disabled=true;
+  progressEl.style.display='block';
+
+  const setFixProgress=(pct,msg)=>{bar.style.width=pct+'%';status.textContent=msg;};
+  setFixProgress(2,'Loading all HWA partners from database...');
+
+  try{
+    // Load all HWA partners
+    const snap=await db.collection('providers').where('inNetwork','==','Yes').get();
+    const total=snap.size;
+    if(!total){showToast('No HWA partners in database','error');btn.disabled=false;progressEl.style.display='none';return;}
+
+    setFixProgress(5,`${total} partners loaded — processing in batches...`);
+    const providers=snap.docs.map(d=>({id:d.id,...d.data()}));
+
+    const BATCH_SIZE=25; // providers per Claude call
+    let fixed=0;
+    const firestoreUpdates=[]; // {id, city, country, type}
+
+    for(let i=0;i<providers.length;i+=BATCH_SIZE){
+      const chunk=providers.slice(i,i+BATCH_SIZE);
+      const pct=Math.round(5+(i/providers.length)*80);
+      setFixProgress(pct,`Fixing providers ${i+1}–${Math.min(i+BATCH_SIZE,providers.length)} of ${total}...`);
+
+      const list=chunk.map((p,idx)=>`${idx}|${p.name||'?'}|${p.city||'?'}|${p.country||'?'}|${p.type||'?'}`).join('\n');
+
+      try{
+        const resp=await fetch('https://api.anthropic.com/v1/messages',{
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json','x-api-key':apiKey,
+            'anthropic-version':'2023-06-01',
+            'anthropic-dangerous-direct-browser-access':'true'
+          },
+          body:JSON.stringify({
+            model:'claude-sonnet-4-6',max_tokens:3000,
+            system:'You are a medical data quality specialist. Correct provider location and type data.',
+            messages:[{role:'user',content:`For each provider below, return corrected data:
+- city: English name of the city (e.g. Θεσσαλονίκη → Thessaloniki, Αθήνα → Athens, München → Munich)
+- country: Full English country name (e.g. GR → Greece, DE → Germany, Ελλάδα → Greece)
+- type: one of: hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi
+
+Format: idx|city|country|type — one line per provider. ONLY output the corrected lines, no explanation.
+
+PROVIDERS (idx|name|city|country|type):
+${list}`}]
+          })
+        });
+
+        if(resp.ok){
+          const data=await resp.json();
+          const raw=data.content.filter(b=>b.type==='text').map(b=>b.text).join('').trim();
+          raw.split('\n').forEach(line=>{
+            const parts=line.split('|');
+            if(parts.length<4)return;
+            const idx=parseInt(parts[0]);
+            if(isNaN(idx)||!chunk[idx])return;
+            const p=chunk[idx];
+            const city=(parts[1]||'').trim();
+            const country=(parts[2]||'').trim();
+            const type=(parts[3]||'').trim();
+            const validTypes=['hospital','clinic','ground_ambulance','air_ambulance','tpa','physical_therapy','doctor','taxi'];
+            const update={};
+            if(city&&city!=='?'&&city!==p.city)update.city=city;
+            if(country&&country!=='?'&&country!==p.country)update.country=country;
+            if(type&&validTypes.includes(type)&&type!==p.type)update.type=type;
+            if(Object.keys(update).length)firestoreUpdates.push({id:p.id,update});
+          });
+          fixed+=chunk.length;
+        }
+      }catch(batchErr){
+        // skip failed batch, continue
+      }
+
+      // Throttle slightly between Claude calls
+      if(i+BATCH_SIZE<providers.length)await new Promise(r=>setTimeout(r,300));
+    }
+
+    setFixProgress(88,`Writing ${firestoreUpdates.length} corrections to database...`);
+
+    // Write to Firestore in 400-doc chunks
+    const CHUNK=400;
+    for(let i=0;i<firestoreUpdates.length;i+=CHUNK){
+      const b=db.batch();
+      firestoreUpdates.slice(i,i+CHUNK).forEach(({id,update})=>{
+        b.update(db.collection('providers').doc(id),update);
+      });
+      await b.commit();
+    }
+
+    setFixProgress(100,`Done — ${firestoreUpdates.length} corrections applied to ${total} partners`);
+    showToast(`Fixed ${firestoreUpdates.length} corrections across ${total} HWA partners ✓`,'success');
+    loadProviders().catch(()=>{});
+
+  }catch(e){
+    showToast('Fix failed: '+e.message,'error');
+    setFixProgress(0,'Error: '+e.message);
+  }finally{
+    btn.disabled=false;
+  }
 }
 
 // ── Admin ─────────────────────────────────────────────────

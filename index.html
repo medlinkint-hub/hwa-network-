@@ -1239,12 +1239,14 @@ async function _runHwaOnly(){
 
     // Country filter — normalize both sides (handles ISO codes, Greek names, etc.)
     if(_searchCountry){
+      // Use ISO code for exact match; full-name substring avoids 'in' matching 'finland','spain' etc.
       const cNorm=_normalizeCountry(_searchCountry);
+      const cFull=_searchCountry.toLowerCase().trim();
       all=all.filter(p=>{
         const pC=(p.country||'').toLowerCase().trim();
         if(!pC)return false;
         const pNorm=_normalizeCountry(pC);
-        return pNorm===cNorm||pC.includes(cNorm)||pNorm.includes(cNorm);
+        return pNorm===cNorm||pC.includes(cFull)||cFull.includes(pC);
       });
     }
 

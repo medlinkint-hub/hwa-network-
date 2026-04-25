@@ -1151,6 +1151,7 @@ function _parseClaudeJSON(rawText){
 }
 
 let _hwaOnlyMode=false;
+let _noHwaMsg='';
 
 function toggleHwaOnlyMode(){
   _hwaOnlyMode=!_hwaOnlyMode;
@@ -1277,57 +1278,16 @@ async function _runHwaOnly(){
 
     if(!all.length){
       setStep(0,'done');
-      setProgress(40,'No HWA partners matched — searching for assistance companies...');
-      // ── Fallback: find TPA/assistance companies in the same location ──
-      let fallback=[];
-      try{
-        const fbSnap=await db.collection('providers').get();
-        const cNorm=_searchCountry?_normalizeCountry(_searchCountry):'';
-        fallback=fbSnap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>{
-          if(p.inNetwork==='Yes')return false; // already shown above, skip HWA partners
-          if(p.type!=='tpa'&&p.type!=='assistance')return false;
-          if(cNorm){
-            const pNorm=_normalizeCountry(p.country||'');
-            if(pNorm!==cNorm)return false;
-          }
-          if(_searchCity){
-            const cityLow=_searchCity.toLowerCase();
-            if(!(p.city||'').toLowerCase().includes(cityLow)&&!(p.address||'').toLowerCase().includes(cityLow))return false;
-          }
-          return true;
-        });
-      }catch(_){}
-
-      document.getElementById('run-results').style.display='block';
       const locMsg=loc||'all countries';
-
-      if(fallback.length){
-        // Show fallback assistance companies
-        runResults=[...fallback];
-        document.getElementById('results-title').textContent=`No HWA Partners — ${fallback.length} Assistance Compan${fallback.length!==1?'ies':'y'} Available`;
-        document.getElementById('results-sub').textContent=`${today} · ${locMsg} · No HWA partners matched — showing assistance companies from database`;
-        document.getElementById('run-cards').innerHTML=`
-          <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px 18px;margin-bottom:12px;font-size:13px;color:#856404">
-            <strong>No HWA partners found in "${locMsg}".</strong> Showing ${fallback.length} assistance compan${fallback.length!==1?'ies':'y'} available in this location that may provide coverage.
-          </div>`;
-        fallback.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*60));
-        setTimeout(()=>{setStep(2,'done');setProgress(100,'Fallback results shown');_restoreRunBtn();},fallback.length*60+300);
-      }else{
-        // No fallback either — show countries with HWA partners
-        const rawCountries=snap.docs.map(d=>d.data().country).filter(c=>c&&c.length<=50&&!/^\d/.test(c));
-        const countries=[...new Set(rawCountries)].sort();
-        document.getElementById('results-title').textContent='No Matches Found';
-        document.getElementById('results-sub').textContent=`${totalInDb} HWA partners in database — none matched filters`;
-        document.getElementById('run-cards').innerHTML=`
-          <div style="background:#fff;border-radius:12px;padding:24px;border:1px solid var(--border)">
-            <div style="font-weight:700;color:var(--navy);margin-bottom:8px">No partners matched "${locMsg}"</div>
-            <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${totalInDb} HWA partners exist in your database. Countries available:</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px">${countries.map(c=>`<span style="background:var(--teal-bg);color:var(--teal);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer" onclick="document.getElementById('country-input').value='${c}';updateCountryBadge()">${c}</span>`).join('')}</div>
-            <div style="font-size:12px;color:var(--text3);margin-top:12px">Click a country above to search it, or clear the country field to see all partners.</div>
-          </div>`;
-        setStep(2,'done'); setProgress(100,'No matches — see available countries above');
-      }
-      _restoreRunBtn(); return;
+      // No HWA partners matched — automatically fall through to Claude AI search
+      _noHwaMsg=locMsg;
+      setProgress(35,`No HWA partners in "${locMsg}" — running Claude AI search...`);
+      // Reset step labels for Claude AI mode
+      document.getElementById('step-0-text').textContent='Locating providers';
+      document.getElementById('step-1-text').textContent='Enriching & qualifying';
+      document.getElementById('step-2-text').textContent='Complete';
+      await _runUnified();
+      return;
     }
 
     all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
@@ -1616,14 +1576,32 @@ Search official databases and web to find exactly 12 real verified medical provi
 
     setProgress(95,'Rendering providers...');
     runResults=[...finalProviders];
+
+    const hwaCount=finalProviders.filter(p=>p._isHWA).length;
+    const noHwaLoc=_noHwaMsg;
+    _noHwaMsg='';
+
     document.getElementById('run-results').style.display='block';
+    document.getElementById('run-cards').innerHTML='';
+
+    if(noHwaLoc||(!hwaCount&&(_searchCountry||_searchCity))){
+      const bannerLoc=noHwaLoc||loc;
+      document.getElementById('results-title').textContent=`Claude AI Results — No HWA Partners in "${bannerLoc}"`;
+      document.getElementById('results-sub').textContent=`${today} · ${bannerLoc} · No HWA partners available — ${finalProviders.length} Claude AI suggestions shown`;
+      document.getElementById('run-cards').insertAdjacentHTML('beforeend',`
+        <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px 18px;margin-bottom:12px;font-size:13px;color:#856404;display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:20px;line-height:1.2">⚠</span>
+          <div><strong>No HWA partners are currently available in "${bannerLoc}".</strong> The results below are Claude AI suggestions — verify before use and consider adding suitable providers to your HWA network.</div>
+        </div>`);
+    }
+
     finalProviders.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*80));
 
     try{await db.collection('sessions').add({date:today,region:loc,providersFound:finalProviders.length,batchNum:1,runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
 
     setTimeout(()=>{
       setStep(1,'done');setStep(2,'done');
-      _finishRunUI(`${finalProviders.length} providers found`);
+      _finishRunUI(`${finalProviders.length} providers found${hwaCount?` (${hwaCount} HWA partner${hwaCount!==1?'s':''})`:' — no HWA partners'}`);
     },finalProviders.length*80+400);
 
   }catch(e){

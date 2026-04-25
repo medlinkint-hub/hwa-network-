@@ -2808,6 +2808,9 @@ function downloadExcel(){
 }
 
 // ── Fix All HWA Partner Data ───────────────────────────────
+// ISO-2 → full English country name (for reversing stored ISO codes)
+const _isoToName={af:'Afghanistan',al:'Albania',dz:'Algeria',ao:'Angola',ar:'Argentina',am:'Armenia',au:'Australia',at:'Austria',az:'Azerbaijan',bh:'Bahrain',bd:'Bangladesh',by:'Belarus',be:'Belgium',bo:'Bolivia',ba:'Bosnia and Herzegovina',br:'Brazil',bg:'Bulgaria',kh:'Cambodia',cm:'Cameroon',ca:'Canada',cl:'Chile',cn:'China',co:'Colombia',hr:'Croatia',cy:'Cyprus',cz:'Czech Republic',dk:'Denmark',do:'Dominican Republic',ec:'Ecuador',eg:'Egypt',ee:'Estonia',et:'Ethiopia',fi:'Finland',fr:'France',ge:'Georgia',de:'Germany',gh:'Ghana',gr:'Greece',gt:'Guatemala',hk:'Hong Kong',hu:'Hungary',in:'India',id:'Indonesia',ir:'Iran',iq:'Iraq',ie:'Ireland',il:'Israel',it:'Italy',jp:'Japan',jo:'Jordan',kz:'Kazakhstan',ke:'Kenya',kw:'Kuwait',lv:'Latvia',lb:'Lebanon',ly:'Libya',lt:'Lithuania',my:'Malaysia',mt:'Malta',mx:'Mexico',ma:'Morocco',mz:'Mozambique',np:'Nepal',nl:'Netherlands',nz:'New Zealand',ng:'Nigeria',mk:'North Macedonia',no:'Norway',om:'Oman',pk:'Pakistan',pa:'Panama',pe:'Peru',ph:'Philippines',pl:'Poland',pt:'Portugal',qa:'Qatar',ro:'Romania',ru:'Russia',rw:'Rwanda',sa:'Saudi Arabia',sn:'Senegal',rs:'Serbia',sg:'Singapore',sk:'Slovakia',si:'Slovenia',za:'South Africa',kr:'South Korea',es:'Spain',lk:'Sri Lanka',se:'Sweden',ch:'Switzerland',tw:'Taiwan',tz:'Tanzania',th:'Thailand',tn:'Tunisia',tr:'Turkey',ae:'UAE',ug:'Uganda',ua:'Ukraine',gb:'United Kingdom',us:'United States',uy:'Uruguay',ve:'Venezuela',vn:'Vietnam',ye:'Yemen',zm:'Zambia',zw:'Zimbabwe'};
+
 async function fixAllHwaData(){
   if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
   const btn=document.getElementById('fix-data-btn');
@@ -2818,25 +2821,63 @@ async function fixAllHwaData(){
   progressEl.style.display='block';
 
   const setFixProgress=(pct,msg)=>{bar.style.width=pct+'%';status.textContent=msg;};
-  setFixProgress(2,'Loading all HWA partners from database...');
+  setFixProgress(2,'Loading all providers from database...');
 
   try{
-    // Load all HWA partners
-    const snap=await db.collection('providers').where('inNetwork','==','Yes').get();
+    // Load ALL providers (not just inNetwork=Yes — bad data affects all)
+    const snap=await db.collection('providers').get();
     const total=snap.size;
-    if(!total){showToast('No HWA partners in database','error');btn.disabled=false;progressEl.style.display='none';return;}
+    if(!total){showToast('No providers in database','error');btn.disabled=false;progressEl.style.display='none';return;}
 
-    setFixProgress(5,`${total} partners loaded — processing in batches...`);
+    setFixProgress(5,`${total} providers loaded — running deterministic fixes...`);
     const providers=snap.docs.map(d=>({id:d.id,...d.data()}));
 
-    const BATCH_SIZE=25; // providers per Claude call
-    let fixed=0;
-    const firestoreUpdates=[]; // {id, city, country, type}
+    // ── PASS 1: Deterministic fixes (no API needed) ─────────
+    const deterministicUpdates=[];
+    providers.forEach(p=>{
+      const update={};
+      // Fix "All over Greece" → "Greece", "All over Italy" → "Italy", etc.
+      const rawCountry=(p.country||'').trim();
+      const allOverMatch=rawCountry.match(/^all\s+over\s+(.+)$/i);
+      if(allOverMatch)update.country=allOverMatch[1].trim().replace(/\b\w/g,c=>c.toUpperCase());
+      // Fix ISO codes stored as country ("GR" → "Greece", "IT" → "Italy")
+      const iso=rawCountry.toLowerCase().trim();
+      if(iso.length===2&&_isoToName[iso])update.country=_isoToName[iso];
+      // Fix city aliases (Greek script → English, common variants)
+      const rawCity=(p.city||'').trim();
+      if(rawCity){
+        const norm=_normalizeCity(rawCity.toLowerCase());
+        const canonical=norm.replace(/\b\w/g,c=>c.toUpperCase());
+        if(canonical.toLowerCase()!==rawCity.toLowerCase())update.city=canonical;
+      }
+      if(Object.keys(update).length)deterministicUpdates.push({id:p.id,update});
+    });
+
+    // Apply deterministic fixes immediately
+    if(deterministicUpdates.length){
+      setFixProgress(12,`Applying ${deterministicUpdates.length} instant corrections...`);
+      const DCHUNK=400;
+      for(let i=0;i<deterministicUpdates.length;i+=DCHUNK){
+        const b=db.batch();
+        deterministicUpdates.slice(i,i+DCHUNK).forEach(({id,update})=>{
+          b.update(db.collection('providers').doc(id),update);
+          // Also update in-memory so Claude sees corrected values
+          const p=providers.find(x=>x.id===id);
+          if(p)Object.assign(p,update);
+        });
+        await b.commit();
+      }
+    }
+
+    setFixProgress(15,`${deterministicUpdates.length} instant fixes done — running Claude AI for remaining issues...`);
+
+    const BATCH_SIZE=25;
+    const firestoreUpdates=[];
 
     for(let i=0;i<providers.length;i+=BATCH_SIZE){
       const chunk=providers.slice(i,i+BATCH_SIZE);
-      const pct=Math.round(5+(i/providers.length)*80);
-      setFixProgress(pct,`Fixing providers ${i+1}–${Math.min(i+BATCH_SIZE,providers.length)} of ${total}...`);
+      const pct=Math.round(15+(i/providers.length)*70);
+      setFixProgress(pct,`AI-fixing providers ${i+1}–${Math.min(i+BATCH_SIZE,providers.length)} of ${total}...`);
 
       const list=chunk.map((p,idx)=>`${idx}|${p.name||'?'}|${p.city||'?'}|${p.country||'?'}|${p.type||'?'}`).join('\n');
 
@@ -2850,16 +2891,20 @@ async function fixAllHwaData(){
           },
           body:JSON.stringify({
             model:'claude-sonnet-4-6',max_tokens:3000,
-            system:'You are a medical data quality specialist. Correct provider location and type data.',
-            messages:[{role:'user',content:`For each provider below, return corrected location and type data.
+            system:'You are a medical data quality specialist. Correct provider location and type data. Output ONLY pipe-separated lines.',
+            messages:[{role:'user',content:`Fix location and type data for each provider. Return corrected values.
 
 RULES:
-- city: English name of the real city where this provider is physically based (Θεσσαλονίκη→Thessaloniki, München→Munich, Αθήνα→Athens)
-- country: Full English country name where this provider is ACTUALLY located — look up by provider name + city. DO NOT trust the stored country if it contradicts the city or provider name. (GR→Greece, DE→Germany, HR→Croatia, FI→Finland, Ελλάδα→Greece, etc.)
-  IMPORTANT: If city="Rijeka" the country must be "Croatia" regardless of what is stored. If city="Helsinki" the country must be "Finland". If city="Athens" or "Thessaloniki" the country must be "Greece". Use the city as the ground truth.
+- city: English city name where provider is PHYSICALLY located. Use provider name + context as ground truth.
+  Examples: "Θεσσαλονίκη"→"Thessaloniki", "München"→"Munich", "Αθήνα"→"Athens", "?"→leave as "?" if unknown
+  If provider name contains a city (e.g. "Athens Medical Center") use that city.
+- country: Full English country name where provider is ACTUALLY located. USE THE CITY AS GROUND TRUTH — ignore the stored country if wrong.
+  Examples: "GR"→"Greece", "Ελλάδα"→"Greece", "All over Greece"→"Greece", "DE"→"Germany"
+  If city="Warsaw" → country="Poland", city="Thessaloniki" → country="Greece", city="Dublin" → country="Ireland"
 - type: one of: hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi
+  If name contains "ambulance/HEMS/air" → air_ambulance or ground_ambulance. "Hospital/Medical Center" → hospital. "Clinic/Polyclinic" → clinic. "TPA/Assistance/SOS" → tpa.
 
-Format: idx|city|country|type — one line per provider. ONLY output lines, no explanation.
+Format: idx|city|country|type — one line per provider, no extra text.
 
 PROVIDERS (idx|name|city|country|type):
 ${list}`}]
@@ -2870,7 +2915,7 @@ ${list}`}]
           const data=await resp.json();
           const raw=data.content.filter(b=>b.type==='text').map(b=>b.text).join('').trim();
           raw.split('\n').forEach(line=>{
-            const parts=line.split('|');
+            const parts=line.trim().split('|');
             if(parts.length<4)return;
             const idx=parseInt(parts[0]);
             if(isNaN(idx)||!chunk[idx])return;
@@ -2885,19 +2930,14 @@ ${list}`}]
             if(type&&validTypes.includes(type)&&type!==p.type)update.type=type;
             if(Object.keys(update).length)firestoreUpdates.push({id:p.id,update});
           });
-          fixed+=chunk.length;
         }
-      }catch(batchErr){
-        // skip failed batch, continue
-      }
+      }catch(batchErr){/* skip failed batch, continue */}
 
-      // Throttle slightly between Claude calls
       if(i+BATCH_SIZE<providers.length)await new Promise(r=>setTimeout(r,300));
     }
 
-    setFixProgress(88,`Writing ${firestoreUpdates.length} corrections to database...`);
+    setFixProgress(88,`Writing ${firestoreUpdates.length} AI corrections to database...`);
 
-    // Write to Firestore in 400-doc chunks
     const CHUNK=400;
     for(let i=0;i<firestoreUpdates.length;i+=CHUNK){
       const b=db.batch();
@@ -2907,9 +2947,11 @@ ${list}`}]
       await b.commit();
     }
 
-    setFixProgress(100,`Done — ${firestoreUpdates.length} corrections applied to ${total} partners`);
-    showToast(`Fixed ${firestoreUpdates.length} corrections across ${total} HWA partners ✓`,'success');
+    const total_fixes=deterministicUpdates.length+firestoreUpdates.length;
+    setFixProgress(100,`Done — ${total_fixes} corrections applied (${deterministicUpdates.length} instant + ${firestoreUpdates.length} AI)`);
+    showToast(`Fixed ${total_fixes} corrections across ${total} providers ✓`,'success');
     loadProviders().catch(()=>{});
+    loadDashboard().catch(()=>{});
 
   }catch(e){
     showToast('Fix failed: '+e.message,'error');

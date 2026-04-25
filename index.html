@@ -949,6 +949,86 @@ let _searchCity='';
 let _searchTypes=[];
 let _searchSpecs=[];
 
+// ISO-2 code → canonical English name + common aliases for normalization
+const COUNTRY_ALIASES={
+  gr:['greece','grecia','griechenland','ελλάδα','hellas','hellenic'],
+  de:['germany','deutschland','allemagne','alemania','germania'],
+  gb:['uk','united kingdom','great britain','england','britain'],
+  us:['usa','united states','america','united states of america'],
+  fr:['france','frankrijk','frankreich','francia'],
+  it:['italy','italia','italien','italie'],
+  es:['spain','españa','espagne','spanien'],
+  pt:['portugal'],
+  cy:['cyprus','κύπρος','kibris','zypern','chypre'],
+  tr:['turkey','türkiye','turquie','turkei'],
+  al:['albania','shqipëria','albanien'],
+  bg:['bulgaria','bulgarie','bulgarien'],
+  ro:['romania','românia','roumanie','rumänien'],
+  rs:['serbia','srbija','serbien'],
+  hr:['croatia','hrvatska','kroatien','croatie'],
+  si:['slovenia','slovenija','slowenien'],
+  sk:['slovakia','slovensko','slowakei'],
+  cz:['czechia','czech republic','česká republika','tschechien'],
+  pl:['poland','polska','pologne','polen'],
+  hu:['hungary','magyarország','ungarn'],
+  at:['austria','österreich','autriche'],
+  ch:['switzerland','schweiz','suisse','svizzera','helvetia'],
+  nl:['netherlands','nederland','hollande','niederlande','holland'],
+  be:['belgium','belgique','belgien'],
+  lu:['luxembourg','luxemburg'],
+  dk:['denmark','danmark','dänemark'],
+  se:['sweden','sverige','schweden'],
+  no:['norway','norge','norwegen'],
+  fi:['finland','suomi','finnland'],
+  ie:['ireland','éire','irland'],
+  mt:['malta'],
+  ee:['estonia','eesti','estland'],
+  lv:['latvia','latvija','lettland'],
+  lt:['lithuania','lietuva','litauen'],
+  mk:['north macedonia','macedonia','makedonia','северная македония'],
+  me:['montenegro','crna gora'],
+  ba:['bosnia','bosnia and herzegovina','bosna i hercegovina'],
+  md:['moldova','moldavia'],
+  ua:['ukraine','україна'],
+  ru:['russia','russland','russie','россия'],
+  ae:['uae','united arab emirates','emirates','امارات'],
+  sa:['saudi arabia','المملكة العربية السعودية'],
+  eg:['egypt','مصر','ägypten'],
+  il:['israel','ישראל'],
+  jo:['jordan','الأردن'],
+  lb:['lebanon','لبنان'],
+  ma:['morocco','maroc','المغرب'],
+  tn:['tunisia','tunisie','تونس'],
+  za:['south africa'],
+  ng:['nigeria'],
+  ke:['kenya'],
+  gh:['ghana'],
+  in:['india','bharat'],
+  cn:['china','中国'],
+  jp:['japan','日本'],
+  kr:['south korea','korea','한국'],
+  th:['thailand','ประเทศไทย'],
+  sg:['singapore','singapura'],
+  au:['australia'],
+  nz:['new zealand'],
+  ca:['canada'],
+  mx:['mexico','méxico'],
+  br:['brazil','brasil'],
+  ar:['argentina'],
+  cl:['chile'],
+  co:['colombia']
+};
+// Reverse map: alias → ISO code (and ISO code → ISO code)
+const _countryAliasFwd={};
+Object.entries(COUNTRY_ALIASES).forEach(([code,aliases])=>{
+  _countryAliasFwd[code]=code;
+  aliases.forEach(a=>{_countryAliasFwd[a.toLowerCase()]=code;});
+});
+function _normalizeCountry(raw){
+  const r=(raw||'').toLowerCase().trim();
+  return _countryAliasFwd[r]||r; // returns ISO code if known, else original
+}
+
 function _resetRunUI(clearCards){
   document.getElementById('run-btn').disabled=true;
   document.getElementById('run-btn').innerHTML='<span>⏳</span><span>Searching...</span>';
@@ -1086,13 +1166,14 @@ async function _runHwaOnly(){
 
     setProgress(25,`${totalInDb} HWA partners in database — filtering...`);
 
-    // Country filter — strict: provider country must contain the search term, not the other way round
+    // Country filter — normalize both sides (handles ISO codes, Greek names, etc.)
     if(_searchCountry){
-      const cLow=_searchCountry.toLowerCase().trim();
+      const cNorm=_normalizeCountry(_searchCountry);
       all=all.filter(p=>{
         const pC=(p.country||'').toLowerCase().trim();
-        if(!pC)return false; // exclude providers with no country when searching by country
-        return pC===cLow||pC.includes(cLow)||cLow===pC;
+        if(!pC)return false;
+        const pNorm=_normalizeCountry(pC);
+        return pNorm===cNorm||pC.includes(cNorm)||pNorm.includes(cNorm);
       });
     }
 
@@ -1126,8 +1207,9 @@ async function _runHwaOnly(){
       document.getElementById('run-results').style.display='block';
       document.getElementById('results-title').textContent='No Matches Found';
       document.getElementById('results-sub').textContent=`${totalInDb} HWA partners in database — none matched filters`;
-      // Show countries that DO have partners
-      const countries=[...new Set(snap.docs.map(d=>d.data().country).filter(Boolean))].sort();
+      // Show countries that DO have partners — filter out non-country values (phone numbers etc.)
+      const rawCountries=snap.docs.map(d=>d.data().country).filter(c=>c&&c.length<=50&&!/^\d/.test(c));
+      const countries=[...new Set(rawCountries)].sort();
       document.getElementById('run-cards').innerHTML=`
         <div style="background:#fff;border-radius:12px;padding:24px;border:1px solid var(--border)">
           <div style="font-weight:700;color:var(--navy);margin-bottom:8px">No partners matched "${locMsg}"</div>

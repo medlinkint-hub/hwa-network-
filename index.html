@@ -628,8 +628,8 @@ a{color:inherit;text-decoration:none}
     </div>
     <div class="providers-table">
       <table><thead><tr>
-        <th>Provider</th><th>Type</th><th>Country</th><th>Contact Person</th><th>Email / Outlook</th>
-        <th>Score</th><th>HWA Status</th><th>In Network</th><th>Added</th>
+        <th>Provider</th><th>Type</th><th>Country</th><th>Contact Person</th><th>Title / LinkedIn</th><th>Email / Outlook</th>
+        <th>Score</th><th>HWA Status</th><th>In Network</th><th>Source</th><th>Added</th>
       </tr></thead>
       <tbody id="db-tbody"></tbody></table>
     </div>
@@ -1940,7 +1940,7 @@ Find exactly 12 real verified medical providers in ${loc} matching the requested
         const existingNames=new Set(googleProviders.map(p=>p.name.toLowerCase().trim()));
         const additional=(parsed.additional||[])
           .filter(p=>p.name&&!existingNames.has(p.name.toLowerCase().trim()))
-          .map(p=>({...p,cooperation_score:p.cooperation_score||65,contact_person:p.contact_person||'',contact_title:p.contact_title||'',linkedin_url:p.linkedin_url||'',linkedin_verified:p.linkedin_verified||false}));
+          .map(p=>({...p,cooperation_score:p.cooperation_score||65,contact_person:p.contact_person||'',contact_title:p.contact_title||'',linkedin_url:p.linkedin_url||'',linkedin_verified:p.linkedin_verified||false,industry_source:p.industry_source||''}));
         finalProviders=[...googleProviders,...additional];
       }catch(_){
         finalProviders=[...googleProviders];
@@ -2392,14 +2392,18 @@ function renderTable(providers){
     const scoreHtml=p.cooperation_score
       ?`<span style="font-size:12px;font-weight:700;color:${p.cooperation_score>=80?'var(--green)':p.cooperation_score>=60?'var(--amber)':'var(--text3)'}">${p.cooperation_score}</span>`
       :'<span style="color:var(--text3)">—</span>';
+    const srcColors={itic:'#1a3a5c',itij:'#0d5c63',jci:'#1d4ed8',eurami:'#15803d',iamat:'#7c3aed',imtj:'#b45309',camts:'#0f766e'};
+    const srcKey=(p.industry_source||'').toLowerCase().replace(/[^a-z]/g,'');
+    const srcBadge=srcColors[srcKey]?`<span style="background:${srcColors[srcKey]};color:#fff;font-size:9px;font-weight:700;border-radius:3px;padding:2px 6px;white-space:nowrap">${(p.industry_source||'').toUpperCase()}</span>`:'<span style="color:var(--text3)">—</span>';
+    const liHtml=p.linkedin_url?`<a href="${p.linkedin_url}" target="_blank" rel="noopener" style="display:inline-block;margin-top:2px;font-size:9px;font-weight:700;border-radius:3px;padding:2px 6px;text-decoration:none;${p.linkedin_verified?'background:#0077b5;color:#fff':'background:#e0f0fb;color:#0077b5'}">${p.linkedin_verified?'✓ LinkedIn':'LinkedIn'}</a>`:'';
     return `<tr>
       <td><div style="font-weight:600;font-size:13px">${p.name||''}</div><div style="font-size:11px;color:var(--text3)">${p.city||''}, ${p.country||''}</div></td>
       <td><span style="font-size:11px;background:var(--teal-bg);color:var(--teal);border-radius:4px;padding:2px 7px;font-weight:600">${typeLabel(p.type||'')}</span></td>
       <td style="font-size:13px">${p.country||''}</td>
-      <td style="font-size:12px;color:var(--text2)">
-        ${p.contact_person||'<span style="color:var(--text3)">—</span>'}
-        ${p.contact_title?`<div style="font-size:10px;color:var(--text3)">${p.contact_title}</div>`:''}
-        ${p.linkedin_url?`<a href="${p.linkedin_url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:${p.linkedin_verified?'#0077b5':'#8db4ce'};text-decoration:none;margin-top:2px">${p.linkedin_verified?'✓':''} LinkedIn</a>`:''}
+      <td style="font-size:12px;color:var(--text2)">${p.contact_person||'<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-size:11px">
+        ${p.contact_title?`<div style="color:var(--text2);margin-bottom:2px">${p.contact_title}</div>`:''}
+        ${liHtml||'<span style="color:var(--text3)">—</span>'}
       </td>
       <td>
         ${p.email?`<div style="font-size:12px;color:var(--text2)">${p.email}</div>`:''}
@@ -2412,6 +2416,7 @@ function renderTable(providers){
         </select>
       </td>
       <td>${p.inNetwork==='Yes'?'<span class="hwa-badge" style="font-size:10px;padding:3px 9px">⭐ HWA</span>':'<span class="'+netClass+'">'+(p.inNetwork||'Pending')+'</span>'}</td>
+      <td>${srcBadge}</td>
       <td style="font-size:11px;color:var(--text3)">${p.outreachDate||''}</td>
     </tr>`;
   }).join('');
@@ -2773,6 +2778,10 @@ Return ONLY valid JSON:
       b.update(db.collection('providers').doc(p.id),{
         email:e.email||p.email||'',
         contact_person:e.contact_person||p.contact_person||'',
+        contact_title:e.contact_title||p.contact_title||'',
+        linkedin_url:e.linkedin_url||p.linkedin_url||'',
+        linkedin_verified:e.linkedin_verified||p.linkedin_verified||false,
+        industry_source:e.industry_source||p.industry_source||'',
         specialties:e.specialties?.length?e.specialties:(p.specialties||[]),
         accreditations:e.accreditations||[],
         hasInternationalDept:e.has_international_dept||false,

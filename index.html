@@ -279,16 +279,44 @@ a{color:inherit;text-decoration:none}
 @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
 
 /* ── RESPONSIVE ── */
-@media(max-width:640px){
-  .tab-content{padding:14px}
-  .kpi-grid{grid-template-columns:repeat(2,1fr)}
-  .providers-grid{grid-template-columns:1fr}
-  .login-card{padding:32px 24px}
-  .header-title{font-size:14px}
-  .tab-btn{padding:0 14px;font-size:12px}
-  .db-toolbar{gap:8px}
-  .providers-table{overflow-x:auto}
-  .providers-table table{min-width:600px}
+@media(max-width:768px){
+  .app-header{padding:0 14px;height:52px}
+  .header-sub{display:none}
+  .user-name{display:none}
+  .btn-signout{font-size:12px;padding:6px 10px}
+  .tab-bar{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 6px}
+  .tab-bar::-webkit-scrollbar{display:none}
+  .tab-btn{padding:0 12px;font-size:11px;height:44px;white-space:nowrap;flex-shrink:0}
+  .tab-content{padding:14px 12px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .kpi-value{font-size:26px}
+  .kpi-card{padding:14px}
+  .section-header{flex-direction:column;align-items:flex-start;gap:10px}
+  .section-header>div:last-child{width:100%;display:flex;flex-wrap:wrap;gap:8px}
+  .run-config{padding:16px 14px}
+  .run-header{flex-direction:column;align-items:flex-start;gap:8px}
+  #country-input,#city-input,.search-input{width:100%;max-width:none;box-sizing:border-box}
+  .type-chip,.region-chip{font-size:11px;padding:5px 10px}
+  .providers-grid{grid-template-columns:1fr;gap:12px}
+  .card-actions{flex-direction:column;align-items:stretch;gap:8px}
+  .btn-gen-email{width:100%;justify-content:center;text-align:center;font-size:13px;padding:10px}
+  .save-check{margin-left:0;justify-content:flex-start}
+  .save-bar{flex-direction:column;align-items:stretch;gap:10px;padding:14px 16px}
+  .save-bar>div:last-child{display:flex;flex-direction:column;gap:8px}
+  #dl-emails-btn,#save-all-btn{width:100%;justify-content:center;text-align:center}
+  .db-toolbar{flex-wrap:wrap;gap:8px}
+  .db-toolbar input[type=text],.db-toolbar .search-input{width:100%;flex:none}
+  .filter-select{flex:1;min-width:130px}
+  .providers-table{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .providers-table table{min-width:700px}
+  .admin-card{padding:16px 14px}
+  .login-card{padding:28px 20px;margin:16px}
+}
+@media(max-width:420px){
+  .kpi-grid{grid-template-columns:1fr}
+  .tab-btn{padding:0 9px;font-size:10px}
+  .header-logo{width:30px;height:30px;font-size:12px}
+  .header-title{font-size:13px}
 }
 @media(prefers-color-scheme:dark){
   :root{--bg:#0e1220;--bg2:#151929;--white:#fff;--text:#e8eaf0;--text2:#a0aabb;--text3:#68748a;
@@ -1338,39 +1366,37 @@ async function _runHwaOnly(){
       const needsInfo=all; // validate location for all providers; also enrich missing data
       if(needsInfo.length>0){
         try{
-          const list=needsInfo.map((p,i)=>`${i+1}. ${p.name} | ${p.city||''}, ${p.country||''} | ${p.website||'no website'} | ${p.email||'no email'} | ${p.phone||'no phone'}`).join('\n');
-          setProgress(50,`Enriching ${needsInfo.length} providers with Claude AI...`);
+          const list=needsInfo.map((p,i)=>`${i+1}. ${p.name} | city: ${p.city||'?'} | country (stored): ${p.country||'?'} | website: ${p.website||'none'} | email: ${p.email||'none'} | phone: ${p.phone||'none'}`).join('\n');
+          setProgress(50,`Verifying locations + enriching ${needsInfo.length} providers...`);
           const aiResp=await fetch('https://api.anthropic.com/v1/messages',{
             method:'POST',
             headers:{
               'Content-Type':'application/json','x-api-key':apiKey,
-              'anthropic-version':'2023-06-01',
+              'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05',
               'anthropic-dangerous-direct-browser-access':'true'
             },
             body:JSON.stringify({
               model:'claude-sonnet-4-6',max_tokens:3000,
+              tools:[{type:'web_search_20250305',name:'web_search',max_uses:4}],
               system:SYSTEM_PROMPT,
               messages:[{role:'user',content:`VALIDATE AND ENRICH HWA PROVIDERS — Date: ${today}
-Location filter: ${_searchCity?_searchCity+', ':''}${_searchCountry||'any location'}
+SEARCH LOCATION: ${_searchCity?_searchCity+', ':''}${_searchCountry||'any'}
 
-REQUIRED FOR ALL providers (location validation):
-- city_verified: the real city where this provider is actually located
-- country_verified: the real country where this provider is actually located (full name, e.g. "Germany" not "DE")
-- location_match: true ONLY if provider is physically located in "${_searchCity?_searchCity+', ':''}${_searchCountry||'any location'}". Set false if the provider is in a DIFFERENT country or city.
+CRITICAL — STORED DATA CAN BE WRONG. Use the provider name and city as ground truth:
+- "American Medical Centers Warsaw" → city=Warsaw → country=Poland (NOT Italy)
+- "Apollo Hospital Mumbai" → city=Mumbai → country=India
+- If city contradicts stored country, ALWAYS trust the city/provider name.
 
-FILL IN only where the value is "no email" / "no phone" / blank (do not overwrite existing data):
-- email: official contact email
-- contact_person: medical director or international coordinator name
-- accreditations: certifications array (JCI, ISO, etc.)
-- specialties: medical specialties array
-- has_international_dept: boolean
-- why_hwa: 2-3 sentences on value to HWA insurer clients
-- cooperation_score: integer 1-100
+For EACH provider return:
+1. city_verified: real city (always fill)
+2. country_verified: real country in English (always fill — look up by provider name+city if needed)
+3. location_match: TRUE only if provider is physically in "${_searchCountry||'any'}${_searchCity?' / '+_searchCity:''}". Set FALSE if real location is any other country.
+4. Fill only where blank: email, contact_person, accreditations[], specialties[], has_international_dept, why_hwa, cooperation_score (1-100)
 
 PROVIDERS:
 ${list}
 
-Return ONLY valid JSON (no markdown):
+Return ONLY valid JSON:
 {"enriched":[{"index":0,"email":"","contact_person":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","cooperation_score":75,"city_verified":"","country_verified":"","location_match":true}]}`}]
             })
           });
@@ -1383,7 +1409,6 @@ Return ONLY valid JSON (no markdown):
               (parsed.enriched||[]).forEach(e=>{
                 const p=needsInfo[e.index];
                 if(!p)return;
-                // Apply to in-memory provider
                 if(e.email&&!p.email)p.email=e.email;
                 if(e.contact_person&&!p.contact_person)p.contact_person=e.contact_person;
                 if(e.accreditations?.length)p.accreditations=e.accreditations;
@@ -1391,11 +1416,10 @@ Return ONLY valid JSON (no markdown):
                 if(e.has_international_dept)p.has_international_dept=e.has_international_dept;
                 if(e.why_hwa&&!p.whyHWA)p.whyHWA=e.why_hwa;
                 if(e.cooperation_score)p.cooperation_score=e.cooperation_score;
-                // Apply verified location corrections
+                // Always trust Claude's verified location over stored data
                 if(e.city_verified)p.city=e.city_verified;
                 if(e.country_verified)p.country=e.country_verified;
                 if(e.location_match===false)p._locationMismatch=true;
-                // Persist to Firestore
                 if(p.id){
                   firestoreBatch.update(db.collection('providers').doc(p.id),{
                     email:p.email||'',contact_person:p.contact_person||'',
@@ -1406,25 +1430,37 @@ Return ONLY valid JSON (no markdown):
                   });
                 }
               });
-              // Strict location filter: remove providers Claude confirmed are not in the search area
-              if(_searchCountry||_searchCity){
-                all=all.filter(p=>!p._locationMismatch);
-              }
               try{await firestoreBatch.commit();}catch(_){}
-              // Re-sort after enrichment
               all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
             }
           }
-        }catch(enrichErr){
-          // Enrichment failed — continue with existing data
-        }
+        }catch(enrichErr){}
       }
       setStep(1,'done');
     }else{
       setStep(1,'done');
     }
 
-    setProgress(90,'Rendering results...');
+    // Post-enrichment: re-apply country filter using Claude AI's corrected country values.
+    // This removes providers whose real country differs from search (e.g. stored as "Italy" but city=Warsaw).
+    if(_searchCountry){
+      const cNorm2=_normalizeCountry(_searchCountry);
+      const cFull2=_searchCountry.toLowerCase().trim();
+      const removed=[];
+      all=all.filter(p=>{
+        if(p._locationMismatch){removed.push(p.name);return false;}
+        const pC2=(p.country||'').toLowerCase().trim();
+        const pNorm2=_normalizeCountry(pC2);
+        const ok=pNorm2===cNorm2||pC2.includes(cFull2)||cFull2.includes(pC2);
+        if(!ok)removed.push(p.name);
+        return ok;
+      });
+      if(removed.length)setProgress(88,`Removed ${removed.length} wrong-location provider${removed.length!==1?'s':''}`);
+    }
+    if(_searchCity){
+      const cs=_searchCity.toLowerCase().trim();
+      all=all.filter(p=>_cityMatch((p.city||'').toLowerCase(),cs)||_cityMatch((p.address||'').toLowerCase(),cs));
+    }
     runResults=[...all];
     document.getElementById('run-results').style.display='block';
     document.getElementById('results-title').textContent=`${all.length} HWA Partner${all.length!==1?'s':''} Found`;
@@ -1774,6 +1810,16 @@ function renderRunCard(p,idx){
     ?`<div class="card-row"><span class="card-row-icon">⭐</span><span class="card-row-val">Cooperation score: <strong>${p.cooperation_score}/100</strong></span></div>`:'';
   const contactHtml=p.contact_person
     ?`<div class="card-row"><span class="card-row-icon">👤</span><span class="card-row-val">${p.contact_person}</span></div>`:'';
+  // Location mismatch warning — visible even without enrichment
+  let locationWarn='';
+  if(_searchCountry&&p.country){
+    const cNormW=_normalizeCountry(_searchCountry);
+    const cFullW=_searchCountry.toLowerCase().trim();
+    const pNormW=_normalizeCountry(p.country);
+    const pCW=(p.country||'').toLowerCase();
+    if(!(pNormW===cNormW||pCW.includes(cFullW)||cFullW.includes(pCW)))
+      locationWarn=`<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:6px 10px;font-size:11px;color:#b91c1c;margin:6px 0">⚠ Location mismatch — stored as <strong>${p.country}</strong> but searched for <strong>${_searchCountry}</strong>. Run "Fix All HWA Partner Data" in Admin to correct.</div>`;
+  }
   const card=document.createElement('div');
   card.className='provider-card'; card.id=id;
   card.style.animationDelay=(idx*0.08)+'s';
@@ -1781,12 +1827,13 @@ function renderRunCard(p,idx){
     <div class="card-header">
       <div>
         <div class="card-name">${p.name}</div>
-        <div class="card-location">📍 ${p.city}, ${p.country}</div>
+        <div class="card-location">📍 ${p.city||'—'}, ${p.country||'—'}</div>
         ${hwaBadge}
       </div>
       <span class="type-badge">${typeLabel(p.type)}</span>
     </div>
     <div class="card-body">
+      ${locationWarn}
       ${contactHtml}
       ${p.email?`<div class="card-row"><span class="card-row-icon">✉</span><span class="card-row-val"><a href="mailto:${p.email}">${p.email}</a></span></div>`:''}
       ${p.phone?`<div class="card-row"><span class="card-row-icon">📞</span><span class="card-row-val">${p.phone}</span></div>`:''}

@@ -1293,14 +1293,14 @@ async function _runHwaOnly(){
     all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
     setStep(0,'done'); setProgress(35,`${all.length} partners matched — enriching with Claude AI...`);
 
-    // ── Claude AI enrichment for providers missing key data ─
+    // ── Claude AI enrichment + STRICT location verification ─
     if(apiKey){
       setStep(1,'active');
-      const needsInfo=all; // validate location for all providers; also enrich missing data
+      const needsInfo=all;
       if(needsInfo.length>0){
         try{
-          const list=needsInfo.map((p,i)=>`${i+1}. ${p.name} | ${p.city||''}, ${p.country||''} | ${p.website||'no website'} | ${p.email||'no email'} | ${p.phone||'no phone'}`).join('\n');
-          setProgress(50,`Enriching ${needsInfo.length} providers with Claude AI...`);
+          const list=needsInfo.map((p,i)=>`${i+1}. ${p.name} | city: ${p.city||'?'} | country (stored): ${p.country||'?'} | website: ${p.website||'none'} | email: ${p.email||'none'} | phone: ${p.phone||'none'}`).join('\n');
+          setProgress(50,`Verifying locations + enriching ${needsInfo.length} providers...`);
           const aiResp=await fetch('https://api.anthropic.com/v1/messages',{
             method:'POST',
             headers:{
@@ -1312,21 +1312,17 @@ async function _runHwaOnly(){
               model:'claude-sonnet-4-6',max_tokens:3000,
               system:SYSTEM_PROMPT,
               messages:[{role:'user',content:`VALIDATE AND ENRICH HWA PROVIDERS — Date: ${today}
-Location filter: ${_searchCity?_searchCity+', ':''}${_searchCountry||'any location'}
+SEARCH LOCATION: ${_searchCity?_searchCity+', ':''}${_searchCountry||'any'}
 
-REQUIRED FOR ALL providers (location validation):
-- city_verified: the real city where this provider is actually located
-- country_verified: the real country where this provider is actually located (full name, e.g. "Germany" not "DE")
-- location_match: true ONLY if provider is physically located in "${_searchCity?_searchCity+', ':''}${_searchCountry||'any location'}". Set false if the provider is in a DIFFERENT country or city.
+CRITICAL LOCATION RULES — read carefully:
+1. country_verified = the REAL country where this provider is physically located. Look it up by name/city/website. ALWAYS fill this, even if same as stored country.
+2. city_verified = the REAL city. ALWAYS fill this.
+3. location_match = TRUE only if the provider is PHYSICALLY IN "${_searchCountry||'any'}${_searchCity?' / '+_searchCity:''}".
+   If the provider is in ANY other country (e.g. Croatia, Finland, Germany, UAE) even if stored country says "${_searchCountry}", set location_match=FALSE.
+   Stored country data can be WRONG — trust the provider name and city, not the stored country field.
 
-FILL IN only where the value is "no email" / "no phone" / blank (do not overwrite existing data):
-- email: official contact email
-- contact_person: medical director or international coordinator name
-- accreditations: certifications array (JCI, ISO, etc.)
-- specialties: medical specialties array
-- has_international_dept: boolean
-- why_hwa: 2-3 sentences on value to HWA insurer clients
-- cooperation_score: integer 1-100
+FILL IN only where blank / "none" (do not overwrite real data):
+- email, contact_person, accreditations[], specialties[], has_international_dept, why_hwa, cooperation_score (1-100)
 
 PROVIDERS:
 ${list}
@@ -1344,7 +1340,6 @@ Return ONLY valid JSON (no markdown):
               (parsed.enriched||[]).forEach(e=>{
                 const p=needsInfo[e.index];
                 if(!p)return;
-                // Apply to in-memory provider
                 if(e.email&&!p.email)p.email=e.email;
                 if(e.contact_person&&!p.contact_person)p.contact_person=e.contact_person;
                 if(e.accreditations?.length)p.accreditations=e.accreditations;
@@ -1352,11 +1347,10 @@ Return ONLY valid JSON (no markdown):
                 if(e.has_international_dept)p.has_international_dept=e.has_international_dept;
                 if(e.why_hwa&&!p.whyHWA)p.whyHWA=e.why_hwa;
                 if(e.cooperation_score)p.cooperation_score=e.cooperation_score;
-                // Apply verified location corrections
+                // Always apply Claude AI's verified location (corrects wrong Firestore data)
                 if(e.city_verified)p.city=e.city_verified;
                 if(e.country_verified)p.country=e.country_verified;
                 if(e.location_match===false)p._locationMismatch=true;
-                // Persist to Firestore
                 if(p.id){
                   firestoreBatch.update(db.collection('providers').doc(p.id),{
                     email:p.email||'',contact_person:p.contact_person||'',
@@ -1367,23 +1361,44 @@ Return ONLY valid JSON (no markdown):
                   });
                 }
               });
-              // Strict location filter: remove providers Claude confirmed are not in the search area
-              if(_searchCountry||_searchCity){
-                all=all.filter(p=>!p._locationMismatch);
-              }
               try{await firestoreBatch.commit();}catch(_){}
               // Re-sort after enrichment
               all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
             }
           }
-        }catch(enrichErr){
-          // Enrichment failed — continue with existing data
-        }
+        }catch(enrichErr){}
       }
       setStep(1,'done');
     }else{
       setStep(1,'done');
     }
+
+    // ── STRICT post-enrichment location filter ───────────────
+    // Re-apply country filter after Claude AI may have corrected country field.
+    // Also catches wrong Firestore data that slipped through the initial filter.
+    if(_searchCountry){
+      const cNorm=_normalizeCountry(_searchCountry);
+      const removedByMismatch=[];
+      all=all.filter(p=>{
+        if(p._locationMismatch){removedByMismatch.push(p.name);return false;}
+        const pNorm=_normalizeCountry(p.country||'');
+        const pC=(p.country||'').toLowerCase();
+        const matches=pNorm===cNorm||pNorm.includes(cNorm)||pC.includes(cNorm);
+        if(!matches)removedByMismatch.push(p.name);
+        return matches;
+      });
+      if(removedByMismatch.length)
+        setProgress(88,`Removed ${removedByMismatch.length} location-mismatched provider${removedByMismatch.length!==1?'s':''}`);
+    }
+    if(_searchCity){
+      const citySearch=_searchCity.toLowerCase().trim();
+      all=all.filter(p=>
+        _cityMatch((p.city||'').toLowerCase(),citySearch)||
+        _cityMatch((p.address||'').toLowerCase(),citySearch)
+      );
+    }
+    // Final sort
+    all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
 
     setProgress(90,'Rendering results...');
     runResults=[...all];
@@ -1753,6 +1768,17 @@ function renderRunCard(p,idx){
     ?`<div class="card-row"><span class="card-row-icon">⭐</span><span class="card-row-val">Cooperation score: <strong>${p.cooperation_score}/100</strong></span></div>`:'';
   const contactHtml=p.contact_person
     ?`<div class="card-row"><span class="card-row-icon">👤</span><span class="card-row-val">${p.contact_person}</span></div>`:'';
+
+  // Location mismatch warning: flag if stored country doesn't match search
+  let locationWarn='';
+  if(_searchCountry&&p.country){
+    const cNorm=_normalizeCountry(_searchCountry);
+    const pNorm=_normalizeCountry(p.country);
+    const pC=(p.country||'').toLowerCase();
+    const matches=pNorm===cNorm||pNorm.includes(cNorm)||pC.includes(cNorm);
+    if(!matches) locationWarn=`<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:6px 10px;font-size:11px;color:#b91c1c;margin:6px 0">⚠ Location mismatch — provider is in <strong>${p.country}</strong>, searched for <strong>${_searchCountry}</strong>. Data may be incorrect — run "Fix All HWA Partner Data" in Admin.</div>`;
+  }
+
   const card=document.createElement('div');
   card.className='provider-card'; card.id=id;
   card.style.animationDelay=(idx*0.08)+'s';
@@ -1760,12 +1786,13 @@ function renderRunCard(p,idx){
     <div class="card-header">
       <div>
         <div class="card-name">${p.name}</div>
-        <div class="card-location">📍 ${p.city}, ${p.country}</div>
+        <div class="card-location">📍 ${p.city||'—'}, ${p.country||'—'}</div>
         ${hwaBadge}
       </div>
       <span class="type-badge">${typeLabel(p.type)}</span>
     </div>
     <div class="card-body">
+      ${locationWarn}
       ${contactHtml}
       ${p.email?`<div class="card-row"><span class="card-row-icon">✉</span><span class="card-row-val"><a href="mailto:${p.email}">${p.email}</a></span></div>`:''}
       ${p.phone?`<div class="card-row"><span class="card-row-icon">📞</span><span class="card-row-val">${p.phone}</span></div>`:''}
@@ -2015,7 +2042,10 @@ function filterProviders(){
   const status=document.getElementById('db-status').value;
   const network=document.getElementById('db-network').value;
   const filtered=currentProviders.filter(p=>{
-    if(q&&!`${p.name}${p.country}${p.city}${p.email}${p.contact_person||''}`.toLowerCase().includes(q))return false;
+    if(q){
+      const normCountry=_normalizeCountry(p.country||'');
+      if(!`${p.name}${p.country}${normCountry}${p.city}${p.email}${p.contact_person||''}`.toLowerCase().includes(q))return false;
+    }
     if(type&&p.type!==type.toLowerCase().replace(/ \/ /,'/').replace(/ /,'_'))return false;
     if(status&&p.status!==status)return false;
     if(network&&p.inNetwork!==network)return false;
@@ -2216,8 +2246,12 @@ async function importFromExcel(){
     const row=_importRows[i];
     const name=getCell(row,'name');
     if(!name)continue;
-    const country=getCell(row,'country');
-    const city=getCell(row,'city');
+    // Normalize on import: ISO codes / local-language names → clean English
+    const rawCountry=getCell(row,'country');
+    const rawCity=getCell(row,'city');
+    const cNormRaw=_normalizeCountry(rawCountry);
+    const country=cNormRaw?cNormRaw.replace(/\b\w/g,c=>c.toUpperCase()):rawCountry;
+    const city=_normalizeCity(rawCity).replace(/\b\w/g,c=>c.toUpperCase())||rawCity;
     // Use first 2 chars of country + sanitized name + row index for unique stable ID
     const cc=(country||'XX').replace(/[^a-z]/gi,'').slice(0,2).toLowerCase()||'xx';
     const slug=name.toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-').slice(0,20);
@@ -2399,12 +2433,15 @@ async function fixAllHwaData(){
           body:JSON.stringify({
             model:'claude-sonnet-4-6',max_tokens:3000,
             system:'You are a medical data quality specialist. Correct provider location and type data.',
-            messages:[{role:'user',content:`For each provider below, return corrected data:
-- city: English name of the city (e.g. Θεσσαλονίκη → Thessaloniki, Αθήνα → Athens, München → Munich)
-- country: Full English country name (e.g. GR → Greece, DE → Germany, Ελλάδα → Greece)
+            messages:[{role:'user',content:`For each provider below, return corrected location and type data.
+
+RULES:
+- city: English name of the real city where this provider is physically based (Θεσσαλονίκη→Thessaloniki, München→Munich, Αθήνα→Athens)
+- country: Full English country name where this provider is ACTUALLY located — look up by provider name + city. DO NOT trust the stored country if it contradicts the city or provider name. (GR→Greece, DE→Germany, HR→Croatia, FI→Finland, Ελλάδα→Greece, etc.)
+  IMPORTANT: If city="Rijeka" the country must be "Croatia" regardless of what is stored. If city="Helsinki" the country must be "Finland". If city="Athens" or "Thessaloniki" the country must be "Greece". Use the city as the ground truth.
 - type: one of: hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi
 
-Format: idx|city|country|type — one line per provider. ONLY output the corrected lines, no explanation.
+Format: idx|city|country|type — one line per provider. ONLY output lines, no explanation.
 
 PROVIDERS (idx|name|city|country|type):
 ${list}`}]

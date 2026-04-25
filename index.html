@@ -1862,28 +1862,90 @@ const IMPORT_FIELDS=[
 
 function _guessCol(fieldKey){
   const aliases={
-    name:['name','provider','hospital','clinic','facility','institution','organization'],
-    country:['country','nation','pays','land'],
-    city:['city','town','village','location','municipality'],
-    type:['type','category','kind','service'],
-    email:['email','e-mail','mail','contact email'],
-    phone:['phone','tel','telephone','mobile','fax'],
-    website:['website','web','url','site','homepage'],
-    contact_person:['contact','contact person','contact name','director','manager','coordinator'],
-    specialties:['specialty','specialties','specialization','department','services'],
-    address:['address','addr','street','location','full address'],
+    // English + Greek + French + Spanish + German aliases
+    name:[
+      'name','provider','hospital','clinic','facility','institution','organization','company',
+      'επωνυμ',// Επωνυμία (company name)
+      'επιχείρ',// Επιχείρηση (business)
+      'φορέας',// Φορέας (entity)
+      'τίτλος',// Τίτλος (title)
+      'διακριτ',// Διακριτ (Διακριτικός Τίτλος)
+      'nom','nombre','nombre del','raison','bezeichnung','einrichtung'
+    ],
+    country:[
+      'country','nation','pays','land','país','paese','χώρα','countries of assistance',
+      'country of','operating country'
+    ],
+    city:[
+      'city','town','village','municipality','localit','πόλη',
+      'τόπος',// Τόπος
+      'ville','ciudad','stadt','sede'
+    ],
+    type:[
+      'type','category','kind','service','επαγγέλ','επαγγελ',
+      'επαγγελ',// Επαγγέλματα
+      'παροχή','ειδικ','κατηγορ','τύπος','genre','categoria','art der'
+    ],
+    email:[
+      'email','e-mail','mail',
+      'ηλεκτρον',// Ηλεκτρον
+      'ηλεκτ',// Ηλεκτ
+      'ταχυδρομ',// ταχυδρομ
+      'correo','courriel','posta'
+    ],
+    phone:[
+      'phone','tel','telephone','mobile','fax','gsm',
+      'τηλέφων',// Τηλέφων
+      'τηλ',// τηλ
+      'téléphone','telefon','teléfono'
+    ],
+    website:[
+      'website','web','url','site','homepage','ιστοσελ','ιστότοπ','sitio','sito'
+    ],
+    contact_person:[
+      'contact','director','manager','coordinator','representative','person','υπεύθυν',
+      'επικοινων','επικοινων',// επικοινων
+      'υπεύθ','αρμόδ','contacto','responsable','ansprechpartner'
+    ],
+    specialties:[
+      'specialty','specialties','specialization','department','services',
+      'ειδικότητ',// Ειδικότητα
+      'ειδικ',// ειδικ
+      'τμήμα',// τμήμα
+      'spécialité','especialidad','fachgebiet'
+    ],
+    address:[
+      'address','addr','street','οδός','διεύθυνση','διευθ',
+      'adresse','dirección','adresa'
+    ],
   };
   const opts=aliases[fieldKey]||[fieldKey];
-  return _importHeaders.findIndex(h=>opts.some(a=>h.toLowerCase().includes(a)));
+  // Try exact alias match first, then partial header match
+  let idx=_importHeaders.findIndex(h=>{
+    const hL=h.toLowerCase();
+    return opts.some(a=>hL===a.toLowerCase()||hL.includes(a.toLowerCase()));
+  });
+  return idx;
 }
 
 function _showImportPreview(){
   document.getElementById('import-count').textContent=_importRows.length;
   document.getElementById('import-preview').style.display='block';
 
-  // Build auto-map and show detected fields as badges
+  // Build auto-map
   _autoColMap={};
   IMPORT_FIELDS.forEach(f=>{const idx=_guessCol(f.key);if(idx>=0)_autoColMap[f.key]=idx;});
+
+  // Fallback: if name not detected, find the column with the most non-empty text values
+  if(_autoColMap.name===undefined){
+    const scores=_importHeaders.map((_,ci)=>{
+      const vals=_importRows.slice(0,20).map(r=>String(r[ci]||'').trim()).filter(v=>v&&v.length>2&&isNaN(v)&&!v.includes('@'));
+      return vals.length;
+    });
+    const best=scores.indexOf(Math.max(...scores));
+    if(best>=0)_autoColMap.name=best;
+  }
+
   const detectedEl=document.getElementById('import-detected-cols');
   detectedEl.innerHTML=IMPORT_FIELDS.map(f=>{
     const found=_autoColMap[f.key]!==undefined;
@@ -1915,15 +1977,22 @@ async function importFromExcel(){
 
   const today=new Date().toISOString().split('T')[0];
   const TYPE_MAP={
-    'hospital':'hospital','clinic':'clinic','ambulance':'ground_ambulance',
-    'air ambulance':'air_ambulance','air_ambulance':'air_ambulance',
-    'tpa':'tpa','assistance':'tpa','physical therapy':'physical_therapy',
-    'physiotherapy':'physical_therapy','rehab':'physical_therapy',
-    'doctor':'doctor','specialist':'doctor','physician':'doctor'
+    'hospital':'hospital','νοσοκομ':'hospital','κλινικ':'clinic',
+    'clinic':'clinic','ambulance':'ground_ambulance','ασθενοφ':'ground_ambulance',
+    'air ambulance':'air_ambulance','air_ambulance':'air_ambulance','αεροδ':'air_ambulance',
+    'tpa':'tpa','assistance':'tpa','ασφαλ':'tpa',
+    'physical therapy':'physical_therapy','physiotherapy':'physical_therapy',
+    'rehab':'physical_therapy','φυσικ':'physical_therapy',
+    'doctor':'doctor','ιατρ':'doctor','γιατρ':'doctor',
+    'specialist':'doctor','physician':'doctor','taxi':'ground_ambulance'
   };
   function mapType(raw){
-    const r=(raw||'').toLowerCase().trim();
-    for(const [k,v] of Object.entries(TYPE_MAP)){if(r.includes(k))return v;}
+    // Handle comma-separated types (e.g. "Doctor, Clinic, Ambulance") — use first match
+    const parts=(raw||'').split(/[,;]/);
+    for(const part of parts){
+      const r=part.toLowerCase().trim();
+      for(const [k,v] of Object.entries(TYPE_MAP)){if(r.includes(k))return v;}
+    }
     return 'clinic';
   }
   function getCell(row,field){
@@ -1965,7 +2034,7 @@ async function importFromExcel(){
   }
 
   if(!records.length){
-    showToast('No valid rows found — make sure the Name column is mapped','error');
+    showToast(`No valid rows found — ${_importRows.length} rows read but all had empty names. Check the file has a header row.`,'error');
     btn.disabled=false; btn.textContent='⭐ Import as HWA Partners';
     return;
   }

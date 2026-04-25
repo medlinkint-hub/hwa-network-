@@ -35,12 +35,16 @@ a{color:inherit;text-decoration:none}
   color:#fff;font-size:26px;font-weight:700;margin-bottom:20px;box-shadow:0 8px 24px rgba(26,47,94,.35)}
 .login-title{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:6px}
 .login-sub{font-size:14px;color:var(--text3);margin-bottom:32px;line-height:1.5}
-.btn-google{width:100%;padding:14px;border:1.5px solid var(--border2);border-radius:var(--r);
+.btn-signin{width:100%;padding:14px;border:none;border-radius:var(--r);
   background:#fff;cursor:pointer;font-size:15px;font-weight:600;color:var(--text);
   display:flex;align-items:center;justify-content:center;gap:10px;
   transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.btn-google:hover{background:#f8f9ff;border-color:var(--navy);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
-.btn-google svg{width:20px;height:20px}
+.btn-signin{background:var(--navy);color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-signin:hover{background:var(--navy2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,47,94,.3)}
+.password-input-wrap{position:relative;width:100%;margin-bottom:16px}
+.password-input-wrap input{width:100%;padding:14px 44px 14px 16px;border:1.5px solid var(--border2);border-radius:var(--r);font-size:15px;outline:none;transition:border .2s;box-sizing:border-box}
+.password-input-wrap input:focus{border-color:var(--navy)}
+.pwd-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:var(--text3)}
 .login-footer{margin-top:28px;font-size:12px;color:var(--text3)}
 
 /* ── HEADER ── */
@@ -108,10 +112,21 @@ a{color:inherit;text-decoration:none}
   display:flex;align-items:center;gap:10px;transition:all .25s}
 .btn-run:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 32px rgba(26,47,94,.5)}
 .btn-run:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.batch-sep{text-align:center;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:2px;
+  padding:16px 0 8px;text-transform:uppercase}
 .btn-outlook{background:#0078d4;color:#fff;border:none;border-radius:6px;padding:8px 16px;
   font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
   transition:all .2s;text-decoration:none}
 .btn-outlook:hover{background:#006cbf;transform:translateY(-1px)}
+.btn-gen-email{background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;border:none;border-radius:6px;
+  padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;
+  gap:7px;transition:all .2s;white-space:nowrap}
+.btn-gen-email:hover{background:linear-gradient(135deg,#0d6b63,#0b8279);transform:translateY(-1px)}
+.btn-gen-email:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.table-gen-email{background:#0078d4;color:#fff;border:none;border-radius:4px;padding:4px 10px;
+  font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;margin-top:4px}
+.table-gen-email:hover{background:#006cbf}
+.table-gen-email:disabled{opacity:.6;cursor:not-allowed}
 .btn-green{background:var(--green);color:#fff;border:none}
 .btn-green:hover{background:#0a5a45}
 
@@ -125,6 +140,10 @@ a{color:inherit;text-decoration:none}
 .region-chip{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border2);
   background:#fff;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s}
 .region-chip.selected,.region-chip:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.type-chip{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border2);
+  background:#fff;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;user-select:none}
+.type-chip.selected{background:var(--teal);color:#fff;border-color:var(--teal)}
+.type-chip:not(.selected):hover{border-color:var(--teal);color:var(--teal)}
 
 /* ── PROGRESS ── */
 .progress-box{background:#fff;border-radius:var(--r);padding:28px;border:1px solid var(--border);
@@ -132,6 +151,7 @@ a{color:inherit;text-decoration:none}
 .progress-box.visible{display:block}
 .progress-steps{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
 .step{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text3);transition:all .3s}
+.step.pending{color:var(--text3);opacity:.5}
 .step.active{color:var(--navy);font-weight:600}
 .step.done{color:var(--green)}
 .step.error{color:var(--red)}
@@ -166,12 +186,6 @@ a{color:inherit;text-decoration:none}
 .acc-tag{background:var(--teal-bg);color:var(--teal);border-radius:4px;padding:2px 7px;font-size:11px;font-weight:600}
 .why-box{background:#f8f9ff;border-left:3px solid var(--navy);border-radius:0 6px 6px 0;
   padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.5}
-.email-toggle{font-size:12px;color:var(--navy);font-weight:600;cursor:pointer;
-  display:flex;align-items:center;gap:5px;padding:8px 0;border:none;background:none}
-.email-preview{display:none;background:var(--bg);border-radius:8px;padding:14px;
-  font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap;margin-bottom:12px;
-  max-height:200px;overflow-y:auto;border:1px solid var(--border)}
-.email-preview.open{display:block}
 .card-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
   padding:12px 18px;border-top:1px solid var(--border);background:#fafbff}
 .save-check{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;margin-left:auto}
@@ -213,8 +227,14 @@ a{color:inherit;text-decoration:none}
 .network-yes{background:#dcfce7;color:#166534;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
 .network-no{background:var(--red-bg);color:var(--red);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
 .network-pending{background:var(--teal-bg);color:var(--teal);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600}
-.table-outlook{color:#0078d4;font-size:20px;cursor:pointer;text-decoration:none;transition:transform .2s}
-.table-outlook:hover{transform:scale(1.2)}
+.hwa-badge{display:inline-flex;align-items:center;gap:5px;background:#1a2f5e;color:#fff;border-radius:20px;padding:4px 11px;font-size:11px;font-weight:700;letter-spacing:.3px;margin-top:5px}
+.import-drop{border:2px dashed var(--border2);border-radius:var(--r);padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.import-drop:hover,.import-drop.drag{border-color:var(--navy);background:#f0f3ff}
+.import-drop input[type=file]{display:none}
+.import-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.import-row:last-child{border-bottom:none}
+.col-map{padding:4px 8px;border:1.5px solid var(--border2);border-radius:6px;font-size:12px;color:var(--text);background:#fff;cursor:pointer}
+
 
 /* ── ADMIN ── */
 .admin-card{background:#fff;border-radius:var(--r);padding:24px;border:1px solid var(--border);
@@ -258,24 +278,6 @@ a{color:inherit;text-decoration:none}
 .toast.error{border-left-color:var(--red)}
 @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
 
-/* ── MODAL ── */
-#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;
-  display:none;align-items:center;justify-content:center;padding:16px}
-#modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:16px;width:100%;max-width:600px;max-height:80vh;
-  overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:modalIn .25s ease}
-@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:16px 16px 0 0}
-.modal-title{font-size:16px;font-weight:700;color:#fff}
-.modal-close{color:rgba(255,255,255,.7);font-size:22px;cursor:pointer;
-  background:none;border:none;padding:4px 8px;border-radius:6px}
-.modal-close:hover{background:rgba(255,255,255,.15);color:#fff}
-.modal-body{padding:24px}
-.modal-email{background:var(--bg);border-radius:8px;padding:16px;font-size:13px;
-  color:var(--text2);line-height:1.7;white-space:pre-wrap;margin-bottom:16px;border:1px solid var(--border)}
-
 /* ── RESPONSIVE ── */
 @media(max-width:640px){
   .tab-content{padding:14px}
@@ -296,8 +298,7 @@ a{color:inherit;text-decoration:none}
   .card-header{background:linear-gradient(135deg,#1a2f5e,#2d4a8e)}
   .app-header{background:#111827}
   .search-input,.filter-select,.form-input{background:#1a1d2e;color:var(--text)}
-  .email-preview{background:#111827}
-  .btn-outline{background:#1a1d2e;color:#a0c4f8}
+.btn-outline{background:#1a1d2e;color:#a0c4f8}
   .why-box{background:#111827}
 }
 </style>
@@ -309,11 +310,13 @@ a{color:inherit;text-decoration:none}
   <div class="login-card">
     <div class="login-logo">HW</div>
     <div class="login-title">HWA Medical Network</div>
-    <div class="login-sub">HealthWatch Assistance — Provider Outreach Hub<br>Daily networking agent for your team</div>
-    <button class="btn-google" onclick="signInGoogle()">
-      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-      Sign in with Google
-    </button>
+    <div class="login-sub">HealthWatch Assistance — Provider Outreach Hub<br>Enter your access password to continue</div>
+    <div class="password-input-wrap">
+      <input type="password" id="password-input" placeholder="Enter password"
+        onkeydown="if(event.key==='Enter')signInWithPassword()">
+      <button class="pwd-toggle" type="button" onclick="togglePwd()" id="pwd-eye">👁</button>
+    </div>
+    <button class="btn-signin" onclick="signInWithPassword()">🔐 Sign In</button>
     <div class="login-footer">HealthWatch Assistance S.A. · Thermi, Thessaloniki, Greece<br>Restricted to authorized HWA team members</div>
   </div>
 </div>
@@ -353,7 +356,7 @@ a{color:inherit;text-decoration:none}
       <div class="kpi-card red"><div class="kpi-label">Last Run</div><div class="kpi-value" id="kpi-lastrun" style="font-size:16px;padding-top:6px">—</div><div class="kpi-sub" id="kpi-lastrun-sub">no sessions yet</div></div>
     </div>
     <div class="section-header">
-      <div><div class="section-title">Today's Region</div><div class="section-sub" id="dash-region">Loading...</div></div>
+      <div><div class="section-title">Network Activity</div><div class="section-sub" id="dash-region"></div></div>
       <button class="btn btn-primary" onclick="showTab('run')">🔍 Run Network Search</button>
     </div>
     <div id="dash-recent"></div>
@@ -367,21 +370,97 @@ a{color:inherit;text-decoration:none}
           <div class="section-title">Network Run</div>
           <div class="section-sub">Find new medical providers to contact for cooperation agreements</div>
         </div>
-        <div class="region-badge" id="run-region-badge">📍 Loading...</div>
+        <div class="region-badge" id="run-region-badge">🎯 Select a country</div>
       </div>
       <div style="margin-top:16px">
-        <div class="form-label" style="margin-bottom:8px">Focus region (auto by weekday, or select below)</div>
-        <div class="region-options" id="region-options">
-          <span class="region-chip" data-region="Mediterranean & Middle East" onclick="selectRegion(this)">🌊 Mediterranean & Middle East</span>
-          <span class="region-chip" data-region="Southeast Asia" onclick="selectRegion(this)">🌏 Southeast Asia</span>
-          <span class="region-chip" data-region="Sub-Saharan Africa" onclick="selectRegion(this)">🌍 Sub-Saharan Africa</span>
-          <span class="region-chip" data-region="Eastern Europe & Latin America" onclick="selectRegion(this)">🌎 E. Europe & Latin America</span>
-          <span class="region-chip" data-region="All regions" onclick="selectRegion(this)">🌐 All Regions</span>
+        <div class="form-label" style="margin-bottom:8px">Country <span style="color:var(--red);font-weight:600">*</span></div>
+        <div style="display:flex;gap:8px;align-items:center;max-width:340px">
+          <input id="country-input" list="country-list" class="search-input" style="flex:1;margin:0"
+            placeholder="Type a country name..."
+            oninput="updateCountryBadge()"
+            autocomplete="off">
+          <button onclick="clearCountry()" style="background:none;border:1.5px solid var(--border2);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;color:var(--text3)" title="Clear">×</button>
         </div>
+        <datalist id="country-list">
+          <option>Afghanistan</option><option>Albania</option><option>Algeria</option><option>Angola</option><option>Argentina</option><option>Armenia</option><option>Australia</option><option>Austria</option><option>Azerbaijan</option>
+          <option>Bahrain</option><option>Bangladesh</option><option>Belarus</option><option>Belgium</option><option>Bolivia</option><option>Bosnia and Herzegovina</option><option>Brazil</option><option>Bulgaria</option>
+          <option>Cambodia</option><option>Cameroon</option><option>Canada</option><option>Chile</option><option>China</option><option>Colombia</option><option>Croatia</option><option>Cyprus</option><option>Czech Republic</option>
+          <option>Denmark</option><option>Dominican Republic</option>
+          <option>Ecuador</option><option>Egypt</option><option>Estonia</option><option>Ethiopia</option>
+          <option>Finland</option><option>France</option>
+          <option>Georgia</option><option>Germany</option><option>Ghana</option><option>Greece</option><option>Guatemala</option>
+          <option>Hong Kong</option><option>Hungary</option>
+          <option>India</option><option>Indonesia</option><option>Iran</option><option>Iraq</option><option>Ireland</option><option>Israel</option><option>Italy</option>
+          <option>Japan</option><option>Jordan</option>
+          <option>Kazakhstan</option><option>Kenya</option><option>Kuwait</option>
+          <option>Latvia</option><option>Lebanon</option><option>Libya</option><option>Lithuania</option>
+          <option>Malaysia</option><option>Malta</option><option>Mexico</option><option>Morocco</option><option>Mozambique</option>
+          <option>Nepal</option><option>Netherlands</option><option>New Zealand</option><option>Nigeria</option><option>North Macedonia</option><option>Norway</option>
+          <option>Oman</option>
+          <option>Pakistan</option><option>Panama</option><option>Peru</option><option>Philippines</option><option>Poland</option><option>Portugal</option>
+          <option>Qatar</option>
+          <option>Romania</option><option>Russia</option><option>Rwanda</option>
+          <option>Saudi Arabia</option><option>Senegal</option><option>Serbia</option><option>Singapore</option><option>Slovakia</option><option>Slovenia</option><option>South Africa</option><option>South Korea</option><option>Spain</option><option>Sri Lanka</option><option>Sweden</option><option>Switzerland</option>
+          <option>Taiwan</option><option>Tanzania</option><option>Thailand</option><option>Tunisia</option><option>Turkey</option>
+          <option>UAE</option><option>Uganda</option><option>Ukraine</option><option>United Kingdom</option><option>United States</option><option>Uruguay</option>
+          <option>Venezuela</option><option>Vietnam</option>
+          <option>Yemen</option>
+          <option>Zambia</option><option>Zimbabwe</option>
+        </datalist>
+      </div>
+      <div style="margin-top:12px">
+        <div class="form-label" style="margin-bottom:8px">City <span style="color:var(--text3);font-weight:400">(optional — leave blank to search entire country)</span></div>
+        <div style="display:flex;gap:8px;align-items:center;max-width:340px">
+          <input id="city-input" class="search-input" style="flex:1;margin:0"
+            placeholder="e.g. Athens, Dubai, London..."
+            oninput="updateCountryBadge()"
+            autocomplete="off">
+          <button onclick="document.getElementById('city-input').value='';updateCountryBadge();" style="background:none;border:1.5px solid var(--border2);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;color:var(--text3)" title="Clear">×</button>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <div class="form-label" style="margin-bottom:8px">Provider types <span style="color:var(--text3);font-weight:400">(tap to toggle)</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="type-options">
+          <span class="type-chip selected" data-type="hospital" onclick="this.classList.toggle('selected')">🏥 Hospital</span>
+          <span class="type-chip selected" data-type="clinic" onclick="this.classList.toggle('selected')">🏢 Clinic</span>
+          <span class="type-chip selected" data-type="physical_therapy" onclick="this.classList.toggle('selected')">🏋️ Physical Therapy</span>
+          <span class="type-chip selected" data-type="doctor" onclick="this.classList.toggle('selected')">👨‍⚕️ Doctor/Specialist</span>
+          <span class="type-chip" data-type="ground_ambulance" onclick="this.classList.toggle('selected')">🚑 Ground Ambulance</span>
+          <span class="type-chip" data-type="air_ambulance" onclick="this.classList.toggle('selected')">✈️ Air Ambulance</span>
+          <span class="type-chip" data-type="tpa" onclick="this.classList.toggle('selected')">🤝 TPA / Assistance</span>
+          <span class="type-chip" data-type="taxi" onclick="this.classList.toggle('selected')">🚖 Taxi</span>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <div class="form-label" style="margin-bottom:8px">Medical specialties <span style="color:var(--text3);font-weight:400">(leave all off = any specialty)</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" id="specialty-options">
+          <span class="type-chip" data-spec="General Medicine" onclick="this.classList.toggle('selected')">🩺 General Medicine</span>
+          <span class="type-chip" data-spec="Cardiology" onclick="this.classList.toggle('selected')">❤️ Cardiology</span>
+          <span class="type-chip" data-spec="Orthopedics" onclick="this.classList.toggle('selected')">🦴 Orthopedics</span>
+          <span class="type-chip" data-spec="Physical Therapy & Rehabilitation" onclick="this.classList.toggle('selected')">🏋️ Physical Therapy</span>
+          <span class="type-chip" data-spec="Neurology" onclick="this.classList.toggle('selected')">🧠 Neurology</span>
+          <span class="type-chip" data-spec="Oncology" onclick="this.classList.toggle('selected')">🔬 Oncology</span>
+          <span class="type-chip" data-spec="Pediatrics" onclick="this.classList.toggle('selected')">👶 Pediatrics</span>
+          <span class="type-chip" data-spec="Surgery" onclick="this.classList.toggle('selected')">🔪 Surgery</span>
+          <span class="type-chip" data-spec="Ophthalmology" onclick="this.classList.toggle('selected')">👁️ Ophthalmology</span>
+          <span class="type-chip" data-spec="Gynecology & Obstetrics" onclick="this.classList.toggle('selected')">🤰 Gynecology</span>
+          <span class="type-chip" data-spec="Dermatology" onclick="this.classList.toggle('selected')">🧴 Dermatology</span>
+          <span class="type-chip" data-spec="Psychiatry & Mental Health" onclick="this.classList.toggle('selected')">🧩 Psychiatry</span>
+          <span class="type-chip" data-spec="Internal Medicine" onclick="this.classList.toggle('selected')">🩻 Internal Medicine</span>
+          <span class="type-chip" data-spec="Radiology & Imaging" onclick="this.classList.toggle('selected')">📡 Radiology</span>
+          <span class="type-chip" data-spec="Emergency Medicine" onclick="this.classList.toggle('selected')">🚨 Emergency</span>
+          <span class="type-chip" data-spec="Dentistry" onclick="this.classList.toggle('selected')">🦷 Dentistry</span>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <button id="hwa-only-toggle" onclick="toggleHwaOnlyMode()" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--r2);border:2px solid var(--border2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .2s">
+          <span id="hwa-only-icon">☐</span> Search HWA Partners Only
+        </button>
+        <div id="hwa-only-hint" style="font-size:12px;color:var(--text3);margin-top:6px;display:none">Search your existing HWA network — country is optional, leave blank to see all partners.</div>
       </div>
       <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn-run" id="run-btn" onclick="startNetworkRun()">
-          <span>🔍</span> <span>Start Network Run</span>
+          <span>🔍</span> <span id="run-btn-label">Start Network Run</span>
         </button>
         <div id="api-key-status"></div>
       </div>
@@ -390,12 +469,9 @@ a{color:inherit;text-decoration:none}
     <div class="progress-box" id="progress-box">
       <div class="section-title" style="margin-bottom:16px">Search Progress</div>
       <div class="progress-steps" id="progress-steps">
-        <div class="step" id="step-0"><div class="step-icon">1</div><span>Connecting to Claude AI</span></div>
-        <div class="step" id="step-1"><div class="step-icon">2</div><span>Searching Europe & Mediterranean</span></div>
-        <div class="step" id="step-2"><div class="step-icon">3</div><span>Searching Asia & Middle East</span></div>
-        <div class="step" id="step-3"><div class="step-icon">4</div><span>Searching Africa</span></div>
-        <div class="step" id="step-4"><div class="step-icon">5</div><span>Writing cooperation emails</span></div>
-        <div class="step" id="step-5"><div class="step-icon">✓</div><span id="step-5-text">Complete</span></div>
+        <div class="step" id="step-0"><div class="step-icon">1</div><span id="step-0-text">Searching verified providers...</span></div>
+        <div class="step" id="step-1"><div class="step-icon">2</div><span id="step-1-text">Enriching with contacts & emails...</span></div>
+        <div class="step" id="step-2"><div class="step-icon">✓</div><span id="step-2-text">Complete</span></div>
       </div>
       <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
       <div class="progress-status" id="progress-status">Starting...</div>
@@ -413,7 +489,10 @@ a{color:inherit;text-decoration:none}
         <div class="save-bar-text">💾 Save to HWA Database</div>
         <div class="save-bar-sub" id="save-bar-sub">0 providers selected</div>
       </div>
-      <button class="btn btn-primary" onclick="saveSelectedProviders()" id="save-all-btn">Save Selected</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)" onclick="downloadAllEmails()" id="dl-emails-btn">📧 Download All Emails</button>
+        <button class="btn btn-primary" onclick="saveSelectedProviders()" id="save-all-btn">Save Selected</button>
+      </div>
     </div>
   </div>
 
@@ -430,6 +509,8 @@ a{color:inherit;text-decoration:none}
         <option>Hospital</option><option>Clinic</option>
         <option>Air Ambulance</option><option>Ground Ambulance</option>
         <option>TPA / Assistance Co</option>
+        <option>Physical Therapy</option><option>Doctor / Specialist</option>
+        <option>Taxi</option>
       </select>
       <select class="filter-select" onchange="filterProviders()" id="db-status">
         <option value="">All Statuses</option>
@@ -441,11 +522,12 @@ a{color:inherit;text-decoration:none}
         <option value="">Network Status</option>
         <option>Yes</option><option>No</option><option>Pending</option>
       </select>
+      <button class="filter-select" id="hwa-filter-btn" onclick="toggleHwaFilter()" style="background:var(--bg);border:1.5px solid var(--border2);cursor:pointer;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px">⭐ HWA Partners</button>
     </div>
     <div class="providers-table">
       <table><thead><tr>
-        <th>Provider</th><th>Type</th><th>Country</th><th>Email / Outlook</th>
-        <th>HWA Status</th><th>In Network</th><th>Added</th>
+        <th>Provider</th><th>Type</th><th>Country</th><th>Contact Person</th><th>Email / Outlook</th>
+        <th>Score</th><th>HWA Status</th><th>In Network</th><th>Added</th>
       </tr></thead>
       <tbody id="db-tbody"></tbody></table>
     </div>
@@ -465,22 +547,67 @@ a{color:inherit;text-decoration:none}
       <div style="font-size:12px;color:var(--text3)">Key is stored securely in Firestore. All team members use the same key.</div>
     </div>
     <div class="admin-card">
-      <h3>👥 Authorized Team Members</h3>
+      <h3>🗺️ Google Places API Key</h3>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Add Email</label>
-          <input type="email" class="form-input" id="new-user-email" placeholder="colleague@healthwatch.gr">
+          <label class="form-label">Google Places (New) API Key</label>
+          <input type="password" class="form-input" id="google-places-key-input" placeholder="AIza...">
         </div>
-        <select class="filter-select" id="new-user-role" style="margin-bottom:1px">
-          <option value="member">Member</option>
-          <option value="admin">Admin</option>
-        </select>
-        <button class="btn btn-primary" onclick="addUser()" style="flex-shrink:0;margin-bottom:1px">Add</button>
+        <button class="btn btn-primary" onclick="saveGooglePlacesKey()" style="flex-shrink:0;margin-bottom:1px">Save Key</button>
       </div>
-      <table class="users-table" id="users-table">
-        <thead><tr><th>Email</th><th>Role</th><th>Added</th><th></th></tr></thead>
-        <tbody id="users-tbody"></tbody>
-      </table>
+      <div style="font-size:12px;color:var(--text3)">Enables Google Places + AI dual-source search. Key stored securely in Firestore. Requires Places API (New) enabled in Google Cloud Console.</div>
+    </div>
+    <div class="admin-card">
+      <h3>🔐 App Password</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">New Password</label>
+          <input type="password" class="form-input" id="new-password-input" placeholder="Enter new password">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm</label>
+          <input type="password" class="form-input" id="confirm-password-input" placeholder="Repeat password">
+        </div>
+        <button class="btn btn-primary" onclick="changeAppPassword()" style="flex-shrink:0;margin-bottom:1px">Save</button>
+      </div>
+      <div style="font-size:12px;color:var(--text3)">Shared password for all team members. Default: <code>hwa2026</code></div>
+    </div>
+    <div class="admin-card">
+      <h3>📥 Import HWA Network from Excel</h3>
+      <div class="import-drop" id="import-drop" onclick="document.getElementById('import-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleImportDrop(event)">
+        <input type="file" id="import-file-input" accept=".xlsx,.xls" onchange="loadImportFile(this)">
+        <div style="font-size:32px;margin-bottom:8px">📂</div>
+        <div style="font-weight:600;color:var(--navy);margin-bottom:4px">Drop your Excel file here or click to browse</div>
+        <div style="font-size:12px;color:var(--text3)">.xlsx or .xls — your HWA network provider list</div>
+      </div>
+      <div id="import-preview" style="margin-top:16px;display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <div style="font-weight:700;font-size:15px;color:var(--navy)"><span id="import-count">0</span> providers ready to import</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary" onclick="document.getElementById('import-preview').style.display='none';document.getElementById('import-file-input').value=''">Cancel</button>
+            <button class="btn btn-primary" id="import-btn" onclick="importFromExcel()" style="font-size:14px;padding:10px 22px">⭐ Import All as HWA Partners</button>
+          </div>
+        </div>
+        <div id="import-detected-cols" style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px"></div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px;overflow-x:auto;max-height:240px;overflow-y:auto">
+          <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Preview — first 5 rows</div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px" id="import-preview-table"></table>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--text3)">All rows will be saved as <strong>⭐ HWA Partners</strong>. Missing details (email, contacts, accreditations) will be found automatically by Claude AI after import.</div>
+      </div>
+      <div id="import-progress" style="display:none;margin-top:12px">
+        <div class="progress-bar-wrap" style="margin-bottom:8px"><div class="progress-bar" id="import-progress-bar" style="width:0%"></div></div>
+        <div id="import-status" style="font-size:13px;color:var(--text2)">Importing...</div>
+      </div>
+    </div>
+    <div class="admin-card">
+      <h3>🔧 Fix All HWA Partner Data</h3>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Correct city names, country names, and service types for all HWA partners using Claude AI. Converts Greek/local-language values to English and fixes wrong types. Runs in batches — may take a few minutes for large databases.</div>
+      <button class="btn btn-primary" id="fix-data-btn" onclick="fixAllHwaData()">🔧 Fix Location &amp; Service Data for All Partners</button>
+      <div id="fix-progress" style="display:none;margin-top:14px">
+        <div class="progress-bar-wrap" style="margin-bottom:8px"><div class="progress-bar" id="fix-progress-bar" style="width:0%"></div></div>
+        <div id="fix-status" style="font-size:13px;color:var(--text2)">Starting...</div>
+      </div>
     </div>
     <div class="admin-card">
       <h3>📋 Recent Sessions</h3>
@@ -490,23 +617,6 @@ a{color:inherit;text-decoration:none}
 </div>
 
 <!-- MODAL -->
-<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="modal-title">Email Draft</div>
-      <button class="modal-close" onclick="closeModal()">×</button>
-    </div>
-    <div class="modal-body">
-      <div id="modal-subject" style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)"></div>
-      <div class="modal-email" id="modal-body-text"></div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <a class="btn-outlook" id="modal-outlook-btn" href="#" target="_blank">📧 Open in Outlook</a>
-        <button class="btn btn-outline btn-sm" onclick="copyEmail()">📋 Copy Email</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div id="toasts"></div>
 
 <script>
@@ -522,7 +632,6 @@ const FIREBASE_CONFIG = {
   appId: "1:626511878041:web:062538781015c5f5002508",
   measurementId: "G-XQ062RVHG9"
 };
-const ADMIN_EMAIL = "sami@healthwatch.gr";
 
 // ── Firebase init ──────────────────────────────────────
 firebase.initializeApp(FIREBASE_CONFIG);
@@ -534,82 +643,94 @@ db.enablePersistence().catch(()=>{});
 let currentUser = null;
 let currentProviders = [];
 let runResults = [];
-let selectedRegion = null;
 let apiKey = '';
-
-// ── Region rotation ────────────────────────────────────
-const REGIONS = {
-  1:{name:'Mediterranean & Middle East',countries:'Italy, Spain, Turkey, UAE, Jordan, Saudi Arabia, Egypt, Lebanon'},
-  2:{name:'Southeast Asia & South Asia',countries:'Thailand, Malaysia, Singapore, India, Philippines, Vietnam'},
-  3:{name:'Sub-Saharan Africa',countries:'South Africa, Kenya, Nigeria, Ghana, Tanzania, Ethiopia, Senegal'},
-  4:{name:'Eastern Europe & Latin America',countries:'Poland, Czech Republic, Colombia, Brazil, Panama, Mexico'},
-  5:{name:'Pacific & Coverage Gaps',countries:'Australia, Japan, South Korea, Taiwan, Hong Kong'},
-  6:{name:'Mediterranean & Middle East',countries:'Italy, Spain, UAE, Jordan, Egypt, Cyprus, Morocco'},
-  0:{name:'Southeast Asia & South Asia',countries:'Thailand, Malaysia, Singapore, India, Indonesia, Vietnam'},
-};
-
-function getTodayRegion(){return REGIONS[new Date().getDay()];}
+let googlePlacesKey = '';
+let _passwordOk = false; // guard: app only opens after password verified
 
 // ── Auth ───────────────────────────────────────────────
-async function signInGoogle(){
-  try{
-    const provider=new firebase.auth.GoogleAuthProvider();
-    try{
-      await auth.signInWithPopup(provider);
-    }catch(popupErr){
-      if(popupErr.code==='auth/operation-not-supported-in-this-environment'||
-         popupErr.code==='auth/popup-blocked'||
-         popupErr.code==='auth/popup-closed-by-user'){
-        await auth.signInWithRedirect(provider);
-      }else{
-        throw popupErr;
-      }
-    }
-  }catch(e){showToast('Sign-in failed: '+e.message,'error');}
+const DEFAULT_PASSWORD = 'hwa2026';
+
+function togglePwd(){
+  const inp=document.getElementById('password-input');
+  inp.type=inp.type==='password'?'text':'password';
 }
-async function signOut(){await auth.signOut();}
 
-// Pick up the result after a signInWithRedirect round-trip
-auth.getRedirectResult().catch(e=>{
-  if(e&&e.code)showToast('Sign-in failed: '+e.message,'error');
-});
+function setLoginError(msg){
+  let el=document.getElementById('login-error');
+  if(!el){
+    el=document.createElement('div');
+    el.id='login-error';
+    el.style.cssText='color:#c0392b;font-size:13px;margin-top:12px;text-align:center;font-weight:500';
+    document.querySelector('.btn-signin').insertAdjacentElement('afterend',el);
+  }
+  el.textContent=msg;
+}
 
-auth.onAuthStateChanged(async user=>{
-  if(user){
-    // Check if authorized
-    const allowed=await isAuthorized(user.email);
-    if(!allowed&&user.email!==ADMIN_EMAIL){
-      showToast('Access denied. Contact Dr. Sami to request access.','error');
-      await auth.signOut(); return;
+async function signInWithPassword(){
+  const pwd=document.getElementById('password-input').value.trim();
+  if(!pwd){setLoginError('Please enter the password.');return;}
+  const btn=document.querySelector('.btn-signin');
+  btn.disabled=true; btn.innerHTML='⏳ Checking...';
+  setLoginError('');
+  try{
+    await auth.signInAnonymously();
+  }catch(e){
+    btn.disabled=false; btn.innerHTML='🔐 Sign In';
+    setLoginError('Firebase error: '+(e.code||e.message)+'. Make sure Anonymous sign-in is enabled in Firebase Console.');
+    return;
+  }
+  // Auth succeeded — now verify password (Firestore is readable)
+  try{
+    let stored=DEFAULT_PASSWORD;
+    try{
+      const doc=await db.collection('config').doc('appPassword').get();
+      if(doc.exists&&doc.data().password) stored=doc.data().password;
+    }catch(_){}  // Firestore read failed → use default
+    if(pwd!==stored.trim()){
+      await auth.signOut();
+      setLoginError('Incorrect password. Please try again.');
+      btn.disabled=false; btn.innerHTML='🔐 Sign In';
+      return;
     }
-    currentUser=user;
-    document.getElementById('login-screen').style.display='none';
-    const app=document.getElementById('app');
-    app.style.display='flex';
-    document.getElementById('user-name').textContent=user.displayName||user.email;
-    document.getElementById('user-avatar').textContent=(user.displayName||user.email||'?')[0].toUpperCase();
-    if(user.email===ADMIN_EMAIL){
-      document.getElementById('admin-tab-btn').style.display='flex';
-      loadAdminData();
-    }
+    _passwordOk=true;
+    openApp(auth.currentUser);
+  }catch(e){
+    await auth.signOut().catch(()=>{});
+    setLoginError('Error: '+e.message);
+  }finally{
+    btn.disabled=false; btn.innerHTML='🔐 Sign In';
+  }
+}
+
+async function signOut(){_passwordOk=false; await auth.signOut();}
+
+function openApp(user){
+  if(!user||!_passwordOk)return;
+  currentUser=user;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('user-name').textContent='HWA Team';
+    document.getElementById('user-avatar').textContent='H';
+    document.getElementById('admin-tab-btn').style.display='flex';
+    loadAdminData();
     loadApiKey();
+    loadGooglePlacesKey();
     loadDashboard();
-    loadProviders();
+    loadProviders().catch(()=>{});
     initRegion();
-  } else {
+}
+
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    _passwordOk=false;
     currentUser=null;
     document.getElementById('login-screen').style.display='flex';
     document.getElementById('app').style.display='none';
+    const pi=document.getElementById('password-input');
+    if(pi)pi.value='';
   }
+  // app only opens via openApp() after password verified — not here
 });
-
-async function isAuthorized(email){
-  if(email===ADMIN_EMAIL)return true;
-  try{
-    const doc=await db.collection('authorized_users').doc(email.replace(/\./g,'_')).get();
-    return doc.exists;
-  }catch(e){return false;}
-}
 
 // ── API Key ─────────────────────────────────────────────
 async function loadApiKey(){
@@ -637,9 +758,33 @@ function updateKeyStatus(){
   const el=document.getElementById('api-key-status');
   if(!el)return;
   el.innerHTML=apiKey
-    ?'<span style="font-size:12px;background:#dcfce7;color:#166534;border-radius:20px;padding:4px 12px;font-weight:600">✓ API Key Active</span>'
-    :'<span style="font-size:12px;background:#fee2e2;color:#991b1b;border-radius:20px;padding:4px 12px;font-weight:600">⚠ API Key Missing — set in Admin</span>';
+    ?'<span style="font-size:12px;background:#dcfce7;color:#166534;border-radius:20px;padding:4px 12px;font-weight:600">✓ Ready</span>'
+    :'<span style="font-size:12px;background:#fee2e2;color:#991b1b;border-radius:20px;padding:4px 12px;font-weight:600">⚠ API Key Missing</span>';
 }
+
+// ── Google Places Key ───────────────────────────────────
+async function loadGooglePlacesKey(){
+  try{
+    const doc=await db.collection('config').doc('googlePlacesKey').get();
+    if(doc.exists&&doc.data().key){
+      googlePlacesKey=doc.data().key;
+      updateKeyStatus();
+    }
+  }catch(e){}
+}
+
+async function saveGooglePlacesKey(){
+  const val=document.getElementById('google-places-key-input').value.trim();
+  if(!val){showToast('Enter a Google Places API key','error');return;}
+  try{
+    await db.collection('config').doc('googlePlacesKey').set({key:val,updatedBy:currentUser.email,updatedAt:new Date()});
+    googlePlacesKey=val;
+    updateKeyStatus();
+    showToast('Google Places key saved ✓','success');
+    document.getElementById('google-places-key-input').value='AIza••••••••••••••••';
+  }catch(e){showToast('Save failed: '+e.message,'error');}
+}
+
 
 // ── Tab navigation ──────────────────────────────────────
 function showTab(tab){
@@ -649,7 +794,7 @@ function showTab(tab){
   if(el)el.style.display='block';
   const btn=document.querySelector(`[data-tab="${tab}"]`);
   if(btn)btn.classList.add('active');
-  if(tab==='providers')loadProviders();
+  if(tab==='providers')loadProviders().catch(()=>{});
   if(tab==='dashboard')loadDashboard();
 }
 
@@ -678,22 +823,23 @@ async function loadDashboard(){
       document.getElementById('kpi-lastrun-sub').textContent=`${sess.providersFound||0} providers found`;
     }
   }catch(e){console.error(e);}
-  const r=getTodayRegion();
-  document.getElementById('dash-region').textContent=`Today: ${r.name} — ${r.countries.split(',').slice(0,3).join(', ')}...`;
+  document.getElementById('dash-region').textContent='Search by country and specialty in the Network Run tab';
 }
 
 // ── Region init ─────────────────────────────────────────
 function initRegion(){
-  const r=selectedRegion||getTodayRegion();
-  document.getElementById('run-region-badge').textContent='📍 '+r.name;
   updateKeyStatus();
 }
-
-function selectRegion(el){
-  document.querySelectorAll('.region-chip').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedRegion={name:el.dataset.region,countries:''};
-  document.getElementById('run-region-badge').textContent='📍 '+el.dataset.region;
+function updateCountryBadge(){
+  const c=(document.getElementById('country-input').value||'').trim();
+  const city=(document.getElementById('city-input').value||'').trim();
+  document.getElementById('run-region-badge').textContent=
+    c?(city?'🎯 '+city+', '+c:'🎯 '+c):'🎯 Select a country';
+}
+function clearCountry(){
+  document.getElementById('country-input').value='';
+  document.getElementById('city-input').value='';
+  document.getElementById('run-region-badge').textContent='🎯 Select a country';
 }
 
 // ══════════════════════════════════════════════════════
@@ -704,134 +850,905 @@ HWA is a leading medical TPA serving: AegisInsurance, Canopius, Argo, HDI Global
 Contact: Dr. Sami, Medical Officer | sami@healthwatch.gr
 
 OUTPUT MUST BE VALID JSON ONLY — no markdown, no backticks, no prose before or after.
+CRITICAL JSON RULES: All string values must be properly escaped. Use \\n for line breaks inside strings. Never use raw double-quotes inside a string value — escape them as \\".
 
 {
   "session_date": "YYYY-MM-DD",
-  "region_focus": "string",
+  "country_focus": "string",
   "providers": [
     {
       "name": "string",
-      "type": "hospital|clinic|ground_ambulance|air_ambulance|tpa",
+      "type": "hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi",
       "country": "string",
       "city": "string",
       "website": "https://...",
       "email": "contact@provider.com",
       "phone": "+XX XXX XXX XXXX",
-      "accreditations": ["JCI"],
-      "specialties": ["Cardiology"],
+      "accreditations": ["JCI","ISO","EACCME"],
+      "specialties": ["Cardiology","Orthopedics","Physical Therapy","General Medicine"],
       "has_international_dept": true,
-      "why_hwa": "1-2 sentences on network value",
-      "email_subject": "Partnership Proposal — HealthWatch Assistance & [Name]",
-      "email_body": "Full professional email (max 300 words). Explain HWA, IPMI, benefit to provider. Sign off: Dr. Sami | Medical Officer | HealthWatch Assistance S.A. | sami@healthwatch.gr"
+      "why_hwa": "1-2 sentences on the specific value this provider brings to HWA's insurer clients"
     }
   ],
   "summary": "2-sentence summary"
 }
 
-Rules: use web_search for real data only. Find 6+ providers: 2 Europe, 2 Asia, 2 Africa. No invented providers.`;
+SEARCH STRATEGY — use web_search to cross-reference ALL of the following sources for each provider:
+
+UNIVERSAL SOURCES (always search):
+- General web search (provider website, Google Maps listing)
+- WHO Global Health Observatory and WHO country health profiles (who.int)
+- JCI-accredited organizations list (jointcommissioninternational.org)
+- International medical directories: Bookimed, Medigo, WhatClinic, Doctoralia, Zocdoc, Healthgrades
+
+GREECE-SPECIFIC SOURCES (use when country = Greece or city is Greek):
+- Ιατρικός Σύλλογος Αθηνών (Medical Association of Athens): isa.gr — search for specialist doctors and clinics
+- Ιατρικός Σύλλογος Θεσσαλονίκης (Medical Association of Thessaloniki): isat.gr
+- Πανελλήνιος Ιατρικός Σύλλογος (Panhellenic Medical Association): pis.gr
+- Πανελλήνιος Σύλλογος Φυσικοθεραπευτών (Greek Physical Therapy Association): psf.gr
+- ΕΣΙΔΙ — Association of Private Hospitals of Greece: esidi.gr
+- Greek Ministry of Health provider registry: moh.gov.gr
+- ΓΕΜΙ / GEMI business registry (Greek company registration): businessregistry.gr
+- iatronet.gr — Greek medical directory with verified specialist profiles
+- ygeiaonline.gr — Greek health portal with clinic/doctor listings
+- findadoctor.gr — doctor search portal in Greece
+- Search in Greek using terms: "ιδιωτική κλινική", "διαγνωστικό κέντρο", "φυσικοθεραπεία", "ιατρός ειδικός", "καρδιολόγος", "ορθοπεδικός", "νευρολόγος", "ογκολόγος" + city name
+
+SOUTH EUROPE — COUNTRY-SPECIFIC SOURCES:
+- ITALY: FNOMCeO national medical register (fnomceo.it), AGENAS hospital quality database, ARS Toscana/Lombardia regional registries, ISS (Istituto Superiore di Sanità), Paginemediche.it, search in Italian: "clinica privata", "poliambulatorio", "fisioterapia", "specialista"
+- SPAIN: CGCOM national medical council (cgcom.es), SNS hospital directory (sanidad.gob.es), TOP Doctors Spain (topdoctors.es), Doctoralia Spain, Salud180, search in Spanish: "clínica privada", "centro médico", "fisioterapia", "especialista"
+- PORTUGAL: Ordem dos Médicos (ordemdosmedicos.pt), ACSS hospital listing (acss.min-saude.pt), SNS hospital directory (sns.gov.pt), search in Portuguese: "clínica privada", "centro médico", "fisioterapia"
+- CYPRUS: Cyprus Medical Association (cma.org.cy), Ministry of Health Cyprus (moh.gov.cy/en), JCC Medical Cyprus, private hospital directories Limassol/Nicosia/Larnaca
+- CROATIA: Croatian Medical Chamber (hlk.hr), HZZO hospital network, Ministry of Health Croatia (zdravlje.gov.hr), search: "privatna klinika", "fizioterapija"
+- SERBIA: Serbian Medical Chamber (lks.org.rs), Ministry of Health Serbia (zdravlje.gov.rs), search: "privatna klinika", "fizioterapija"
+- NORTH MACEDONIA: Macedonian Medical Association, Ministry of Health North Macedonia
+- ALBANIA: Medical Chamber of Albania, Ministry of Health Albania (shendetesia.gov.al)
+- MALTA: Medical Council of Malta (medicalcouncil.gov.mt), Malta Health Network, Ministry of Health Malta
+- SLOVENIA: Medical Chamber of Slovenia (zdravniskazbornica.si), NIJZ health data
+- BULGARIA: Bulgarian Medical Association (blsm.bg), Ministry of Health Bulgaria, search: "частна клиника", "физиотерапия"
+- TURKEY: Turkish Medical Association (ttb.org.tr), Health Tourism accreditation list (saglik.gov.tr), search: "özel hastane", "klinik", "fizyoterapi"
+
+ALWAYS cross-check each found provider against at least 2 sources before including.
+
+RULES (strictly follow all):
+1. Only return REAL verified providers — confirmed name, address, working website, real contact email/phone. No invented data.
+2. Find exactly 12 of the best providers matching the requested country AND specialties/types. Return them ordered best-first: accredited (JCI/ISO) providers first, then facilities with verified email + website, then others. If fewer than 12 verified providers exist, return all you can confirm.
+3. For each provider cross-check at least 2 sources to confirm it is active and registered. Use country-specific sources listed above — do NOT rely only on Google Maps.
+4. Prefer accredited providers (JCI, ISO 9001, national health ministry certified).
+5. For type=doctor: name = doctor's full name + title (e.g. "Dr. Nikos Papadopoulos — Cardiologist").
+6. ALWAYS search in the local language of the country using the local-language terms listed above — this is mandatory for Greece, Italy, Spain, Portugal, Croatia, Serbia, Bulgaria, Turkey.
+7. For Greece specifically: search iatronet.gr and isat.gr or isa.gr depending on city, and cross-reference with GEMI for clinic registration status.
+8. Prioritize providers with a verified email address — this is the most important contact field.`;
+
+const EMAIL_PROMPT=`You are Dr. Sami's email assistant at HealthWatch Assistance S.A. (HWA), Thermi, Thessaloniki, Greece.
+HWA is a leading international medical assistance and TPA company serving: AegisInsurance, Canopius, Argo Group, HDI Global, Prime Cyprus Group, GBG Group.
+
+Generate a professional cooperation invitation email from Dr. Sami to the given medical provider, inviting them to join the HWA Medical Network.
+
+Return ONLY valid JSON — no markdown, no backticks, no prose:
+{"subject": "...", "body": "..."}
+
+CRITICAL JSON RULES: Use \\n for line breaks inside strings. Escape any double-quotes inside strings as \\". Both subject and body must be single-line JSON strings.
+
+EMAIL STRUCTURE — follow exactly:
+
+SUBJECT: "Network Partnership Invitation — HealthWatch Assistance & [Provider Name]"
+
+PARAGRAPH 1 — Salutation + Introduction (2 sentences):
+"Dear [Dr./Mr./Ms. Last Name or Medical Director of Provider Name],\\nMy name is Dr. Sami, Medical Officer at HealthWatch Assistance S.A. (HWA), a leading international medical assistance and TPA company based in Thessaloniki, Greece, serving major Lloyd's and global insurers including AegisInsurance, Canopius, Argo Group, HDI Global, Prime Cyprus Group, and GBG Group."
+
+PARAGRAPH 2 — Why THIS provider specifically (specialty-driven, 3 sentences):
+Explain WHY this provider's specialty is relevant to HWA's insured patients. Be specific to the provider's type and specialty:
+- Hospital: focus on emergency admissions, surgical procedures, specialist consultations
+- Clinic / specialist: focus on the specific specialty and the patient needs in that area
+- Physical therapy: focus on post-injury and post-surgical rehabilitation for internationally mobile patients
+- Doctor: focus on the specialist's expertise and the need for reliable specialist access in that city
+Reference the actual city and specialty. Do NOT use generic filler.
+
+PARAGRAPH 3 — What we offer (3 sentences):
+"Joining the HWA Medical Network means your facility/practice will receive direct patient referrals from international insurance companies, guaranteed payment through our cashless or reimbursement system with no administrative burden on your side. We handle all pre-authorizations, documentation, and insurer coordination so your team focuses only on providing excellent care. Our network currently covers patients from over 30 countries, and we are actively growing our provider base in [country]."
+
+PARAGRAPH 4 — Call to action (2 sentences):
+"I would welcome the opportunity to schedule a brief call or video meeting at your convenience to discuss the terms of our cooperation agreement and answer any questions you may have. Please feel free to reply to this email or contact me directly at sami@healthwatch.gr."
+
+CLOSING:
+"Warm regards,\\nDr. Sami\\nMedical Officer\\nHealthWatch Assistance S.A.\\nThermi, Thessaloniki, Greece\\nTel: +30 2310 000000\\nEmail: sami@healthwatch.gr\\nwww.healthwatch.gr"
+
+IMPORTANT: Write the email freshly for this specific provider. Reference the provider's actual name, city, and specialty. Tone: formal, respectful, confident. Length: 250–350 words.`;
+
+let _searchActive=false;
+let _searchCountry='';
+let _searchCity='';
+let _searchTypes=[];
+let _searchSpecs=[];
+
+// ISO-2 code → canonical English name + common aliases for normalization
+const COUNTRY_ALIASES={
+  gr:['greece','grecia','griechenland','ελλάδα','hellas','hellenic'],
+  de:['germany','deutschland','allemagne','alemania','germania'],
+  gb:['uk','united kingdom','great britain','england','britain'],
+  us:['usa','united states','america','united states of america'],
+  fr:['france','frankrijk','frankreich','francia'],
+  it:['italy','italia','italien','italie'],
+  es:['spain','españa','espagne','spanien'],
+  pt:['portugal'],
+  cy:['cyprus','κύπρος','kibris','zypern','chypre'],
+  tr:['turkey','türkiye','turquie','turkei'],
+  al:['albania','shqipëria','albanien'],
+  bg:['bulgaria','bulgarie','bulgarien'],
+  ro:['romania','românia','roumanie','rumänien'],
+  rs:['serbia','srbija','serbien'],
+  hr:['croatia','hrvatska','kroatien','croatie'],
+  si:['slovenia','slovenija','slowenien'],
+  sk:['slovakia','slovensko','slowakei'],
+  cz:['czechia','czech republic','česká republika','tschechien'],
+  pl:['poland','polska','pologne','polen'],
+  hu:['hungary','magyarország','ungarn'],
+  at:['austria','österreich','autriche'],
+  ch:['switzerland','schweiz','suisse','svizzera','helvetia'],
+  nl:['netherlands','nederland','hollande','niederlande','holland'],
+  be:['belgium','belgique','belgien'],
+  lu:['luxembourg','luxemburg'],
+  dk:['denmark','danmark','dänemark'],
+  se:['sweden','sverige','schweden'],
+  no:['norway','norge','norwegen'],
+  fi:['finland','suomi','finnland'],
+  ie:['ireland','éire','irland'],
+  mt:['malta'],
+  ee:['estonia','eesti','estland'],
+  lv:['latvia','latvija','lettland'],
+  lt:['lithuania','lietuva','litauen'],
+  mk:['north macedonia','macedonia','makedonia','северная македония'],
+  me:['montenegro','crna gora'],
+  ba:['bosnia','bosnia and herzegovina','bosna i hercegovina'],
+  md:['moldova','moldavia'],
+  ua:['ukraine','україна'],
+  ru:['russia','russland','russie','россия'],
+  ae:['uae','united arab emirates','emirates','امارات'],
+  sa:['saudi arabia','المملكة العربية السعودية'],
+  eg:['egypt','مصر','ägypten'],
+  il:['israel','ישראל'],
+  jo:['jordan','الأردن'],
+  lb:['lebanon','لبنان'],
+  ma:['morocco','maroc','المغرب'],
+  tn:['tunisia','tunisie','تونس'],
+  za:['south africa'],
+  ng:['nigeria'],
+  ke:['kenya'],
+  gh:['ghana'],
+  in:['india','bharat'],
+  cn:['china','中国'],
+  jp:['japan','日本'],
+  kr:['south korea','korea','한국'],
+  th:['thailand','ประเทศไทย'],
+  sg:['singapore','singapura'],
+  au:['australia'],
+  nz:['new zealand'],
+  ca:['canada'],
+  mx:['mexico','méxico'],
+  br:['brazil','brasil'],
+  ar:['argentina'],
+  cl:['chile'],
+  co:['colombia']
+};
+// Reverse map: alias → ISO code (and ISO code → ISO code)
+const _countryAliasFwd={};
+Object.entries(COUNTRY_ALIASES).forEach(([code,aliases])=>{
+  _countryAliasFwd[code]=code;
+  aliases.forEach(a=>{_countryAliasFwd[a.toLowerCase()]=code;});
+});
+function _normalizeCountry(raw){
+  const r=(raw||'').toLowerCase().trim();
+  return _countryAliasFwd[r]||r; // returns ISO code if known, else original
+}
+
+// City alias table — maps Greek and local-language city names to canonical Latin key
+const CITY_ALIASES={
+  thessaloniki:['θεσσαλονίκη','thessalonica','salonika','salonica','thermi thessaloniki','θεσσαλονικη'],
+  athens:['αθήνα','athina','athen','athènes','atenas','αθηνα','attica','αττική'],
+  piraeus:['πειραιάς','pireas','pireus','πειραιας'],
+  patras:['πάτρα','patra','pátra','πατρα'],
+  heraklion:['ηράκλειο','iraklio','iraklion','heraclion','irakleio','ηρακλειο','ηρακλεio'],
+  larissa:['λάρισα','larisa','λαρισα'],
+  volos:['βόλος','βολος'],
+  rhodes:['ρόδος','rodos','rod','ρoδoς'],
+  ioannina:['ιωάννινα','yannena','ιωαννινα','giannena'],
+  corfu:['κέρκυρα','kerkyra','corfou','κερκυρα'],
+  kos:['κως'],
+  chania:['χανιά','xania','χανια'],
+  kavala:['καβάλα','καβαλα'],
+  alexandroupolis:['αλεξανδρούπολη','αλεξανδρουπολη'],
+  serres:['σέρρες','σερρες'],
+  kozani:['κοζάνη','κοζανη'],
+  katerini:['κατερίνη','κατερινη'],
+  trikala:['τρίκαλα','τρικαλα'],
+  lamia:['λαμία','λαμια'],
+  kalamata:['καλαμάτα','καλαματα'],
+  tripolis:['τρίπολη','τριπολη','tripoli'],
+  chalkida:['χαλκίδα','χαλκιδα','chalcis'],
+  mytilene:['μυτιλήνη','mytilini','lesbos','λέσβος','μυτιληνη'],
+  sparta:['σπάρτη','σπαρτη'],
+  corinth:['κόρινθος','korinthos','κορινθος'],
+  nafplio:['ναύπλιο','nauplio','ναυπλιο'],
+  drama:['δράμα','δραμα'],
+  agrinio:['αγρίνιο','αγρινιο'],
+  // Major European cities with umlaut/accent variants
+  munich:['münchen','muenchen','munchen'],
+  dusseldorf:['düsseldorf','duesseldorf'],
+  cologne:['köln','koeln','koln'],
+  frankfurt:['frankfurt am main','frankfurt/main'],
+  nuremberg:['nürnberg','nuernberg','nurnberg'],
+  zurich:['zürich','zuerich','zuerich'],
+  vienna:['wien','vienne'],
+  brussels:['bruxelles','brüssel','brussel'],
+  istanbul:['κωνσταντινούπολη','konstantinoupolis'],
+  nicosia:['λευκωσία','lefkosia','lefkoşa'],
+  limassol:['λεμεσός','lemesos'],
+  larnaca:['λάρνακα','larnaka'],
+  paphos:['πάφος','pafos'],
+};
+const _cityAliasFwd={};
+Object.entries(CITY_ALIASES).forEach(([canonical,aliases])=>{
+  _cityAliasFwd[canonical]=canonical;
+  aliases.forEach(a=>{_cityAliasFwd[a.toLowerCase()]=canonical;});
+});
+function _normalizeCity(raw){
+  const r=(raw||'').toLowerCase().trim();
+  return _cityAliasFwd[r]||r;
+}
+function _cityMatch(stored,search){
+  const sNorm=_normalizeCity(search);
+  const pNorm=_normalizeCity(stored);
+  return pNorm===sNorm||stored.includes(search)||pNorm.includes(sNorm)||
+    stored.includes(sNorm)||pNorm.includes(search);
+}
+
+function _resetRunUI(clearCards){
+  document.getElementById('run-btn').disabled=true;
+  document.getElementById('run-btn').innerHTML='<span>⏳</span><span>Searching...</span>';
+  document.getElementById('progress-box').classList.add('visible');
+  document.getElementById('step-0-text').textContent='Locating providers';
+  document.getElementById('step-1-text').textContent='Enriching & qualifying';
+  document.getElementById('step-2-text').textContent='Complete';
+  if(clearCards){
+    document.getElementById('run-results').style.display='none';
+    document.getElementById('run-cards').innerHTML='';
+    document.getElementById('save-bar').classList.remove('visible');
+    runResults=[];
+  }
+}
+
+function _finishRunUI(msg){
+  _searchActive=false;
+  document.getElementById('run-btn').disabled=false;
+  document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';
+  setProgress(100,'Search complete');
+  [0,1,2].forEach(i=>setStep(i,'done'));
+  document.getElementById('step-2-text').textContent=runResults.length?`Complete — ${runResults.length} providers found`:'Complete';
+  const total=runResults.length;
+  if(total>0){
+    const loc=_searchCity?`${_searchCity}, ${_searchCountry}`:_searchCountry;
+    const today=new Date().toISOString().split('T')[0];
+    document.getElementById('run-results').style.display='block';
+    document.getElementById('results-title').textContent=`${total} Providers Found`;
+    document.getElementById('results-sub').textContent=`${today} · ${loc} · ${msg||'Search complete'}`;
+    document.getElementById('save-bar').classList.add('visible');
+    updateSaveCount();
+  }
+}
+
+function _parseClaudeJSON(rawText){
+  let clean=rawText.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
+  const m=clean.match(/\{[\s\S]*\}/);
+  if(m)clean=m[0];
+  clean=clean.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,'');
+  try{return JSON.parse(clean);}catch(_){
+    const repaired=clean.replace(/"why_hwa"\s*:\s*"([\s\S]*?)(?=",\s*"\w+"\s*:|"\s*\})/g,(_,val)=>{
+      return `"why_hwa":"${val.replace(/\n/g,' ').replace(/(?<!\\)"/g,'\\"')}`;
+    });
+    return JSON.parse(repaired);
+  }
+}
+
+let _hwaOnlyMode=false;
+
+function toggleHwaOnlyMode(){
+  _hwaOnlyMode=!_hwaOnlyMode;
+  const toggle=document.getElementById('hwa-only-toggle');
+  const icon=document.getElementById('hwa-only-icon');
+  const hint=document.getElementById('hwa-only-hint');
+  if(_hwaOnlyMode){
+    toggle.style.cssText='display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--r2);border:2px solid #1a2f5e;background:#1a2f5e;font-size:13px;font-weight:600;cursor:pointer;color:#fff;transition:all .2s';
+    icon.textContent='☑';
+    hint.style.display='block';
+  }else{
+    toggle.style.cssText='display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--r2);border:2px solid var(--border2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .2s';
+    icon.textContent='☐';
+    hint.style.display='none';
+  }
+  _restoreRunBtn();
+}
 
 async function startNetworkRun(){
-  if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
-  const region=selectedRegion||getTodayRegion();
-  const today=new Date().toISOString().split('T')[0];
+  _searchCountry=(document.getElementById('country-input').value||'').trim();
+  _searchCity=(document.getElementById('city-input').value||'').trim();
+  _searchTypes=[...document.querySelectorAll('#type-options .type-chip.selected')].map(c=>c.dataset.type);
+  _searchSpecs=[...document.querySelectorAll('#specialty-options .type-chip.selected')].map(c=>c.dataset.spec);
 
-  // UI: show progress
-  document.getElementById('run-btn').disabled=true;
-  document.getElementById('run-btn').innerHTML='<span>⏳</span><span>Running...</span>';
-  document.getElementById('progress-box').classList.add('visible');
+  if(_hwaOnlyMode){
+    // Country is optional for HWA search — can browse all partners
+    await _runHwaOnly();
+    return;
+  }
+  if(!_searchCountry){showToast('Please enter a country to search in','error');return;}
+  if(!_searchTypes.length){showToast('Select at least one provider type','error');return;}
+  if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
+  _searchActive=true;
+  _resetRunUI(true);
+  setStep(0,'active');
+  setProgress(5,'Locating providers...');
+  await _runUnified();
+}
+
+function _restoreRunBtn(){
+  const btn=document.getElementById('run-btn');
+  btn.disabled=false;
+  const label=_hwaOnlyMode?'Search HWA Network':'Start Network Run';
+  btn.innerHTML=`<span>🔍</span><span id="run-btn-label">${label}</span>`;
+}
+
+async function _runHwaOnly(){
+  const today=new Date().toISOString().split('T')[0];
+  const loc=_searchCity&&_searchCountry?`${_searchCity}, ${_searchCountry}`:(_searchCountry||_searchCity||'All Countries');
+  const btn=document.getElementById('run-btn');
+  btn.disabled=true;
+  btn.innerHTML='<span>⏳</span><span>Searching HWA Network...</span>';
   document.getElementById('run-results').style.display='none';
-  document.getElementById('save-bar').classList.remove('visible');
   document.getElementById('run-cards').innerHTML='';
+  document.getElementById('save-bar').classList.remove('visible');
+  document.getElementById('progress-box').classList.add('visible');
+  document.getElementById('step-0-text').textContent='Loading HWA partners';
+  document.getElementById('step-1-text').textContent='Enriching with Claude AI';
+  document.getElementById('step-2-text').textContent='Complete';
+  [0,1,2].forEach(i=>setStep(i,'pending'));
+  setStep(0,'active'); setProgress(10,'Loading HWA partners from database...');
   runResults=[];
 
-  setStep(0,'active');
-  setProgress(5,'Connecting to Claude AI...');
-
-  const userMsg=`NETWORK RUN — Date: ${today}\nPrimary focus: ${region.name}\nCountries: ${region.countries||'All'}\n\nSearch the web and find 6+ real medical providers. Return JSON only.`;
-
   try{
-    setStep(0,'done'); setStep(1,'active'); setProgress(20,'Searching Europe & Mediterranean...');
-    
-    // Simulate step progression during API call
-    let stepTimer=0;
-    const stepTimers=[
-      setTimeout(()=>{setStep(1,'done');setStep(2,'active');setProgress(40,'Searching Asia & Middle East...');},15000),
-      setTimeout(()=>{setStep(2,'done');setStep(3,'active');setProgress(60,'Searching Africa...');},35000),
-      setTimeout(()=>{setStep(3,'done');setStep(4,'active');setProgress(80,'Writing cooperation emails...');},55000),
-    ];
+    // ── Load all HWA partners from Firestore ───────────────
+    const snap=await db.collection('providers').where('inNetwork','==','Yes').get();
+    const totalInDb=snap.size;
+    let all=snap.docs.map(d=>({id:d.id,...d.data(),_isHWA:true}));
 
-    const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),300000);
+    if(totalInDb===0){
+      setStep(0,'done');
+      setStep(2,'done'); setProgress(100,'No HWA partners in database');
+      document.getElementById('progress-status').textContent='No HWA partners found in database';
+      // Show inline guidance
+      document.getElementById('run-results').style.display='block';
+      document.getElementById('results-title').textContent='No HWA Partners Found';
+      document.getElementById('results-sub').textContent='Your HWA network database is empty';
+      document.getElementById('run-cards').innerHTML=`
+        <div style="background:#fff;border-radius:12px;padding:32px;text-align:center;border:2px dashed var(--border2);margin:8px 0">
+          <div style="font-size:40px;margin-bottom:12px">📥</div>
+          <div style="font-size:17px;font-weight:700;color:var(--navy);margin-bottom:8px">Import your HWA network first</div>
+          <div style="font-size:14px;color:var(--text3);margin-bottom:20px;max-width:400px;margin-left:auto;margin-right:auto">Go to the <strong>Admin tab → Import HWA Network from Excel</strong> and upload your provider list. All imported providers will be searchable here.</div>
+          <button class="btn btn-primary" onclick="showTab('admin')">Go to Admin → Import</button>
+        </div>`;
+      _restoreRunBtn(); return;
+    }
+
+    setProgress(25,`${totalInDb} HWA partners in database — filtering...`);
+
+    // Country filter — normalize both sides (handles ISO codes, Greek names, etc.)
+    if(_searchCountry){
+      const cNorm=_normalizeCountry(_searchCountry);
+      all=all.filter(p=>{
+        const pC=(p.country||'').toLowerCase().trim();
+        if(!pC)return false;
+        const pNorm=_normalizeCountry(pC);
+        return pNorm===cNorm||pC.includes(cNorm)||pNorm.includes(cNorm);
+      });
+    }
+
+    // City filter — normalize both sides to handle Greek/Latin script differences
+    if(_searchCity){
+      const citySearch=_searchCity.toLowerCase().trim();
+      all=all.filter(p=>
+        _cityMatch((p.city||'').toLowerCase(),citySearch)||
+        _cityMatch((p.address||'').toLowerCase(),citySearch)
+      );
+    }
+
+    // Type filter — skip if all types selected
+    const allTypes=['hospital','clinic','physical_therapy','doctor','ground_ambulance','air_ambulance','tpa','taxi'];
+    if(_searchTypes.length&&_searchTypes.length<allTypes.length){
+      all=all.filter(p=>!p.type||_searchTypes.includes(p.type));
+    }
+
+    // Specialties filter — include providers with no specialty data
+    if(_searchSpecs.length){
+      all=all.filter(p=>{
+        if(!(p.specialties||[]).length)return true;
+        const sp=(p.specialties||[]).map(s=>s.toLowerCase());
+        return _searchSpecs.some(sel=>sp.some(s=>s.includes(sel.toLowerCase())));
+      });
+    }
+
+    if(!all.length){
+      setStep(0,'done');
+      setProgress(40,'No HWA partners matched — searching for assistance companies...');
+      // ── Fallback: find TPA/assistance companies in the same location ──
+      let fallback=[];
+      try{
+        const fbSnap=await db.collection('providers').get();
+        const cNorm=_searchCountry?_normalizeCountry(_searchCountry):'';
+        fallback=fbSnap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>{
+          if(p.inNetwork==='Yes')return false; // already shown above, skip HWA partners
+          if(p.type!=='tpa'&&p.type!=='assistance')return false;
+          if(cNorm){
+            const pNorm=_normalizeCountry(p.country||'');
+            if(pNorm!==cNorm)return false;
+          }
+          if(_searchCity){
+            const cityLow=_searchCity.toLowerCase();
+            if(!(p.city||'').toLowerCase().includes(cityLow)&&!(p.address||'').toLowerCase().includes(cityLow))return false;
+          }
+          return true;
+        });
+      }catch(_){}
+
+      document.getElementById('run-results').style.display='block';
+      const locMsg=loc||'all countries';
+
+      if(fallback.length){
+        // Show fallback assistance companies
+        runResults=[...fallback];
+        document.getElementById('results-title').textContent=`No HWA Partners — ${fallback.length} Assistance Compan${fallback.length!==1?'ies':'y'} Available`;
+        document.getElementById('results-sub').textContent=`${today} · ${locMsg} · No HWA partners matched — showing assistance companies from database`;
+        document.getElementById('run-cards').innerHTML=`
+          <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px 18px;margin-bottom:12px;font-size:13px;color:#856404">
+            <strong>No HWA partners found in "${locMsg}".</strong> Showing ${fallback.length} assistance compan${fallback.length!==1?'ies':'y'} available in this location that may provide coverage.
+          </div>`;
+        fallback.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*60));
+        setTimeout(()=>{setStep(2,'done');setProgress(100,'Fallback results shown');_restoreRunBtn();},fallback.length*60+300);
+      }else{
+        // No fallback either — show countries with HWA partners
+        const rawCountries=snap.docs.map(d=>d.data().country).filter(c=>c&&c.length<=50&&!/^\d/.test(c));
+        const countries=[...new Set(rawCountries)].sort();
+        document.getElementById('results-title').textContent='No Matches Found';
+        document.getElementById('results-sub').textContent=`${totalInDb} HWA partners in database — none matched filters`;
+        document.getElementById('run-cards').innerHTML=`
+          <div style="background:#fff;border-radius:12px;padding:24px;border:1px solid var(--border)">
+            <div style="font-weight:700;color:var(--navy);margin-bottom:8px">No partners matched "${locMsg}"</div>
+            <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${totalInDb} HWA partners exist in your database. Countries available:</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">${countries.map(c=>`<span style="background:var(--teal-bg);color:var(--teal);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer" onclick="document.getElementById('country-input').value='${c}';updateCountryBadge()">${c}</span>`).join('')}</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:12px">Click a country above to search it, or clear the country field to see all partners.</div>
+          </div>`;
+        setStep(2,'done'); setProgress(100,'No matches — see available countries above');
+      }
+      _restoreRunBtn(); return;
+    }
+
+    all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
+    setStep(0,'done'); setProgress(35,`${all.length} partners matched — enriching with Claude AI...`);
+
+    // ── Claude AI enrichment for providers missing key data ─
+    if(apiKey){
+      setStep(1,'active');
+      const needsInfo=all; // validate location for all providers; also enrich missing data
+      if(needsInfo.length>0){
+        try{
+          const list=needsInfo.map((p,i)=>`${i+1}. ${p.name} | ${p.city||''}, ${p.country||''} | ${p.website||'no website'} | ${p.email||'no email'} | ${p.phone||'no phone'}`).join('\n');
+          setProgress(50,`Enriching ${needsInfo.length} providers with Claude AI...`);
+          const aiResp=await fetch('https://api.anthropic.com/v1/messages',{
+            method:'POST',
+            headers:{
+              'Content-Type':'application/json','x-api-key':apiKey,
+              'anthropic-version':'2023-06-01',
+              'anthropic-dangerous-direct-browser-access':'true'
+            },
+            body:JSON.stringify({
+              model:'claude-sonnet-4-6',max_tokens:3000,
+              system:SYSTEM_PROMPT,
+              messages:[{role:'user',content:`VALIDATE AND ENRICH HWA PROVIDERS — Date: ${today}
+Location filter: ${_searchCity?_searchCity+', ':''}${_searchCountry||'any location'}
+
+REQUIRED FOR ALL providers (location validation):
+- city_verified: the real city where this provider is actually located
+- country_verified: the real country where this provider is actually located (full name, e.g. "Germany" not "DE")
+- location_match: true ONLY if provider is physically located in "${_searchCity?_searchCity+', ':''}${_searchCountry||'any location'}". Set false if the provider is in a DIFFERENT country or city.
+
+FILL IN only where the value is "no email" / "no phone" / blank (do not overwrite existing data):
+- email: official contact email
+- contact_person: medical director or international coordinator name
+- accreditations: certifications array (JCI, ISO, etc.)
+- specialties: medical specialties array
+- has_international_dept: boolean
+- why_hwa: 2-3 sentences on value to HWA insurer clients
+- cooperation_score: integer 1-100
+
+PROVIDERS:
+${list}
+
+Return ONLY valid JSON (no markdown):
+{"enriched":[{"index":0,"email":"","contact_person":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","cooperation_score":75,"city_verified":"","country_verified":"","location_match":true}]}`}]
+            })
+          });
+          if(aiResp.ok){
+            const aiData=await aiResp.json();
+            const rawText=aiData.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+            if(rawText){
+              const parsed=_parseClaudeJSON(rawText);
+              const firestoreBatch=db.batch();
+              (parsed.enriched||[]).forEach(e=>{
+                const p=needsInfo[e.index];
+                if(!p)return;
+                // Apply to in-memory provider
+                if(e.email&&!p.email)p.email=e.email;
+                if(e.contact_person&&!p.contact_person)p.contact_person=e.contact_person;
+                if(e.accreditations?.length)p.accreditations=e.accreditations;
+                if(e.specialties?.length)p.specialties=e.specialties;
+                if(e.has_international_dept)p.has_international_dept=e.has_international_dept;
+                if(e.why_hwa&&!p.whyHWA)p.whyHWA=e.why_hwa;
+                if(e.cooperation_score)p.cooperation_score=e.cooperation_score;
+                // Apply verified location corrections
+                if(e.city_verified)p.city=e.city_verified;
+                if(e.country_verified)p.country=e.country_verified;
+                if(e.location_match===false)p._locationMismatch=true;
+                // Persist to Firestore
+                if(p.id){
+                  firestoreBatch.update(db.collection('providers').doc(p.id),{
+                    email:p.email||'',contact_person:p.contact_person||'',
+                    accreditations:p.accreditations||[],specialties:p.specialties||[],
+                    hasInternationalDept:p.has_international_dept||false,
+                    whyHWA:p.whyHWA||'',cooperation_score:p.cooperation_score||null,
+                    city:p.city||'',country:p.country||''
+                  });
+                }
+              });
+              // Strict location filter: remove providers Claude confirmed are not in the search area
+              if(_searchCountry||_searchCity){
+                all=all.filter(p=>!p._locationMismatch);
+              }
+              try{await firestoreBatch.commit();}catch(_){}
+              // Re-sort after enrichment
+              all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
+            }
+          }
+        }catch(enrichErr){
+          // Enrichment failed — continue with existing data
+        }
+      }
+      setStep(1,'done');
+    }else{
+      setStep(1,'done');
+    }
+
+    setProgress(90,'Rendering results...');
+    runResults=[...all];
+    document.getElementById('run-results').style.display='block';
+    document.getElementById('results-title').textContent=`${all.length} HWA Partner${all.length!==1?'s':''} Found`;
+    document.getElementById('results-sub').textContent=`${today} · ${loc} · HWA Network`;
+    all.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*60));
+    setTimeout(()=>{
+      setStep(2,'done'); setProgress(100,'Search complete');
+      document.getElementById('save-bar').classList.remove('visible');
+      _restoreRunBtn();
+    },all.length*60+300);
+
+  }catch(e){
+    showToast('HWA search failed: '+e.message,'error');
+    setProgress(0,'Error: '+e.message);
+    _restoreRunBtn();
+  }
+}
+
+// ── Unified Google Places + Claude AI Pipeline ─────────────
+async function _runUnified(){
+  const today=new Date().toISOString().split('T')[0];
+  const loc=_searchCity?`${_searchCity}, ${_searchCountry}`:_searchCountry;
+  const typeStr=_searchTypes.join(', ');
+  const specStr=_searchSpecs.length?_searchSpecs.join(', '):'';
+
+  // ── STEP 0: Google Places ────────────────────────────────
+  let googleProviders=[];
+  if(googlePlacesKey){
+    try{
+      const typeQueries=_searchTypes.map(t=>({
+        hospital:'hospital',clinic:'medical clinic',ground_ambulance:'ambulance service',
+        air_ambulance:'air ambulance',tpa:'insurance assistance company',
+        physical_therapy:'physiotherapy clinic',doctor:'specialist doctor clinic',
+        taxi:'medical taxi transport service'
+      })[t]||t);
+      const baseQuery=typeQueries.join(' OR ')+' '+(specStr?specStr+' ':'')+'medical';
+      const locationStr=_searchCity?`${_searchCity} ${_searchCountry}`:_searchCountry;
+      const textQuery=`${baseQuery} in ${locationStr}`;
+      const gpResp=await fetch('https://places.googleapis.com/v1/places:searchText',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'X-Goog-Api-Key':googlePlacesKey,
+          'X-Goog-FieldMask':'places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.types,places.id,places.location'
+        },
+        body:JSON.stringify({textQuery,maxResultCount:20,languageCode:'en'})
+      });
+      if(!gpResp.ok){const e=await gpResp.json();throw new Error(e.error?.message||gpResp.status);}
+      const gpData=await gpResp.json();
+      googleProviders=(gpData.places||[]).map(pl=>{
+        const addr=pl.formattedAddress||'';
+        const addrParts=addr.split(',').map(s=>s.trim());
+        const detectedCity=addrParts.length>=2?addrParts[addrParts.length-2]:_searchCity||'';
+        const plTypes=pl.types||[];
+        let pType='clinic';
+        if(plTypes.some(t=>t.includes('hospital')))pType='hospital';
+        else if(plTypes.some(t=>t.includes('physiotherapist')||t.includes('physical_therapy')))pType='physical_therapy';
+        else if(plTypes.some(t=>t.includes('doctor')||t.includes('physician')))pType='doctor';
+        else if(plTypes.some(t=>t.includes('taxi')||t.includes('transportation')))pType='taxi';
+        return{
+          name:pl.displayName?.text||'Unknown',type:pType,
+          country:_searchCountry,city:detectedCity||_searchCity||_searchCountry,
+          address:pl.formattedAddress||'',website:pl.websiteUri||'',email:'',
+          phone:pl.internationalPhoneNumber||pl.nationalPhoneNumber||'',
+          accreditations:[],specialties:_searchSpecs.length?[..._searchSpecs]:[],
+          has_international_dept:false,why_hwa:'',
+          cooperation_score:pl.rating?Math.round(pl.rating*20):null,
+          contact_person:'',
+          _googlePlaceId:pl.id||'',_googleRating:pl.rating||null,_googleReviews:pl.userRatingCount||0
+        };
+      });
+      setProgress(30,`Located ${googleProviders.length} providers`);
+    }catch(gpErr){
+      showToast('Google Places unavailable — using AI search only','error');
+    }
+  }
+  setStep(0,'done');
+
+  // ── STEP 1: Claude AI — enrich + supplemental ───────────
+  setStep(1,'active'); setProgress(40,'Enriching & qualifying providers...');
+  const controller=new AbortController();
+  const abortTimer=setTimeout(()=>controller.abort(),240000);
+  try{
+    let claudeMsg;
+    if(googleProviders.length>0){
+      const providerList=googleProviders.map((p,i)=>`${i+1}. ${p.name} | ${p.city}, ${p.country} | ${p.website||'no website'} | ${p.phone||'no phone'}`).join('\n');
+      const additionalCount=Math.max(4,12-googleProviders.length);
+      claudeMsg=`UNIFIED NETWORK RUN — Date: ${today}
+Location: ${loc}
+Provider types: ${typeStr}
+${specStr?'Specialties: '+specStr:''}
+Google Places found ${googleProviders.length} providers. Your tasks:
+1. Enrich each provider below: find email, contact_person (medical director or international coordinator), specialties array, accreditations array, has_international_dept boolean, why_hwa (1-2 sentences on value to HWA's insurer clients), cooperation_score (integer 1-100, higher = better international partner).
+2. Find up to ${additionalCount} ADDITIONAL verified providers in ${loc} not already in the list.
+
+PROVIDERS TO ENRICH:
+${providerList}
+
+ALREADY FOUND — do NOT repeat: ${googleProviders.map(p=>p.name).join(' | ')}
+
+Return ONLY valid JSON (no markdown, no backticks):
+{"enriched":[{"index":0,"email":"","contact_person":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","cooperation_score":65}]}`;
+    }else{
+      claudeMsg=`NETWORK RUN — Date: ${today}
+Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity+' (search primarily here, expand to nearby if needed)':' (search across the entire country)'}
+Provider types required: ${typeStr}
+${specStr?'Medical specialties: '+specStr:'Medical specialties: any'}
+
+Search official databases and web to find exactly 12 real verified medical providers in ${loc} matching the requested types and specialties. Order best-first: JCI/ISO-accredited first, then providers with verified email + website. Return JSON only.`;
+    }
 
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',signal:controller.signal,
       headers:{
-        'Content-Type':'application/json',
-        'x-api-key':apiKey,
-        'anthropic-version':'2023-06-01',
-        'anthropic-beta':'web-search-2025-03-05',
+        'Content-Type':'application/json','x-api-key':apiKey,
+        'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05',
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:8000,
-        tools:[{type:'web_search_20250305',name:'web_search',max_uses:15}],
+        model:'claude-sonnet-4-6',max_tokens:4000,
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:3}],
         system:SYSTEM_PROMPT,
-        messages:[{role:'user',content:userMsg}]
+        messages:[{role:'user',content:claudeMsg}]
       })
     });
-    clearTimeout(timeout);
-    stepTimers.forEach(t=>clearTimeout(t));
-
+    clearTimeout(abortTimer);
     if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error '+resp.status);}
 
     const data=await resp.json();
-    let rawText='';
-    for(let i=data.content.length-1;i>=0;i--){
-      if(data.content[i].type==='text'){rawText=data.content[i].text;break;}
+    const rawText=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    if(!rawText)throw new Error('No response from Claude (stop_reason: '+data.stop_reason+')');
+
+    setProgress(80,'Processing results...');
+
+    let finalProviders=[];
+    if(googleProviders.length>0){
+      try{
+        const parsed=_parseClaudeJSON(rawText);
+        (parsed.enriched||[]).forEach(e=>{
+          const p=googleProviders[e.index];
+          if(!p)return;
+          p.email=e.email||p.email||'';
+          p.contact_person=e.contact_person||'';
+          p.specialties=e.specialties||p.specialties||[];
+          p.accreditations=e.accreditations||[];
+          p.has_international_dept=e.has_international_dept||false;
+          p.why_hwa=e.why_hwa||'';
+          p.cooperation_score=e.cooperation_score||p.cooperation_score||70;
+        });
+        const existingNames=new Set(googleProviders.map(p=>p.name.toLowerCase().trim()));
+        const additional=(parsed.additional||[])
+          .filter(p=>p.name&&!existingNames.has(p.name.toLowerCase().trim()))
+          .map(p=>({...p,cooperation_score:p.cooperation_score||65,contact_person:p.contact_person||''}));
+        finalProviders=[...googleProviders,...additional];
+      }catch(_){
+        finalProviders=[...googleProviders];
+      }
+    }else{
+      try{
+        const parsed=_parseClaudeJSON(rawText);
+        finalProviders=(parsed.providers||[]).map(p=>({...p,cooperation_score:p.cooperation_score||65,contact_person:p.contact_person||''}));
+      }catch(_){ finalProviders=[]; }
     }
-    if(!rawText)throw new Error('No text in response');
 
-    // Parse JSON
-    let clean=rawText.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
-    const match=clean.match(/\{[\s\S]*\}/);
-    if(match)clean=match[0];
-    const parsed=JSON.parse(clean);
-    const providers=parsed.providers||[];
-    if(!providers.length)throw new Error('No providers in response');
-
-    // Step complete
-    [1,2,3,4].forEach(i=>setStep(i,'done'));
-    setStep(5,'done');
-    document.getElementById('step-5-text').textContent=`Complete — ${providers.length} providers found`;
-    setProgress(100,`Found ${providers.length} providers`);
-
-    // Save session
-    await db.collection('sessions').add({
-      date:today,region:region.name,providersFound:providers.length,
-      runBy:currentUser.displayName,runByEmail:currentUser.email,
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    // Deduplicate
+    const seen=new Set();
+    finalProviders=finalProviders.filter(p=>{
+      const key=(p.name||'').toLowerCase().trim();
+      if(!key||seen.has(key))return false;
+      seen.add(key);return true;
     });
 
-    // Render cards
-    runResults=providers;
+    // Cross-reference with HWA network (mark existing partners)
+    try{
+      const hwaSnap=await db.collection('providers').where('inNetwork','==','Yes').get();
+      const hwaNames=new Set(hwaSnap.docs.map(d=>(d.data().name||'').toLowerCase().trim()));
+      finalProviders.forEach(p=>{
+        if(hwaNames.has((p.name||'').toLowerCase().trim()))p._isHWA=true;
+      });
+    }catch(_){}
+
+    // Sort: HWA partners first, then by cooperation_score
+    finalProviders.sort((a,b)=>{
+      const aHwa=a._isHWA?1:0, bHwa=b._isHWA?1:0;
+      if(aHwa!==bHwa)return bHwa-aHwa;
+      return (b.cooperation_score||0)-(a.cooperation_score||0);
+    });
+
+    setProgress(95,'Rendering providers...');
+    runResults=[...finalProviders];
     document.getElementById('run-results').style.display='block';
-    document.getElementById('results-title').textContent=`${providers.length} Providers Found`;
-    document.getElementById('results-sub').textContent=`${today} · ${region.name} · Select providers to save`;
-    document.getElementById('run-cards').innerHTML='';
-    providers.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*120));
+    finalProviders.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*80));
+
+    try{await db.collection('sessions').add({date:today,region:loc,providersFound:finalProviders.length,batchNum:1,runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
+
     setTimeout(()=>{
-      document.getElementById('save-bar').classList.add('visible');
-      updateSaveCount();
-    },providers.length*120+200);
+      setStep(1,'done');setStep(2,'done');
+      _finishRunUI(`${finalProviders.length} providers found`);
+    },finalProviders.length*80+400);
 
   }catch(e){
-    setStep(document.querySelectorAll('.step.active')[0]?.id.replace('step-',''),'error');
-    setProgress(0,'Error: '+e.message);
-    showToast('Run failed: '+e.message,'error');
-  }finally{
+    clearTimeout(abortTimer);
+    const isAbort=e.name==='AbortError'||e.message.toLowerCase().includes('abort');
+    setProgress(0,'Error: '+(isAbort?'Search timed out':e.message));
+    showToast(isAbort?'Search timed out — try a more specific location':'Run failed: '+e.message,'error');
+    _searchActive=false;
     document.getElementById('run-btn').disabled=false;
     document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';
+  }
+}
+
+async function _runBatch(batchNum){
+  if(!_searchActive){_finishRunUI('Search stopped');return;}
+  if(runResults.length>=250){_finishRunUI('250 providers reached');return;}
+
+  const today=new Date().toISOString().split('T')[0];
+  const loc=_searchCity?`${_searchCity}, ${_searchCountry}`:_searchCountry;
+  const typesLine=`Provider types required: ${_searchTypes.join(', ')}`;
+  const specsLine=_searchSpecs.length?`Medical specialties required: ${_searchSpecs.join(', ')}`:'Medical specialties: any';
+  const excludeLine=runResults.length>0
+    ?`\nALREADY FOUND — do NOT include any of these (find completely different providers):\n${runResults.map(p=>p.name).join(' | ')}`
+    :'';
+
+  const userMsg=`NETWORK RUN Batch ${batchNum} — Date: ${today}
+Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity+' (search primarily in '+_searchCity+', expand to nearby areas if needed)':' (search across the entire country)'}
+${typesLine}
+${specsLine}${excludeLine}
+
+Search official databases and web to find exactly 12 NEW real verified medical providers in ${loc} matching the requested types and specialties. Order best-first: JCI/ISO-accredited first, then providers with verified email + website. Do not repeat any provider from the ALREADY FOUND list. Return JSON only.`;
+
+  // Reset steps and progress bar for this batch
+  setProgress(0,'');
+  [0,1,2].forEach(i=>setStep(i,'pending'));
+  setStep(0,'active');
+  setProgress(15, batchNum===1?'Searching databases & web...':'Batch '+batchNum+' — searching for more providers...');
+
+  const stepTimers=[
+    setTimeout(()=>{setStep(0,'done');setStep(1,'active');setProgress(50,'Analyzing providers...');},15000),
+  ];
+  const controller=new AbortController();
+  const abortTimer=setTimeout(()=>controller.abort(),240000);
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',signal:controller.signal,
+      headers:{
+        'Content-Type':'application/json','x-api-key':apiKey,
+        'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',max_tokens:5000,
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:4}],
+        system:SYSTEM_PROMPT,messages:[{role:'user',content:userMsg}]
+      })
+    });
+    clearTimeout(abortTimer);stepTimers.forEach(t=>clearTimeout(t));
+    if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error '+resp.status);}
+
+    const data=await resp.json();
+    const rawText=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    if(!rawText)throw new Error('No text in response (stop_reason: '+data.stop_reason+')');
+
+    const parsed=_parseClaudeJSON(rawText);
+    const batch=parsed.providers||[];
+
+    // Deduplicate against all already-found providers
+    const existingNames=new Set(runResults.map(p=>p.name.toLowerCase().trim()));
+    const newProviders=batch.filter(p=>!existingNames.has(p.name.toLowerCase().trim()));
+
+    if(!newProviders.length){
+      [0,1,2].forEach(i=>setStep(i,'done'));
+      setProgress(100,'No more unique providers found');
+      _finishRunUI('All available providers found');
+      return;
+    }
+
+    // Mark batch steps done
+    [0,1,2].forEach(i=>setStep(i,'done'));
+    const newTotal=runResults.length+newProviders.length;
+    setProgress(100,`Batch ${batchNum} complete — ${newTotal} providers found`);
+
+    // Show batch separator for batches after the first
+    document.getElementById('run-results').style.display='block';
+    if(batchNum>1){
+      const sep=document.createElement('div');
+      sep.className='batch-sep';
+      sep.textContent=`Batch ${batchNum} — ${newProviders.length} more providers`;
+      document.getElementById('run-cards').appendChild(sep);
+    }
+
+    // Render cards with staggered animation
+    newProviders.forEach((p,i)=>{
+      const globalIdx=runResults.length+i;
+      setTimeout(()=>renderRunCard(p,globalIdx),i*100);
+    });
+    runResults.push(...newProviders);
+
+    // Update header and save bar
+    document.getElementById('results-title').textContent=`${runResults.length} Providers Found`;
+    document.getElementById('results-sub').textContent=`${today} · ${loc} · ${_searchActive&&runResults.length<250?'Searching for more...':'Select providers to save'}`;
+    setTimeout(()=>{document.getElementById('save-bar').classList.add('visible');updateSaveCount();},newProviders.length*100+300);
+
+    // Session log (non-critical)
+    try{await db.collection('sessions').add({date:today,region:loc,providersFound:runResults.length,batchNum,runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
+
+    // Auto-continue to next batch
+    if(_searchActive&&runResults.length<250){
+      setTimeout(()=>_runBatch(batchNum+1),800);
+    }else{
+      _finishRunUI(runResults.length>=250?'250 provider limit reached':'Search stopped');
+    }
+
+  }catch(e){
+    clearTimeout(abortTimer);stepTimers.forEach(t=>clearTimeout(t));
+    const activeStep=document.querySelector('.step.active');
+    if(activeStep)setStep(parseInt(activeStep.id.replace('step-','')),  'error');
+    const isAbort=e.name==='AbortError'||e.message.toLowerCase().includes('abort');
+    const msg=isAbort?`Batch ${batchNum} timed out — ${runResults.length} providers found so far`:e.message;
+    setProgress(0,'Error: '+msg);
+    showToast(isAbort?`Timed out after batch ${batchNum} — ${runResults.length} providers saved`:'Run failed: '+e.message,'error');
+    if(runResults.length>0)_finishRunUI('Search ended with error');
+    else{document.getElementById('run-btn').disabled=false;document.getElementById('run-btn').innerHTML='<span>🔍</span><span>Start Network Run</span>';}
   }
 }
 
@@ -842,7 +1759,7 @@ function setStep(n,state){
   const icon=el.querySelector('.step-icon');
   if(state==='done')icon.textContent='✓';
   else if(state==='error')icon.textContent='✗';
-  else icon.textContent=n+1;
+  else icon.textContent=Number(n)+1;
 }
 function setProgress(pct,text){
   document.getElementById('progress-bar').style.width=pct+'%';
@@ -853,7 +1770,11 @@ function setProgress(pct,text){
 function renderRunCard(p,idx){
   const id='card-'+idx;
   const accHtml=(p.accreditations||[]).map(a=>`<span class="acc-tag">${a}</span>`).join('');
-  const emailEncoded=buildMailto(p);
+  const hwaBadge=p._isHWA?'<span class="hwa-badge">⭐ HWA Partner</span>':'';
+  const scoreHtml=p.cooperation_score
+    ?`<div class="card-row"><span class="card-row-icon">⭐</span><span class="card-row-val">Cooperation score: <strong>${p.cooperation_score}/100</strong></span></div>`:'';
+  const contactHtml=p.contact_person
+    ?`<div class="card-row"><span class="card-row-icon">👤</span><span class="card-row-val">${p.contact_person}</span></div>`:'';
   const card=document.createElement('div');
   card.className='provider-card'; card.id=id;
   card.style.animationDelay=(idx*0.08)+'s';
@@ -862,40 +1783,41 @@ function renderRunCard(p,idx){
       <div>
         <div class="card-name">${p.name}</div>
         <div class="card-location">📍 ${p.city}, ${p.country}</div>
+        ${hwaBadge}
       </div>
       <span class="type-badge">${typeLabel(p.type)}</span>
     </div>
     <div class="card-body">
+      ${contactHtml}
       ${p.email?`<div class="card-row"><span class="card-row-icon">✉</span><span class="card-row-val"><a href="mailto:${p.email}">${p.email}</a></span></div>`:''}
       ${p.phone?`<div class="card-row"><span class="card-row-icon">📞</span><span class="card-row-val">${p.phone}</span></div>`:''}
       ${p.website?`<div class="card-row"><span class="card-row-icon">🌐</span><span class="card-row-val"><a href="${p.website}" target="_blank">${p.website.replace('https://','')}</a></span></div>`:''}
       ${accHtml?`<div class="card-row"><span class="card-row-icon">🏅</span><span class="card-row-val"><div class="accs">${accHtml}</div></span></div>`:''}
+      ${scoreHtml}
       ${p.why_hwa?`<div class="why-box">${p.why_hwa}</div>`:''}
-      <button class="email-toggle" onclick="toggleEmail('email-${idx}',this)">📄 View Email Draft ▼</button>
-      <div class="email-preview" id="email-${idx}">${p.email_body||''}</div>
     </div>
     <div class="card-actions">
-      <a class="btn-outlook" href="${emailEncoded}" target="_blank">📧 Open in Outlook</a>
-      <button class="btn btn-outline btn-sm" onclick="openModal(${idx})">👁 Full View</button>
+      ${p._isHWA
+        ? (p.email
+            ? `<button class="btn-gen-email" onclick="sendEmailDirect(${idx})">✉ Send Email</button>`
+            : `<button class="btn-gen-email" disabled style="opacity:.5;cursor:not-allowed" title="No email address on file">✉ No Email on File</button>`)
+        : (p.email
+            ? `<button class="btn-gen-email" onclick="generateEmailForRun(${idx},this)">✉ Generate & Send Email</button>`
+            : `<button class="btn-gen-email" onclick="generateEmailForRun(${idx},this)">✉ Generate Email</button>`)}
       <label class="save-check">
-        <input type="checkbox" checked id="chk-${idx}" onchange="updateSaveCount()">
-        Save to DB
+        <input type="checkbox" ${p._isHWA?'style="display:none"':'checked'} id="chk-${idx}" onchange="updateSaveCount()">
+        ${p._isHWA?'':'Save to DB'}
       </label>
     </div>`;
   document.getElementById('run-cards').appendChild(card);
 }
 
-function toggleEmail(id,btn){
-  const el=document.getElementById(id);
-  el.classList.toggle('open');
-  btn.textContent=el.classList.contains('open')?'📄 Hide Email ▲':'📄 View Email Draft ▼';
-}
 function updateSaveCount(){
-  const checked=document.querySelectorAll('[id^="chk-"]:checked').length;
+  const checked=document.querySelectorAll('[id^="chk-"]:checked:not([style*="display:none"])').length;
   document.getElementById('save-bar-sub').textContent=`${checked} provider${checked!==1?'s':''} selected`;
 }
 function typeLabel(t){
-  return{hospital:'🏥 Hospital',clinic:'🏢 Clinic',ground_ambulance:'🚑 Ground Amb.',air_ambulance:'✈️ Air Amb.',tpa:'🤝 TPA'}[t]||t;
+  return{hospital:'🏥 Hospital',clinic:'🏢 Clinic',ground_ambulance:'🚑 Ground Amb.',air_ambulance:'✈️ Air Amb.',tpa:'🤝 TPA',physical_therapy:'🏋️ Physical Therapy',doctor:'👨‍⚕️ Doctor/Specialist',taxi:'🚖 Taxi'}[t]||t;
 }
 function buildMailto(p){
   const subj=encodeURIComponent(p.email_subject||'Partnership Proposal — HealthWatch Assistance');
@@ -903,31 +1825,90 @@ function buildMailto(p){
   return `mailto:${p.email||''}?subject=${subj}&body=${body}`;
 }
 
-// ── Modal ───────────────────────────────────────────────
-function openModal(idx){
+// ── Email Generation ────────────────────────────────────
+async function generateEmail(p,btnEl,docId){
+  if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
+  const orig=btnEl.innerHTML;
+  btnEl.disabled=true;
+  btnEl.innerHTML='⏳ Generating...';
+  if(!p.email){showToast('No email address for this provider','error');btnEl.disabled=false;btnEl.innerHTML=orig;return;}
+  const specs=(p.specialties||p.specialty||[]);
+  const specsStr=Array.isArray(specs)?specs.join(', '):(specs||'General');
+  const userMsg=`Generate cooperation email for:
+Provider: ${p.name}
+Type: ${p.type||''}
+City: ${p.city||''}, ${p.country||''}
+Specialties: ${specsStr||'General'}
+Provider email: ${p.email||'[not available]'}`;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,system:EMAIL_PROMPT,messages:[{role:'user',content:userMsg}]})
+    });
+    if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error '+resp.status);}
+    const data=await resp.json();
+    let raw=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    if(!raw)throw new Error('No response from Claude');
+    let clean=raw.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
+    const m=clean.match(/\{[\s\S]*\}/);
+    if(m)clean=m[0];
+    clean=clean.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,'');
+    const emailData=JSON.parse(clean);
+    p.email_subject=emailData.subject||'Network Partnership — HealthWatch Assistance';
+    p.email_body=emailData.body||'';
+    if(docId){
+      const today=new Date().toISOString().split('T')[0];
+      await db.collection('providers').doc(docId).update({
+        email_subject:p.email_subject,email_body:p.email_body,
+        status:'Email Sent',lastContact:today
+      });
+      const idx=currentProviders.findIndex(x=>x.id===docId);
+      if(idx>=0){currentProviders[idx].email_subject=p.email_subject;currentProviders[idx].email_body=p.email_body;}
+      await loadProviders();loadDashboard();
+    }
+    const a=document.createElement('a');
+    a.href=buildMailto(p);a.click();
+    showToast('Email generated — Outlook opened ✓','success');
+  }catch(e){
+    showToast('Email generation failed: '+e.message,'error');
+  }finally{
+    btnEl.disabled=false;btnEl.innerHTML=orig;
+  }
+}
+async function generateEmailForRun(idx,btn){
   const p=runResults[idx];
   if(!p)return;
-  document.getElementById('modal-title').textContent=p.name;
-  document.getElementById('modal-subject').textContent='Subject: '+(p.email_subject||'');
-  document.getElementById('modal-body-text').textContent=p.email_body||'';
-  document.getElementById('modal-outlook-btn').href=buildMailto(p);
-  window._modalEmail=p.email_body;
-  document.getElementById('modal-overlay').classList.add('open');
+  await generateEmail(p,btn,null);
 }
-function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
-function copyEmail(){
-  navigator.clipboard.writeText(window._modalEmail||'');
-  showToast('Email copied to clipboard ✓','success');
+async function generateEmailForDb(docId,btn){
+  const p=currentProviders.find(x=>x.id===docId);
+  if(!p)return;
+  await generateEmail(p,btn,docId);
+}
+function sendEmailDirect(idx){
+  const p=runResults[idx];
+  if(!p||!p.email){showToast('No email address for this provider','error');return;}
+  const a=document.createElement('a');
+  a.href=`mailto:${p.email}`;
+  a.click();
 }
 
 // ── Save to Firestore ───────────────────────────────────
 async function saveSelectedProviders(){
+  const saveBtn=document.getElementById('save-all-btn');
+  if(saveBtn)saveBtn.disabled=true;
   const today=new Date().toISOString().split('T')[0];
   const toSave=[];
-  document.querySelectorAll('[id^="chk-"]').forEach(chk=>{
+  document.querySelectorAll('[id^="chk-"]:not([style*="display:none"])').forEach(chk=>{
     if(chk.checked){
       const idx=parseInt(chk.id.replace('chk-',''));
-      if(runResults[idx])toSave.push(runResults[idx]);
+      if(!isNaN(idx)&&runResults[idx]&&!runResults[idx]._isHWA)toSave.push(runResults[idx]);
     }
   });
   if(!toSave.length){showToast('No providers selected','error');return;}
@@ -940,12 +1921,17 @@ async function saveSelectedProviders(){
       const ref=db.collection('providers').doc(docId);
       batch.set(ref,{
         name:p.name||'',type:p.type||'',country:p.country||'',city:p.city||'',
+        address:p.address||'',
         website:p.website||'',email:p.email||'',phone:p.phone||'',
         accreditations:p.accreditations||[],specialties:p.specialties||[],
         hasInternationalDept:p.has_international_dept||false,
-        whyHWA:p.why_hwa||'',emailSubject:p.email_subject||'',emailBody:p.email_body||'',
+        whyHWA:p.why_hwa||'',email_subject:'',email_body:'',
         outreachDate:today,status:'New',inNetwork:'Pending',
         lastContact:'',responseNotes:'',agreementDate:'',
+        contact_person:p.contact_person||'',
+        cooperation_score:p.cooperation_score||null,
+        google_place_id:p._googlePlaceId||'',
+        google_rating:p._googleRating||null,
         addedBy:currentUser.displayName||'',addedByEmail:currentUser.email||'',
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -955,46 +1941,54 @@ async function saveSelectedProviders(){
     document.getElementById('save-bar').classList.remove('visible');
     loadDashboard();
   }catch(e){showToast('Save failed: '+e.message,'error');}
+  finally{
+    const btn=document.getElementById('save-all-btn');
+    if(btn)btn.disabled=false;
+  }
 }
 
 // ── Provider Database ────────────────────────────────────
 async function loadProviders(){
   const tbody=document.getElementById('db-tbody');
-  tbody.innerHTML='<tr><td colspan="7"><div class="skeleton" style="height:40px;margin:8px"></div></td></tr>';
+  tbody.innerHTML='<tr><td colspan="11"><div class="skeleton" style="height:40px;margin:8px"></div></td></tr>';
   try{
     const snap=await db.collection('providers').orderBy('createdAt','desc').limit(500).get();
     currentProviders=snap.docs.map(d=>({id:d.id,...d.data()}));
     document.getElementById('db-count').textContent=`${currentProviders.length} providers in database`;
     renderTable(currentProviders);
   }catch(e){
-    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3)">Could not load providers: ${e.message}</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--text3)">Could not load providers: ${e.message}</td></tr>`;
   }
 }
 
 function renderTable(providers){
   const tbody=document.getElementById('db-tbody');
   if(!providers.length){
-    tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No providers yet</div><div class="empty-sub">Run a Network Search to find providers</div></div></td></tr>';
+    tbody.innerHTML='<tr><td colspan="11"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No providers yet</div><div class="empty-sub">Run a Network Search to find providers</div></div></td></tr>';
     return;
   }
   tbody.innerHTML=providers.map(p=>{
-    const mailto=buildMailto(p);
     const statusClass='status-'+(p.status||'New').replace(/ /g,'-');
     const netClass=p.inNetwork==='Yes'?'network-yes':p.inNetwork==='No'?'network-no':'network-pending';
+    const scoreHtml=p.cooperation_score
+      ?`<span style="font-size:12px;font-weight:700;color:${p.cooperation_score>=80?'var(--green)':p.cooperation_score>=60?'var(--amber)':'var(--text3)'}">${p.cooperation_score}</span>`
+      :'<span style="color:var(--text3)">—</span>';
     return `<tr>
       <td><div style="font-weight:600;font-size:13px">${p.name||''}</div><div style="font-size:11px;color:var(--text3)">${p.city||''}, ${p.country||''}</div></td>
       <td><span style="font-size:11px;background:var(--teal-bg);color:var(--teal);border-radius:4px;padding:2px 7px;font-weight:600">${typeLabel(p.type||'')}</span></td>
       <td style="font-size:13px">${p.country||''}</td>
+      <td style="font-size:12px;color:var(--text2)">${p.contact_person||'<span style="color:var(--text3)">—</span>'}</td>
       <td>
         ${p.email?`<div style="font-size:12px;color:var(--text2)">${p.email}</div>`:''}
-        ${p.email?`<a class="table-outlook" href="${buildMailto(p)}" target="_blank" title="Open in Outlook">📧</a>`:''}
+        <button class="table-gen-email" onclick="generateEmailForDb('${p.id}',this)">✉ Generate & Send</button>
       </td>
+      <td>${scoreHtml}</td>
       <td>
         <select class="status-sel ${statusClass}" onchange="updateStatus('${p.id}',this)">
           ${['New','Email Sent','Agreement Sent','Agreement Signed','In Network','No Response','Declined'].map(s=>`<option${s===p.status?' selected':''}>${s}</option>`).join('')}
         </select>
       </td>
-      <td><span class="${netClass}">${p.inNetwork||'Pending'}</span></td>
+      <td>${p.inNetwork==='Yes'?'<span class="hwa-badge" style="font-size:10px;padding:3px 9px">⭐ HWA</span>':'<span class="'+netClass+'">'+(p.inNetwork||'Pending')+'</span>'}</td>
       <td style="font-size:11px;color:var(--text3)">${p.outreachDate||''}</td>
     </tr>`;
   }).join('');
@@ -1013,97 +2007,525 @@ async function updateStatus(docId,sel){
   }catch(e){showToast('Update failed','error');}
 }
 
+async function trackEmailSent(docId){
+  if(!docId)return;
+  try{
+    const today=new Date().toISOString().split('T')[0];
+    await db.collection('providers').doc(docId).update({
+      status:'Email Sent',
+      lastContact:today
+    });
+    showToast('Email opened — status set to "Email Sent" ✓','success');
+    await loadProviders();
+    loadDashboard();
+  }catch(e){}
+}
+
+let _hwaFilterOn=false;
+function toggleHwaFilter(){
+  _hwaFilterOn=!_hwaFilterOn;
+  const btn=document.getElementById('hwa-filter-btn');
+  btn.style.background=_hwaFilterOn?'var(--navy)':'var(--bg)';
+  btn.style.color=_hwaFilterOn?'#fff':'var(--text2)';
+  btn.style.borderColor=_hwaFilterOn?'var(--navy)':'var(--border2)';
+  filterProviders();
+}
+
 function filterProviders(){
   const q=(document.getElementById('db-search').value||'').toLowerCase();
   const type=document.getElementById('db-type').value;
   const status=document.getElementById('db-status').value;
   const network=document.getElementById('db-network').value;
   const filtered=currentProviders.filter(p=>{
-    if(q&&!`${p.name}${p.country}${p.city}${p.email}`.toLowerCase().includes(q))return false;
+    if(q&&!`${p.name}${p.country}${p.city}${p.email}${p.contact_person||''}`.toLowerCase().includes(q))return false;
     if(type&&p.type!==type.toLowerCase().replace(/ \/ /,'/').replace(/ /,'_'))return false;
     if(status&&p.status!==status)return false;
     if(network&&p.inNetwork!==network)return false;
+    if(_hwaFilterOn&&p.inNetwork!=='Yes')return false;
     return true;
   });
   renderTable(filtered);
   document.getElementById('db-count').textContent=`${filtered.length} of ${currentProviders.length} providers`;
 }
 
+// ── Excel Import ─────────────────────────────────────────
+let _importRows=[];
+let _importHeaders=[];
+
+function handleImportDrop(e){
+  e.preventDefault();
+  document.getElementById('import-drop').classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(file)_readImportFile(file);
+}
+
+function loadImportFile(input){
+  if(input.files[0])_readImportFile(input.files[0]);
+}
+
+function _readImportFile(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const wb=XLSX.read(ev.target.result,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(!data||data.length<2){showToast('File appears empty or invalid','error');return;}
+    _importHeaders=(data[0]||[]).map(h=>String(h).trim());
+    _importRows=data.slice(1).filter(r=>r.some(c=>c!==''));
+    _showImportPreview();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+const IMPORT_FIELDS=[
+  {key:'name',label:'Provider Name'},
+  {key:'country',label:'Country'},
+  {key:'city',label:'City'},
+  {key:'type',label:'Type'},
+  {key:'email',label:'Email'},
+  {key:'phone',label:'Phone'},
+  {key:'website',label:'Website'},
+  {key:'contact_person',label:'Contact Person'},
+  {key:'specialties',label:'Specialties'},
+  {key:'address',label:'Address'},
+];
+
+function _guessCol(fieldKey){
+  const aliases={
+    // English + Greek + French + Spanish + German aliases
+    name:[
+      'name','provider','hospital','clinic','facility','institution','organization','company',
+      'επωνυμ',// Επωνυμία (company name)
+      'επιχείρ',// Επιχείρηση (business)
+      'φορέας',// Φορέας (entity)
+      'τίτλος',// Τίτλος (title)
+      'διακριτ',// Διακριτ (Διακριτικός Τίτλος)
+      'nom','nombre','nombre del','raison','bezeichnung','einrichtung'
+    ],
+    country:[
+      'country','nation','pays','land','país','paese','χώρα','countries of assistance',
+      'country of','operating country'
+    ],
+    city:[
+      'city','town','village','municipality','localit','πόλη',
+      'τόπος',// Τόπος
+      'ville','ciudad','stadt','sede'
+    ],
+    type:[
+      'type','category','kind','service','επαγγέλ','επαγγελ',
+      'επαγγελ',// Επαγγέλματα
+      'παροχή','ειδικ','κατηγορ','τύπος','genre','categoria','art der'
+    ],
+    email:[
+      'email','e-mail','mail',
+      'ηλεκτρον',// Ηλεκτρον
+      'ηλεκτ',// Ηλεκτ
+      'ταχυδρομ',// ταχυδρομ
+      'correo','courriel','posta'
+    ],
+    phone:[
+      'phone','tel','telephone','mobile','fax','gsm',
+      'τηλέφων',// Τηλέφων
+      'τηλ',// τηλ
+      'téléphone','telefon','teléfono'
+    ],
+    website:[
+      'website','web','url','site','homepage','ιστοσελ','ιστότοπ','sitio','sito'
+    ],
+    contact_person:[
+      'contact','director','manager','coordinator','representative','person','υπεύθυν',
+      'επικοινων','επικοινων',// επικοινων
+      'υπεύθ','αρμόδ','contacto','responsable','ansprechpartner'
+    ],
+    specialties:[
+      'specialty','specialties','specialization','department','services',
+      'ειδικότητ',// Ειδικότητα
+      'ειδικ',// ειδικ
+      'τμήμα',// τμήμα
+      'spécialité','especialidad','fachgebiet'
+    ],
+    address:[
+      'address','addr','street','οδός','διεύθυνση','διευθ',
+      'adresse','dirección','adresa'
+    ],
+  };
+  const opts=aliases[fieldKey]||[fieldKey];
+  // Try exact alias match first, then partial header match
+  let idx=_importHeaders.findIndex(h=>{
+    const hL=h.toLowerCase();
+    return opts.some(a=>hL===a.toLowerCase()||hL.includes(a.toLowerCase()));
+  });
+  return idx;
+}
+
+function _showImportPreview(){
+  document.getElementById('import-count').textContent=_importRows.length;
+  document.getElementById('import-preview').style.display='block';
+
+  // Build auto-map
+  _autoColMap={};
+  IMPORT_FIELDS.forEach(f=>{const idx=_guessCol(f.key);if(idx>=0)_autoColMap[f.key]=idx;});
+
+  // Fallback: if name not detected, find the column with the most non-empty text values
+  if(_autoColMap.name===undefined){
+    const scores=_importHeaders.map((_,ci)=>{
+      const vals=_importRows.slice(0,20).map(r=>String(r[ci]||'').trim()).filter(v=>v&&v.length>2&&isNaN(v)&&!v.includes('@'));
+      return vals.length;
+    });
+    const best=scores.indexOf(Math.max(...scores));
+    if(best>=0)_autoColMap.name=best;
+  }
+
+  const detectedEl=document.getElementById('import-detected-cols');
+  detectedEl.innerHTML=IMPORT_FIELDS.map(f=>{
+    const found=_autoColMap[f.key]!==undefined;
+    const colName=found?_importHeaders[_autoColMap[f.key]]:'—';
+    return `<span style="font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;${found?'background:#dcfce7;color:#166534':'background:#fee2e2;color:#991b1b'}">
+      ${found?'✓':'✗'} ${f.label}${found?' → '+colName:''}</span>`;
+  }).join('');
+
+  // Preview table (all columns from file)
+  const tbl=document.getElementById('import-preview-table');
+  const previewRows=_importRows.slice(0,5);
+  tbl.innerHTML=`<tr>${_importHeaders.map(h=>`<th style="background:var(--navy);color:#fff;padding:5px 8px;font-size:11px;white-space:nowrap">${h}</th>`).join('')}</tr>`+
+    previewRows.map(r=>`<tr>${_importHeaders.map((_,i)=>`<td style="padding:4px 8px;border-bottom:1px solid var(--border);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis">${r[i]??''}</td>`).join('')}</tr>`).join('');
+}
+
+let _autoColMap={};
+
+async function importFromExcel(){
+  if(!_importRows.length){showToast('No data to import','error');return;}
+  const btn=document.getElementById('import-btn');
+  btn.disabled=true; btn.textContent='Importing...';
+  const progBar=document.getElementById('import-progress-bar');
+  const progTxt=document.getElementById('import-status');
+  document.getElementById('import-progress').style.display='block';
+  progBar.style.width='0%'; progTxt.textContent='Preparing...';
+
+  // Use the auto-detected column map built during preview
+  const colMap={..._autoColMap};
+
+  const today=new Date().toISOString().split('T')[0];
+  const TYPE_MAP={
+    'hospital':'hospital','νοσοκομ':'hospital','κλινικ':'clinic',
+    'clinic':'clinic','ambulance':'ground_ambulance','ασθενοφ':'ground_ambulance',
+    'air ambulance':'air_ambulance','air_ambulance':'air_ambulance','αεροδ':'air_ambulance',
+    'tpa':'tpa','assistance':'tpa','ασφαλ':'tpa',
+    'physical therapy':'physical_therapy','physiotherapy':'physical_therapy',
+    'rehab':'physical_therapy','φυσικ':'physical_therapy',
+    'doctor':'doctor','ιατρ':'doctor','γιατρ':'doctor',
+    'specialist':'doctor','physician':'doctor','taxi':'taxi','ταξί':'taxi','ταξι':'taxi'
+  };
+  function mapType(raw){
+    // Handle comma-separated types (e.g. "Doctor, Clinic, Ambulance") — use first match
+    const parts=(raw||'').split(/[,;]/);
+    for(const part of parts){
+      const r=part.toLowerCase().trim();
+      for(const [k,v] of Object.entries(TYPE_MAP)){if(r.includes(k))return v;}
+    }
+    return 'clinic';
+  }
+  function getCell(row,field){
+    if(colMap[field]!==undefined)return String(row[colMap[field]]??'').trim();
+    // Fallback: scan all headers for a match on the field name itself
+    const idx=_importHeaders.findIndex(h=>h.toLowerCase().includes(field.replace('_',' ')));
+    return idx>=0?String(row[idx]??'').trim():'';
+  }
+
+  // Build all records first, skip rows with no name
+  const records=[];
+  for(let i=0;i<_importRows.length;i++){
+    const row=_importRows[i];
+    const name=getCell(row,'name');
+    if(!name)continue;
+    const country=getCell(row,'country');
+    const city=getCell(row,'city');
+    // Use first 2 chars of country + sanitized name + row index for unique stable ID
+    const cc=(country||'XX').replace(/[^a-z]/gi,'').slice(0,2).toLowerCase()||'xx';
+    const slug=name.toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-').slice(0,20);
+    const docId=`hwa-${cc}-${slug}-${i}`;
+    records.push({docId,data:{
+      name,country,city,
+      type:mapType(getCell(row,'type')),
+      email:getCell(row,'email'),
+      phone:getCell(row,'phone'),
+      website:getCell(row,'website'),
+      address:getCell(row,'address'),
+      contact_person:getCell(row,'contact_person'),
+      specialties:getCell(row,'specialties').split(/[;,]/).map(s=>s.trim()).filter(Boolean),
+      accreditations:[],hasInternationalDept:false,whyHWA:'',
+      email_subject:'',email_body:'',
+      outreachDate:today,status:'In Network',inNetwork:'Yes',
+      lastContact:'',responseNotes:'',agreementDate:'',
+      cooperation_score:null,google_place_id:'',google_rating:null,
+      addedBy:currentUser.displayName||'Import',addedByEmail:currentUser.email||'',
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    }});
+  }
+
+  if(!records.length){
+    showToast(`No valid rows found — ${_importRows.length} rows read but all had empty names. Check the file has a header row.`,'error');
+    btn.disabled=false; btn.textContent='⭐ Import as HWA Partners';
+    return;
+  }
+
+  // Commit in chunks of 400 (Firestore batch limit is 500)
+  const CHUNK=400;
+  let saved=0;
+  try{
+    for(let i=0;i<records.length;i+=CHUNK){
+      const chunk=records.slice(i,i+CHUNK);
+      const b=db.batch();
+      chunk.forEach(({docId,data})=>b.set(db.collection('providers').doc(docId),data,{merge:true}));
+      await b.commit();
+      saved+=chunk.length;
+      const pct=Math.round(saved/records.length*75);
+      progBar.style.width=pct+'%';
+      progTxt.textContent=`Saved ${saved} of ${records.length} providers...`;
+    }
+
+    progBar.style.width='80%';
+    progTxt.textContent=`${saved} providers saved${apiKey?' — enriching with Claude AI...':' — done'}`;
+
+    if(apiKey){
+      await _enrichImported(records.slice(0,20).map(r=>({id:r.docId,...r.data})));
+    }
+
+    progBar.style.width='100%';
+    progTxt.textContent=`✓ ${saved} HWA partners imported successfully`;
+    showToast(`${saved} HWA partners imported ✓`,'success');
+    document.getElementById('import-preview').style.display='none';
+    await loadProviders();
+  }catch(e){
+    showToast('Import failed: '+e.message,'error');
+    progTxt.textContent='Import failed: '+e.message;
+  }
+  btn.disabled=false; btn.textContent='⭐ Import as HWA Partners';
+}
+
+async function _enrichImported(providers){
+  if(!apiKey||!providers?.length)return;
+  try{
+    // Filter to those needing enrichment (no whyHWA or no cooperation_score)
+    const toEnrich=providers.filter(p=>p.name&&(!p.whyHWA||!p.cooperation_score)).slice(0,15);
+    if(!toEnrich.length)return;
+    const list=toEnrich.map((p,i)=>`${i+1}. ${p.name} | ${p.city||''}, ${p.country||''} | ${p.website||'no website'} | ${p.email||'no email'}`).join('\n');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json','x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',max_tokens:2500,
+        system:SYSTEM_PROMPT,
+        messages:[{role:'user',content:`ENRICH HWA PARTNER PROVIDERS — for each below, search the web and find:
+email (official contact email), contact_person (medical director or international coordinator name),
+specialties (array), accreditations (JCI/ISO/national), has_international_dept (boolean),
+why_hwa (2-3 sentences on value to HWA's insurer clients), cooperation_score (1-100).
+
+${list}
+
+Return ONLY valid JSON:
+{"enriched":[{"index":0,"email":"","contact_person":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":75}]}`}]
+      })
+    });
+    if(!resp.ok)return;
+    const data=await resp.json();
+    const rawText=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    if(!rawText)return;
+    const parsed=_parseClaudeJSON(rawText);
+    const b=db.batch();
+    (parsed.enriched||[]).forEach(e=>{
+      const p=toEnrich[e.index];
+      if(!p?.id)return;
+      b.update(db.collection('providers').doc(p.id),{
+        email:e.email||p.email||'',
+        contact_person:e.contact_person||p.contact_person||'',
+        specialties:e.specialties?.length?e.specialties:(p.specialties||[]),
+        accreditations:e.accreditations||[],
+        hasInternationalDept:e.has_international_dept||false,
+        whyHWA:e.why_hwa||'',
+        cooperation_score:e.cooperation_score||null
+      });
+    });
+    await b.commit();
+  }catch(_){}
+}
+
 // ── Excel Export ─────────────────────────────────────────
 function downloadExcel(){
   if(!currentProviders.length){showToast('No providers to export','error');return;}
   const headers=['Date Found','Provider Name','Type','Country','City','Website','Email','Phone',
-    'Accreditations','Specialties','Int\'l Dept','Why HWA','HWA Status','Outreach Date',
-    'Last Contact','Response Notes','In HWA Network','Agreement Date','Added By'];
+    'Accreditations','Specialties','Int\'l Dept','Why HWA','Contact Person','Cooperation Score',
+    'HWA Status','Outreach Date','Last Contact','Response Notes','In HWA Network','Agreement Date','Added By'];
   const rows=currentProviders.map(p=>[
     p.outreachDate||'',p.name||'',p.type||'',p.country||'',p.city||'',
     p.website||'',p.email||'',p.phone||'',
     (p.accreditations||[]).join('; '),(p.specialties||[]).join('; '),
     p.hasInternationalDept?'Yes':'Unknown',p.whyHWA||'',
+    p.contact_person||'',p.cooperation_score||'',
     p.status||'New',p.outreachDate||'',p.lastContact||'',p.responseNotes||'',
     p.inNetwork||'Pending',p.agreementDate||'',p.addedBy||''
   ]);
   const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
-  ws['!cols']=headers.map((_,i)=>({wch:[14,30,16,14,14,24,24,16,16,22,10,28,16,14,14,24,13,14,16][i]||14}));
+  ws['!cols']=headers.map((_,i)=>({wch:[14,30,16,14,14,24,24,16,16,22,10,28,18,10,16,14,14,24,13,14,16][i]||14}));
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,'Providers',ws);
+  XLSX.utils.book_append_sheet(wb,ws,'Providers');
   XLSX.writeFile(wb,`HWA_Network_Tracker_${new Date().toISOString().split('T')[0]}.xlsx`);
   showToast('Excel downloaded ✓','success');
 }
 
+// ── Fix All HWA Partner Data ───────────────────────────────
+async function fixAllHwaData(){
+  if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
+  const btn=document.getElementById('fix-data-btn');
+  const progressEl=document.getElementById('fix-progress');
+  const bar=document.getElementById('fix-progress-bar');
+  const status=document.getElementById('fix-status');
+  btn.disabled=true;
+  progressEl.style.display='block';
+
+  const setFixProgress=(pct,msg)=>{bar.style.width=pct+'%';status.textContent=msg;};
+  setFixProgress(2,'Loading all HWA partners from database...');
+
+  try{
+    // Load all HWA partners
+    const snap=await db.collection('providers').where('inNetwork','==','Yes').get();
+    const total=snap.size;
+    if(!total){showToast('No HWA partners in database','error');btn.disabled=false;progressEl.style.display='none';return;}
+
+    setFixProgress(5,`${total} partners loaded — processing in batches...`);
+    const providers=snap.docs.map(d=>({id:d.id,...d.data()}));
+
+    const BATCH_SIZE=25; // providers per Claude call
+    let fixed=0;
+    const firestoreUpdates=[]; // {id, city, country, type}
+
+    for(let i=0;i<providers.length;i+=BATCH_SIZE){
+      const chunk=providers.slice(i,i+BATCH_SIZE);
+      const pct=Math.round(5+(i/providers.length)*80);
+      setFixProgress(pct,`Fixing providers ${i+1}–${Math.min(i+BATCH_SIZE,providers.length)} of ${total}...`);
+
+      const list=chunk.map((p,idx)=>`${idx}|${p.name||'?'}|${p.city||'?'}|${p.country||'?'}|${p.type||'?'}`).join('\n');
+
+      try{
+        const resp=await fetch('https://api.anthropic.com/v1/messages',{
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json','x-api-key':apiKey,
+            'anthropic-version':'2023-06-01',
+            'anthropic-dangerous-direct-browser-access':'true'
+          },
+          body:JSON.stringify({
+            model:'claude-sonnet-4-6',max_tokens:3000,
+            system:'You are a medical data quality specialist. Correct provider location and type data.',
+            messages:[{role:'user',content:`For each provider below, return corrected data:
+- city: English name of the city (e.g. Θεσσαλονίκη → Thessaloniki, Αθήνα → Athens, München → Munich)
+- country: Full English country name (e.g. GR → Greece, DE → Germany, Ελλάδα → Greece)
+- type: one of: hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi
+
+Format: idx|city|country|type — one line per provider. ONLY output the corrected lines, no explanation.
+
+PROVIDERS (idx|name|city|country|type):
+${list}`}]
+          })
+        });
+
+        if(resp.ok){
+          const data=await resp.json();
+          const raw=data.content.filter(b=>b.type==='text').map(b=>b.text).join('').trim();
+          raw.split('\n').forEach(line=>{
+            const parts=line.split('|');
+            if(parts.length<4)return;
+            const idx=parseInt(parts[0]);
+            if(isNaN(idx)||!chunk[idx])return;
+            const p=chunk[idx];
+            const city=(parts[1]||'').trim();
+            const country=(parts[2]||'').trim();
+            const type=(parts[3]||'').trim();
+            const validTypes=['hospital','clinic','ground_ambulance','air_ambulance','tpa','physical_therapy','doctor','taxi'];
+            const update={};
+            if(city&&city!=='?'&&city!==p.city)update.city=city;
+            if(country&&country!=='?'&&country!==p.country)update.country=country;
+            if(type&&validTypes.includes(type)&&type!==p.type)update.type=type;
+            if(Object.keys(update).length)firestoreUpdates.push({id:p.id,update});
+          });
+          fixed+=chunk.length;
+        }
+      }catch(batchErr){
+        // skip failed batch, continue
+      }
+
+      // Throttle slightly between Claude calls
+      if(i+BATCH_SIZE<providers.length)await new Promise(r=>setTimeout(r,300));
+    }
+
+    setFixProgress(88,`Writing ${firestoreUpdates.length} corrections to database...`);
+
+    // Write to Firestore in 400-doc chunks
+    const CHUNK=400;
+    for(let i=0;i<firestoreUpdates.length;i+=CHUNK){
+      const b=db.batch();
+      firestoreUpdates.slice(i,i+CHUNK).forEach(({id,update})=>{
+        b.update(db.collection('providers').doc(id),update);
+      });
+      await b.commit();
+    }
+
+    setFixProgress(100,`Done — ${firestoreUpdates.length} corrections applied to ${total} partners`);
+    showToast(`Fixed ${firestoreUpdates.length} corrections across ${total} HWA partners ✓`,'success');
+    loadProviders().catch(()=>{});
+
+  }catch(e){
+    showToast('Fix failed: '+e.message,'error');
+    setFixProgress(0,'Error: '+e.message);
+  }finally{
+    btn.disabled=false;
+  }
+}
+
 // ── Admin ─────────────────────────────────────────────────
 async function loadAdminData(){
-  // Load API key to input
   try{
     const doc=await db.collection('config').doc('api').get();
     if(doc.exists&&doc.data().anthropicKey){
       document.getElementById('api-key-input').value='sk-ant-••••••••••••••••';
     }
   }catch(e){}
-  // Load users
   try{
-    const snap=await db.collection('authorized_users').get();
-    const tbody=document.getElementById('users-tbody');
-    const users=[{email:ADMIN_EMAIL,role:'admin',addedAt:'Owner'},...snap.docs.map(d=>d.data())];
-    tbody.innerHTML=users.map(u=>`<tr>
-      <td>${u.email}</td>
-      <td><span class="role-badge ${u.role==='admin'?'':'member'}">${u.role||'member'}</span></td>
-      <td style="font-size:11px;color:var(--text3)">${u.addedAt||''}</td>
-      <td>${u.email!==ADMIN_EMAIL?`<button class="del-btn" onclick="removeUser('${u.email}')">×</button>`:''}</td>
-    </tr>`).join('');
+    const doc=await db.collection('config').doc('googlePlacesKey').get();
+    if(doc.exists&&doc.data().key){
+      document.getElementById('google-places-key-input').value='AIza••••••••••••••••';
+    }
   }catch(e){}
-  // Load sessions
   try{
-    const snap=await db.collection('sessions').orderBy('createdAt','desc').limit(10).get();
+    const snap=await db.collection('runSessions').orderBy('createdAt','desc').limit(15).get();
     const cont=document.getElementById('sessions-list');
     if(snap.empty){cont.innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px">No sessions yet</div>';return;}
-    cont.innerHTML=snap.docs.map(d=>{const s=d.data();return`
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">
-        <div><strong>${s.date}</strong> · ${s.region}</div>
-        <div style="color:var(--text3)">${s.providersFound||0} providers · ${s.runBy||''}</div>
+    cont.innerHTML=snap.docs.map(d=>{const s=d.data();
+      const loc=[s.city,s.country].filter(Boolean).join(', ')||s.region||'—';
+      const types=(s.types||[]).join(', ')||'all';
+      const dt=s.createdAt?new Date(s.createdAt).toLocaleString():(s.date||'');
+      return`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <div><strong>${d.id}</strong> · ${loc}<div style="color:var(--text3);font-size:11px">${types} · ${dt}</div></div>
+        <div style="color:var(--green);font-weight:600">${s.found||0} found</div>
       </div>`;}).join('');
   }catch(e){}
 }
 
-async function addUser(){
-  const email=document.getElementById('new-user-email').value.trim();
-  const role=document.getElementById('new-user-role').value;
-  if(!email||!email.includes('@')){showToast('Enter a valid email','error');return;}
+async function changeAppPassword(){
+  const np=document.getElementById('new-password-input').value.trim();
+  const cp=document.getElementById('confirm-password-input').value.trim();
+  if(!np){showToast('Enter a new password','error');return;}
+  if(np!==cp){showToast('Passwords do not match','error');return;}
+  if(np.length<4){showToast('Password must be at least 4 characters','error');return;}
   try{
-    await db.collection('authorized_users').doc(email.replace(/\./g,'_')).set({
-      email,role,addedAt:new Date().toISOString().split('T')[0],addedBy:currentUser.email
-    });
-    showToast(`${email} added ✓`,'success');
-    document.getElementById('new-user-email').value='';
-    loadAdminData();
-  }catch(e){showToast('Failed: '+e.message,'error');}
-}
-async function removeUser(email){
-  if(!confirm(`Remove ${email}?`))return;
-  try{
-    await db.collection('authorized_users').doc(email.replace(/\./g,'_')).delete();
-    showToast(`${email} removed`,'success');
-    loadAdminData();
+    await db.collection('config').doc('appPassword').set({password:np,updatedAt:new Date().toISOString()});
+    showToast('Password updated ✓','success');
+    document.getElementById('new-password-input').value='';
+    document.getElementById('confirm-password-input').value='';
   }catch(e){showToast('Failed: '+e.message,'error');}
 }
 

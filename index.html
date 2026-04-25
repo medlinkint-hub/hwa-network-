@@ -1053,22 +1053,23 @@ async function _runHwaOnly(){
   document.getElementById('save-bar').classList.remove('visible');
   document.getElementById('progress-box').classList.add('visible');
   document.getElementById('step-0-text').textContent='Loading HWA partners';
-  document.getElementById('step-1-text').textContent='Filtering by location & type';
+  document.getElementById('step-1-text').textContent='Enriching with Claude AI';
   document.getElementById('step-2-text').textContent='Complete';
   [0,1,2].forEach(i=>setStep(i,'pending'));
-  setStep(0,'active'); setProgress(20,'Loading HWA partners...');
+  setStep(0,'active'); setProgress(10,'Loading HWA partners from database...');
   runResults=[];
 
   try{
+    // ── Load all HWA partners from Firestore ───────────────
     const snap=await db.collection('providers').where('inNetwork','==','Yes').get();
     let all=snap.docs.map(d=>({id:d.id,...d.data(),_isHWA:true}));
-    setStep(0,'done'); setStep(1,'active'); setProgress(60,'Filtering results...');
+    setProgress(25,`${all.length} HWA partners loaded — filtering...`);
 
-    // Country filter — flexible: match word boundary, handle partial names
+    // Country filter — bidirectional fuzzy match
     const cLow=_searchCountry.toLowerCase().trim();
     all=all.filter(p=>{
-      const pCountry=(p.country||'').toLowerCase().trim();
-      return pCountry===cLow||pCountry.includes(cLow)||cLow.includes(pCountry);
+      const pC=(p.country||'').toLowerCase().trim();
+      return pC===cLow||pC.includes(cLow)||cLow.includes(pC);
     });
 
     // City filter (optional)
@@ -1080,33 +1081,109 @@ async function _runHwaOnly(){
       );
     }
 
-    // Type filter — only if types are selected AND not all types are selected
+    // Type filter — skip if all types selected
     const allTypes=['hospital','clinic','physical_therapy','doctor','ground_ambulance','air_ambulance','tpa'];
-    if(_searchTypes.length && _searchTypes.length<allTypes.length){
+    if(_searchTypes.length&&_searchTypes.length<allTypes.length){
       all=all.filter(p=>!p.type||_searchTypes.includes(p.type));
     }
 
-    // Specialties filter
+    // Specialties filter — include providers with no specialty data
     if(_searchSpecs.length){
       all=all.filter(p=>{
-        if(!(p.specialties||[]).length)return true; // no specialty data → always include
+        if(!(p.specialties||[]).length)return true;
         const sp=(p.specialties||[]).map(s=>s.toLowerCase());
         return _searchSpecs.some(sel=>sp.some(s=>s.includes(sel.toLowerCase())));
       });
     }
 
-    all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
-    setStep(1,'done'); setProgress(90,'Rendering...');
-
     if(!all.length){
-      const hint=_searchCity?` in ${loc}`:(` in ${_searchCountry}`);
-      showToast(`No HWA partners found${hint}. Try broader filters or import your HWA network list in Admin.`,'error');
+      setStep(0,'done');
+      showToast(`No HWA partners found in ${loc}. Try broader filters or import your HWA list in Admin.`,'error');
       setStep(2,'done'); setProgress(100,'No results');
-      document.getElementById('progress-status').textContent=`0 partners found in ${loc}`;
-      _restoreRunBtn();
-      return;
+      _restoreRunBtn(); return;
     }
 
+    all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
+    setStep(0,'done'); setProgress(35,`${all.length} partners matched — enriching with Claude AI...`);
+
+    // ── Claude AI enrichment for providers missing key data ─
+    if(apiKey){
+      setStep(1,'active');
+      const needsInfo=all.filter(p=>!p.whyHWA||!p.cooperation_score||!p.email||!p.contact_person);
+      if(needsInfo.length>0){
+        try{
+          const list=needsInfo.map((p,i)=>`${i+1}. ${p.name} | ${p.city||''}, ${p.country||''} | ${p.website||'no website'} | ${p.email||'no email'} | ${p.phone||'no phone'}`).join('\n');
+          setProgress(50,`Enriching ${needsInfo.length} providers with Claude AI...`);
+          const aiResp=await fetch('https://api.anthropic.com/v1/messages',{
+            method:'POST',
+            headers:{
+              'Content-Type':'application/json','x-api-key':apiKey,
+              'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05',
+              'anthropic-dangerous-direct-browser-access':'true'
+            },
+            body:JSON.stringify({
+              model:'claude-sonnet-4-6',max_tokens:5000,
+              tools:[{type:'web_search_20250305',name:'web_search',max_uses:6}],
+              system:SYSTEM_PROMPT,
+              messages:[{role:'user',content:`ENRICH HWA PARTNER PROVIDERS — Date: ${today}
+These are confirmed HWA network partners. For each, search the web and find:
+- email: official contact/international department email
+- contact_person: name of medical director, international coordinator, or CEO
+- accreditations: array of certifications (JCI, ISO, national accreditations)
+- specialties: array of medical specialties offered
+- has_international_dept: boolean — does this facility have an international patient department?
+- why_hwa: 2-3 sentences on why this provider is valuable for HWA's insurer clients (Canopius, Argo, HDI Global, AegisInsurance, Prime Cyprus, GBG Group)
+- cooperation_score: integer 1-100 (higher = stronger international partner; consider size, accreditation, international experience, reputation)
+
+PROVIDERS:
+${list}
+
+Return ONLY valid JSON (no markdown):
+{"enriched":[{"index":0,"email":"","contact_person":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","cooperation_score":75}]}`}]
+            })
+          });
+          if(aiResp.ok){
+            const aiData=await aiResp.json();
+            const rawText=aiData.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+            if(rawText){
+              const parsed=_parseClaudeJSON(rawText);
+              const firestoreBatch=db.batch();
+              (parsed.enriched||[]).forEach(e=>{
+                const p=needsInfo[e.index];
+                if(!p)return;
+                // Apply to in-memory provider
+                if(e.email&&!p.email)p.email=e.email;
+                if(e.contact_person&&!p.contact_person)p.contact_person=e.contact_person;
+                if(e.accreditations?.length)p.accreditations=e.accreditations;
+                if(e.specialties?.length)p.specialties=e.specialties;
+                if(e.has_international_dept)p.has_international_dept=e.has_international_dept;
+                if(e.why_hwa&&!p.whyHWA)p.whyHWA=e.why_hwa;
+                if(e.cooperation_score)p.cooperation_score=e.cooperation_score;
+                // Persist to Firestore
+                if(p.id){
+                  firestoreBatch.update(db.collection('providers').doc(p.id),{
+                    email:p.email||'',contact_person:p.contact_person||'',
+                    accreditations:p.accreditations||[],specialties:p.specialties||[],
+                    hasInternationalDept:p.has_international_dept||false,
+                    whyHWA:p.whyHWA||'',cooperation_score:p.cooperation_score||null
+                  });
+                }
+              });
+              try{await firestoreBatch.commit();}catch(_){}
+              // Re-sort after enrichment
+              all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
+            }
+          }
+        }catch(enrichErr){
+          // Enrichment failed — continue with existing data
+        }
+      }
+      setStep(1,'done');
+    }else{
+      setStep(1,'done');
+    }
+
+    setProgress(90,'Rendering results...');
     runResults=[...all];
     document.getElementById('run-results').style.display='block';
     document.getElementById('results-title').textContent=`${all.length} HWA Partner${all.length!==1?'s':''} Found`;
@@ -1114,7 +1191,6 @@ async function _runHwaOnly(){
     all.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*60));
     setTimeout(()=>{
       setStep(2,'done'); setProgress(100,'Search complete');
-      // Hide save bar — these providers are already in the database
       document.getElementById('save-bar').classList.remove('visible');
       _restoreRunBtn();
     },all.length*60+300);
@@ -1795,99 +1871,134 @@ async function importFromExcel(){
   if(!_importRows.length){showToast('No data to import','error');return;}
   const btn=document.getElementById('import-btn');
   btn.disabled=true; btn.textContent='Importing...';
+  const progBar=document.getElementById('import-progress-bar');
+  const progTxt=document.getElementById('import-status');
   document.getElementById('import-progress').style.display='block';
+  progBar.style.width='0%'; progTxt.textContent='Preparing...';
 
   // Build field→column index map
   const colMap={};
   IMPORT_FIELDS.forEach(f=>{
-    const idx=parseInt(document.getElementById('map-'+f.key)?.value??-1);
+    const el=document.getElementById('map-'+f.key);
+    const idx=el?parseInt(el.value):-1;
     if(idx>=0)colMap[f.key]=idx;
   });
 
   const today=new Date().toISOString().split('T')[0];
-  const TYPE_MAP={'hospital':'hospital','clinic':'clinic','ambulance':'ground_ambulance','air ambulance':'air_ambulance','tpa':'tpa','assistance':'tpa','physical therapy':'physical_therapy','physiotherapy':'physical_therapy','doctor':'doctor','specialist':'doctor'};
-
+  const TYPE_MAP={
+    'hospital':'hospital','clinic':'clinic','ambulance':'ground_ambulance',
+    'air ambulance':'air_ambulance','air_ambulance':'air_ambulance',
+    'tpa':'tpa','assistance':'tpa','physical therapy':'physical_therapy',
+    'physiotherapy':'physical_therapy','rehab':'physical_therapy',
+    'doctor':'doctor','specialist':'doctor','physician':'doctor'
+  };
   function mapType(raw){
-    const r=(raw||'').toLowerCase();
+    const r=(raw||'').toLowerCase().trim();
     for(const [k,v] of Object.entries(TYPE_MAP)){if(r.includes(k))return v;}
     return 'clinic';
   }
-  function getCell(row,field){return colMap[field]!==undefined?String(row[colMap[field]]||'').trim():'';}
+  function getCell(row,field){
+    return colMap[field]!==undefined?String(row[colMap[field]]??'').trim():'';
+  }
 
-  const total=_importRows.length;
-  let saved=0,errors=0;
-  const batch=db.batch();
-
+  // Build all records first, skip rows with no name
+  const records=[];
   for(let i=0;i<_importRows.length;i++){
     const row=_importRows[i];
     const name=getCell(row,'name');
     if(!name)continue;
     const country=getCell(row,'country');
     const city=getCell(row,'city');
-    const typeRaw=getCell(row,'type');
-    const cc=(country||'XX').slice(0,2).toLowerCase();
-    const slug=name.toLowerCase().replace(/[^a-z0-9]/g,'-').slice(0,18);
-    const docId=`${cc}-${slug}-hwa`;
-    const ref=db.collection('providers').doc(docId);
-    try{
-      batch.set(ref,{
-        name,country,city,
-        type:mapType(typeRaw),
-        email:getCell(row,'email'),
-        phone:getCell(row,'phone'),
-        website:getCell(row,'website'),
-        address:getCell(row,'address'),
-        contact_person:getCell(row,'contact_person'),
-        specialties:getCell(row,'specialties').split(/[;,]/).map(s=>s.trim()).filter(Boolean),
-        accreditations:[],hasInternationalDept:false,whyHWA:'',
-        email_subject:'',email_body:'',
-        outreachDate:today,status:'In Network',inNetwork:'Yes',
-        lastContact:'',responseNotes:'',agreementDate:'',
-        cooperation_score:null,google_place_id:'',google_rating:null,
-        addedBy:currentUser.displayName||'Import',addedByEmail:currentUser.email||'',
-        createdAt:firebase.firestore.FieldValue.serverTimestamp()
-      },{merge:true});
-      saved++;
-    }catch(e){errors++;}
-    const pct=Math.round((i+1)/total*80);
-    document.getElementById('import-progress-bar').style.width=pct+'%';
-    document.getElementById('import-status').textContent=`Saving ${i+1} of ${total}...`;
+    // Use first 2 chars of country + sanitized name + row index for unique stable ID
+    const cc=(country||'XX').replace(/[^a-z]/gi,'').slice(0,2).toLowerCase()||'xx';
+    const slug=name.toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-').slice(0,20);
+    const docId=`hwa-${cc}-${slug}-${i}`;
+    records.push({docId,data:{
+      name,country,city,
+      type:mapType(getCell(row,'type')),
+      email:getCell(row,'email'),
+      phone:getCell(row,'phone'),
+      website:getCell(row,'website'),
+      address:getCell(row,'address'),
+      contact_person:getCell(row,'contact_person'),
+      specialties:getCell(row,'specialties').split(/[;,]/).map(s=>s.trim()).filter(Boolean),
+      accreditations:[],hasInternationalDept:false,whyHWA:'',
+      email_subject:'',email_body:'',
+      outreachDate:today,status:'In Network',inNetwork:'Yes',
+      lastContact:'',responseNotes:'',agreementDate:'',
+      cooperation_score:null,google_place_id:'',google_rating:null,
+      addedBy:currentUser.displayName||'Import',addedByEmail:currentUser.email||'',
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    }});
   }
 
+  if(!records.length){
+    showToast('No valid rows found — make sure the Name column is mapped','error');
+    btn.disabled=false; btn.textContent='⭐ Import as HWA Partners';
+    return;
+  }
+
+  // Commit in chunks of 400 (Firestore batch limit is 500)
+  const CHUNK=400;
+  let saved=0;
   try{
-    await batch.commit();
-    document.getElementById('import-progress-bar').style.width='90%';
-    document.getElementById('import-status').textContent=`${saved} providers saved — enriching with Claude AI...`;
+    for(let i=0;i<records.length;i+=CHUNK){
+      const chunk=records.slice(i,i+CHUNK);
+      const b=db.batch();
+      chunk.forEach(({docId,data})=>b.set(db.collection('providers').doc(docId),data,{merge:true}));
+      await b.commit();
+      saved+=chunk.length;
+      const pct=Math.round(saved/records.length*75);
+      progBar.style.width=pct+'%';
+      progTxt.textContent=`Saved ${saved} of ${records.length} providers...`;
+    }
 
-    // Enrich if API key available
-    if(apiKey)await _enrichImported();
+    progBar.style.width='80%';
+    progTxt.textContent=`${saved} providers saved${apiKey?' — enriching with Claude AI...':' — done'}`;
 
-    document.getElementById('import-progress-bar').style.width='100%';
-    document.getElementById('import-status').textContent=`✓ ${saved} HWA partners imported${errors?' ('+errors+' skipped)':''}`;
-    showToast(`${saved} HWA partners imported successfully ✓`,'success');
+    if(apiKey){
+      await _enrichImported(records.slice(0,20).map(r=>({id:r.docId,...r.data})));
+    }
+
+    progBar.style.width='100%';
+    progTxt.textContent=`✓ ${saved} HWA partners imported successfully`;
+    showToast(`${saved} HWA partners imported ✓`,'success');
     document.getElementById('import-preview').style.display='none';
     await loadProviders();
   }catch(e){
     showToast('Import failed: '+e.message,'error');
+    progTxt.textContent='Import failed: '+e.message;
   }
   btn.disabled=false; btn.textContent='⭐ Import as HWA Partners';
 }
 
-async function _enrichImported(){
-  if(!apiKey)return;
+async function _enrichImported(providers){
+  if(!apiKey||!providers?.length)return;
   try{
-    const snap=await db.collection('providers').where('inNetwork','==','Yes').where('whyHWA','==','').limit(20).get();
-    if(snap.empty)return;
-    const toEnrich=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.name);
+    // Filter to those needing enrichment (no whyHWA or no cooperation_score)
+    const toEnrich=providers.filter(p=>p.name&&(!p.whyHWA||!p.cooperation_score)).slice(0,15);
+    if(!toEnrich.length)return;
     const list=toEnrich.map((p,i)=>`${i+1}. ${p.name} | ${p.city||''}, ${p.country||''} | ${p.website||'no website'} | ${p.email||'no email'}`).join('\n');
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05','anthropic-dangerous-direct-browser-access':'true'},
+      headers:{
+        'Content-Type':'application/json','x-api-key':apiKey,
+        'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
       body:JSON.stringify({
         model:'claude-sonnet-4-6',max_tokens:4000,
-        tools:[{type:'web_search_20250305',name:'web_search',max_uses:4}],
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:5}],
         system:SYSTEM_PROMPT,
-        messages:[{role:'user',content:`ENRICH HWA PARTNER PROVIDERS — for each below, find: email (if missing), contact_person, specialties array, accreditations array, has_international_dept boolean, why_hwa (1-2 sentences on value for HWA insurers), cooperation_score (1-100).\n\n${list}\n\nReturn ONLY valid JSON:\n{"enriched":[{"index":0,"email":"","contact_person":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":80}]}`}]
+        messages:[{role:'user',content:`ENRICH HWA PARTNER PROVIDERS — for each below, search the web and find:
+email (official contact email), contact_person (medical director or international coordinator name),
+specialties (array), accreditations (JCI/ISO/national), has_international_dept (boolean),
+why_hwa (2-3 sentences on value to HWA's insurer clients), cooperation_score (1-100).
+
+${list}
+
+Return ONLY valid JSON:
+{"enriched":[{"index":0,"email":"","contact_person":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":75}]}`}]
       })
     });
     if(!resp.ok)return;
@@ -1895,21 +2006,21 @@ async function _enrichImported(){
     const rawText=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
     if(!rawText)return;
     const parsed=_parseClaudeJSON(rawText);
-    const enrichBatch=db.batch();
+    const b=db.batch();
     (parsed.enriched||[]).forEach(e=>{
       const p=toEnrich[e.index];
-      if(!p)return;
-      enrichBatch.update(db.collection('providers').doc(p.id),{
+      if(!p?.id)return;
+      b.update(db.collection('providers').doc(p.id),{
         email:e.email||p.email||'',
         contact_person:e.contact_person||p.contact_person||'',
-        specialties:e.specialties||p.specialties||[],
+        specialties:e.specialties?.length?e.specialties:(p.specialties||[]),
         accreditations:e.accreditations||[],
         hasInternationalDept:e.has_international_dept||false,
         whyHWA:e.why_hwa||'',
         cooperation_score:e.cooperation_score||null
       });
     });
-    await enrichBatch.commit();
+    await b.commit();
   }catch(_){}
 }
 

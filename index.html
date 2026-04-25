@@ -1159,20 +1159,25 @@ async function _runHwaOnly(){
               model:'claude-sonnet-4-6',max_tokens:3000,
               system:SYSTEM_PROMPT,
               messages:[{role:'user',content:`ENRICH HWA PARTNER PROVIDERS — Date: ${today}
-These are confirmed HWA network partners. For each, search the web and find:
+Search filter: ${_searchCity?_searchCity+', ':''}${_searchCountry||'any location'}
+
+For each provider below, using your knowledge:
 - email: official contact/international department email
 - contact_person: name of medical director, international coordinator, or CEO
 - accreditations: array of certifications (JCI, ISO, national accreditations)
 - specialties: array of medical specialties offered
 - has_international_dept: boolean — does this facility have an international patient department?
-- why_hwa: 2-3 sentences on why this provider is valuable for HWA's insurer clients (Canopius, Argo, HDI Global, AegisInsurance, Prime Cyprus, GBG Group)
-- cooperation_score: integer 1-100 (higher = stronger international partner; consider size, accreditation, international experience, reputation)
+- why_hwa: 2-3 sentences on why this provider is valuable for HWA's insurer clients
+- cooperation_score: integer 1-100
+- city_verified: the correct city name for this provider based on your knowledge
+- country_verified: the correct country name for this provider based on your knowledge
+- location_match: true if provider is actually located in ${_searchCity?_searchCity+', ':''}${_searchCountry||'any location'}, false if not
 
 PROVIDERS:
 ${list}
 
 Return ONLY valid JSON (no markdown):
-{"enriched":[{"index":0,"email":"","contact_person":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","cooperation_score":75}]}`}]
+{"enriched":[{"index":0,"email":"","contact_person":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","cooperation_score":75,"city_verified":"","country_verified":"","location_match":true}]}`}]
             })
           });
           if(aiResp.ok){
@@ -1192,16 +1197,25 @@ Return ONLY valid JSON (no markdown):
                 if(e.has_international_dept)p.has_international_dept=e.has_international_dept;
                 if(e.why_hwa&&!p.whyHWA)p.whyHWA=e.why_hwa;
                 if(e.cooperation_score)p.cooperation_score=e.cooperation_score;
+                // Apply verified location corrections
+                if(e.city_verified)p.city=e.city_verified;
+                if(e.country_verified)p.country=e.country_verified;
+                if(e.location_match===false)p._locationMismatch=true;
                 // Persist to Firestore
                 if(p.id){
                   firestoreBatch.update(db.collection('providers').doc(p.id),{
                     email:p.email||'',contact_person:p.contact_person||'',
                     accreditations:p.accreditations||[],specialties:p.specialties||[],
                     hasInternationalDept:p.has_international_dept||false,
-                    whyHWA:p.whyHWA||'',cooperation_score:p.cooperation_score||null
+                    whyHWA:p.whyHWA||'',cooperation_score:p.cooperation_score||null,
+                    city:p.city||'',country:p.country||''
                   });
                 }
               });
+              // Strict location filter: remove providers Claude confirmed are not in the search area
+              if(_searchCountry||_searchCity){
+                all=all.filter(p=>!p._locationMismatch);
+              }
               try{await firestoreBatch.commit();}catch(_){}
               // Re-sort after enrichment
               all.sort((a,b)=>(b.cooperation_score||0)-(a.cooperation_score||0));
@@ -1586,10 +1600,14 @@ function renderRunCard(p,idx){
       ${p.why_hwa?`<div class="why-box">${p.why_hwa}</div>`:''}
     </div>
     <div class="card-actions">
-      <button class="btn-gen-email" onclick="generateEmailForRun(${idx},this)">✉ Generate & Send Email</button>
+      ${p._isHWA
+        ? (p.email
+            ? `<button class="btn-gen-email" onclick="sendEmailDirect(${idx})">✉ Send Email</button>`
+            : `<button class="btn-gen-email" disabled style="opacity:.5;cursor:not-allowed" title="No email address on file">✉ No Email on File</button>`)
+        : `<button class="btn-gen-email" onclick="generateEmailForRun(${idx},this)">✉ Generate & Send Email</button>`}
       <label class="save-check">
-        <input type="checkbox" checked id="chk-${idx}" onchange="updateSaveCount()">
-        Save to DB
+        <input type="checkbox" ${p._isHWA?'style="display:none"':'checked'} id="chk-${idx}" onchange="updateSaveCount()">
+        ${p._isHWA?'':'Save to DB'}
       </label>
     </div>`;
   document.getElementById('run-cards').appendChild(card);
@@ -1672,6 +1690,13 @@ async function generateEmailForDb(docId,btn){
   const p=currentProviders.find(x=>x.id===docId);
   if(!p)return;
   await generateEmail(p,btn,docId);
+}
+function sendEmailDirect(idx){
+  const p=runResults[idx];
+  if(!p||!p.email){showToast('No email address for this provider','error');return;}
+  const a=document.createElement('a');
+  a.href=`mailto:${p.email}`;
+  a.click();
 }
 
 // ── Save to Firestore ───────────────────────────────────

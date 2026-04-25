@@ -455,7 +455,7 @@ a{color:inherit;text-decoration:none}
         <button id="hwa-only-toggle" onclick="toggleHwaOnlyMode()" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--r2);border:2px solid var(--border2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .2s">
           <span id="hwa-only-icon">☐</span> Search HWA Partners Only
         </button>
-        <div id="hwa-only-hint" style="font-size:12px;color:var(--text3);margin-top:6px;display:none">Search your existing HWA network — instant, no external APIs needed.</div>
+        <div id="hwa-only-hint" style="font-size:12px;color:var(--text3);margin-top:6px;display:none">Search your existing HWA network — country is optional, leave blank to see all partners.</div>
       </div>
       <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn-run" id="run-btn" onclick="startNetworkRun()">
@@ -1018,14 +1018,15 @@ function toggleHwaOnlyMode(){
 async function startNetworkRun(){
   _searchCountry=(document.getElementById('country-input').value||'').trim();
   _searchCity=(document.getElementById('city-input').value||'').trim();
-  if(!_searchCountry){showToast('Please enter a country to search in','error');return;}
   _searchTypes=[...document.querySelectorAll('#type-options .type-chip.selected')].map(c=>c.dataset.type);
   _searchSpecs=[...document.querySelectorAll('#specialty-options .type-chip.selected')].map(c=>c.dataset.spec);
 
   if(_hwaOnlyMode){
+    // Country is optional for HWA search — can browse all partners
     await _runHwaOnly();
     return;
   }
+  if(!_searchCountry){showToast('Please enter a country to search in','error');return;}
   if(!_searchTypes.length){showToast('Select at least one provider type','error');return;}
   if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
   _searchActive=true;
@@ -1044,7 +1045,7 @@ function _restoreRunBtn(){
 
 async function _runHwaOnly(){
   const today=new Date().toISOString().split('T')[0];
-  const loc=_searchCity?`${_searchCity}, ${_searchCountry}`:_searchCountry;
+  const loc=_searchCity&&_searchCountry?`${_searchCity}, ${_searchCountry}`:(_searchCountry||_searchCity||'All Countries');
   const btn=document.getElementById('run-btn');
   btn.disabled=true;
   btn.innerHTML='<span>⏳</span><span>Searching HWA Network...</span>';
@@ -1062,15 +1063,37 @@ async function _runHwaOnly(){
   try{
     // ── Load all HWA partners from Firestore ───────────────
     const snap=await db.collection('providers').where('inNetwork','==','Yes').get();
+    const totalInDb=snap.size;
     let all=snap.docs.map(d=>({id:d.id,...d.data(),_isHWA:true}));
-    setProgress(25,`${all.length} HWA partners loaded — filtering...`);
 
-    // Country filter — bidirectional fuzzy match
-    const cLow=_searchCountry.toLowerCase().trim();
-    all=all.filter(p=>{
-      const pC=(p.country||'').toLowerCase().trim();
-      return pC===cLow||pC.includes(cLow)||cLow.includes(pC);
-    });
+    if(totalInDb===0){
+      setStep(0,'done');
+      setStep(2,'done'); setProgress(100,'No HWA partners in database');
+      document.getElementById('progress-status').textContent='No HWA partners found in database';
+      // Show inline guidance
+      document.getElementById('run-results').style.display='block';
+      document.getElementById('results-title').textContent='No HWA Partners Found';
+      document.getElementById('results-sub').textContent='Your HWA network database is empty';
+      document.getElementById('run-cards').innerHTML=`
+        <div style="background:#fff;border-radius:12px;padding:32px;text-align:center;border:2px dashed var(--border2);margin:8px 0">
+          <div style="font-size:40px;margin-bottom:12px">📥</div>
+          <div style="font-size:17px;font-weight:700;color:var(--navy);margin-bottom:8px">Import your HWA network first</div>
+          <div style="font-size:14px;color:var(--text3);margin-bottom:20px;max-width:400px;margin-left:auto;margin-right:auto">Go to the <strong>Admin tab → Import HWA Network from Excel</strong> and upload your provider list. All imported providers will be searchable here.</div>
+          <button class="btn btn-primary" onclick="showTab('admin')">Go to Admin → Import</button>
+        </div>`;
+      _restoreRunBtn(); return;
+    }
+
+    setProgress(25,`${totalInDb} HWA partners in database — filtering...`);
+
+    // Country filter — bidirectional fuzzy match (skip if no country entered)
+    if(_searchCountry){
+      const cLow=_searchCountry.toLowerCase().trim();
+      all=all.filter(p=>{
+        const pC=(p.country||'').toLowerCase().trim();
+        return pC===cLow||pC.includes(cLow)||cLow.includes(pC);
+      });
+    }
 
     // City filter (optional)
     if(_searchCity){
@@ -1098,8 +1121,20 @@ async function _runHwaOnly(){
 
     if(!all.length){
       setStep(0,'done');
-      showToast(`No HWA partners found in ${loc}. Try broader filters or import your HWA list in Admin.`,'error');
-      setStep(2,'done'); setProgress(100,'No results');
+      const locMsg=loc||'all countries';
+      document.getElementById('run-results').style.display='block';
+      document.getElementById('results-title').textContent='No Matches Found';
+      document.getElementById('results-sub').textContent=`${totalInDb} HWA partners in database — none matched filters`;
+      // Show countries that DO have partners
+      const countries=[...new Set(snap.docs.map(d=>d.data().country).filter(Boolean))].sort();
+      document.getElementById('run-cards').innerHTML=`
+        <div style="background:#fff;border-radius:12px;padding:24px;border:1px solid var(--border)">
+          <div style="font-weight:700;color:var(--navy);margin-bottom:8px">No partners matched "${locMsg}"</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${totalInDb} HWA partners exist in your database. Countries available:</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">${countries.map(c=>`<span style="background:var(--teal-bg);color:var(--teal);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer" onclick="document.getElementById('country-input').value='${c}';updateCountryBadge()">${c}</span>`).join('')}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:12px">Click a country above to search it, or clear the country field to see all partners.</div>
+        </div>`;
+      setStep(2,'done'); setProgress(100,'No matches — see available countries above');
       _restoreRunBtn(); return;
     }
 

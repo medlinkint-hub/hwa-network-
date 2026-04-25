@@ -443,12 +443,17 @@ a{color:inherit;text-decoration:none}
 
     <!-- KPI drill-down panel -->
     <div id="kpi-drill-overlay" onclick="closeKpiDrill()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200"></div>
-    <div id="kpi-drill-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:16px 16px 0 0;z-index:201;max-height:80vh;overflow:hidden;box-shadow:0 -4px 32px rgba(0,0,0,.18)">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--border)">
+    <div id="kpi-drill-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:16px 16px 0 0;z-index:201;max-height:80vh;overflow:hidden;box-shadow:0 -4px 32px rgba(0,0,0,.18);flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--border);flex-shrink:0">
         <div id="kpi-drill-title" style="font-weight:700;font-size:16px;color:var(--navy)"></div>
         <button onclick="closeKpiDrill()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);line-height:1">×</button>
       </div>
-      <div id="kpi-drill-list" style="overflow-y:auto;max-height:calc(80vh - 60px);padding:12px 16px"></div>
+      <div id="kpi-drill-list" style="overflow-y:auto;flex:1;padding:12px 16px"></div>
+      <div style="flex-shrink:0;padding:12px 16px;border-top:1px solid var(--border);background:#fff">
+        <button onclick="closeKpiDrill()" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid var(--border2);background:#fff;font-size:14px;font-weight:600;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          ← Back to Dashboard
+        </button>
+      </div>
     </div>
     <div class="section-header">
       <div><div class="section-title">Network Activity</div><div class="section-sub" id="dash-region"></div></div>
@@ -969,7 +974,7 @@ function showKpiDrill(type){
     }).join('');
   }
   document.getElementById('kpi-drill-overlay').style.display='block';
-  document.getElementById('kpi-drill-panel').style.display='block';
+  document.getElementById('kpi-drill-panel').style.display='flex';
   document.body.style.overflow='hidden';
 }
 function closeKpiDrill(){

@@ -1642,11 +1642,11 @@ async function _runHwaOnly(){
     // ── Claude AI enrichment + STRICT location verification ─
     if(apiKey){
       setStep(1,'active');
-      const needsInfo=all;
+      const needsInfo=all.filter(p=>!p.email||!p.contact_person||!p.cooperation_score);
       if(needsInfo.length>0){
         try{
           const list=needsInfo.map((p,i)=>`${i+1}. ${p.name} | city: ${p.city||'?'} | country (stored): ${p.country||'?'} | website: ${p.website||'none'} | email: ${p.email||'none'} | phone: ${p.phone||'none'}`).join('\n');
-          setProgress(50,`Verifying locations + enriching ${needsInfo.length} providers...`);
+          setProgress(50,`Enriching ${needsInfo.length} provider${needsInfo.length!==1?'s':''} with missing data...`);
           const aiResp=await fetch('https://api.anthropic.com/v1/messages',{
             method:'POST',
             headers:{
@@ -1764,12 +1764,10 @@ Return ONLY valid JSON (no markdown):
     document.getElementById('run-results').style.display='block';
     document.getElementById('results-title').textContent=`${all.length} HWA Partner${all.length!==1?'s':''} Found`;
     document.getElementById('results-sub').textContent=`${today} · ${loc} · HWA Network`;
-    all.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*60));
-    setTimeout(()=>{
-      setStep(2,'done'); setProgress(100,'Search complete');
-      document.getElementById('save-bar').classList.remove('visible');
-      _restoreRunBtn();
-    },all.length*60+300);
+    all.forEach((p,i)=>renderRunCard(p,i));
+    setStep(2,'done'); setProgress(100,'Search complete');
+    document.getElementById('save-bar').classList.remove('visible');
+    _restoreRunBtn();
 
   }catch(e){
     showToast('HWA search failed: '+e.message,'error');
@@ -1996,15 +1994,12 @@ Find exactly 12 real verified medical providers in ${loc} matching the requested
           <div><strong>No HWA partners are currently available in "${bannerLoc}".</strong> The results below are Claude AI suggestions — verify before use and consider adding suitable providers to your HWA network.</div>
         </div>`);
     }
-
-    finalProviders.forEach((p,i)=>setTimeout(()=>renderRunCard(p,i),i*80));
+    finalProviders.forEach((p,i)=>renderRunCard(p,i));
 
     try{await db.collection('sessions').add({date:today,region:loc,providersFound:finalProviders.length,batchNum:1,runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
 
-    setTimeout(()=>{
-      setStep(1,'done');setStep(2,'done');
-      _finishRunUI(`${finalProviders.length} providers found${hwaCount?` (${hwaCount} HWA partner${hwaCount!==1?'s':''})`:' — no HWA partners'}`);
-    },finalProviders.length*80+400);
+    setStep(1,'done');setStep(2,'done');
+    _finishRunUI(`${finalProviders.length} providers found${hwaCount?` (${hwaCount} HWA partner${hwaCount!==1?'s':''})`:' — no HWA partners'}`);
 
   }catch(e){
     clearTimeout(abortTimer);
@@ -2106,17 +2101,14 @@ Find exactly 12 NEW real verified providers in ${loc} matching the requested typ
       document.getElementById('run-cards').appendChild(sep);
     }
 
-    // Render cards with staggered animation
-    newProviders.forEach((p,i)=>{
-      const globalIdx=runResults.length+i;
-      setTimeout(()=>renderRunCard(p,globalIdx),i*100);
-    });
+    newProviders.forEach((p,i)=>renderRunCard(p,runResults.length+i));
     runResults.push(...newProviders);
 
     // Update header and save bar
     document.getElementById('results-title').textContent=`${runResults.length} Providers Found`;
     document.getElementById('results-sub').textContent=`${today} · ${loc} · ${_searchActive&&runResults.length<250?'Searching for more...':'Select providers to save'}`;
-    setTimeout(()=>{document.getElementById('save-bar').classList.add('visible');updateSaveCount();},newProviders.length*100+300);
+    document.getElementById('save-bar').classList.add('visible');
+    updateSaveCount();
 
     // Session log (non-critical)
     try{await db.collection('sessions').add({date:today,region:loc,providersFound:runResults.length,batchNum,runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}

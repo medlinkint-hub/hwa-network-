@@ -470,47 +470,49 @@ a{color:inherit;text-decoration:none}
       <div style="margin-top:16px">
         <div class="form-label" style="margin-bottom:8px">Country <span style="color:var(--red);font-weight:600">*</span></div>
         <div style="display:flex;gap:8px;align-items:center;max-width:340px">
-          <input id="country-input" list="country-list" class="search-input" style="flex:1;margin:0"
-            placeholder="Type a country name..."
-            oninput="updateCountryBadge()"
-            autocomplete="off">
+          <select id="country-input" class="search-input" style="flex:1;margin:0;cursor:pointer" onchange="updateCityOptions();updateCountryBadge()">
+            <option value="">— Select a country —</option>
+            <option>Afghanistan</option><option>Albania</option><option>Algeria</option><option>Angola</option><option>Argentina</option><option>Armenia</option><option>Australia</option><option>Austria</option><option>Azerbaijan</option>
+            <option>Bahrain</option><option>Bangladesh</option><option>Belarus</option><option>Belgium</option><option>Bolivia</option><option>Bosnia and Herzegovina</option><option>Brazil</option><option>Bulgaria</option>
+            <option>Cambodia</option><option>Cameroon</option><option>Canada</option><option>Chile</option><option>China</option><option>Colombia</option><option>Croatia</option><option>Cyprus</option><option>Czech Republic</option>
+            <option>Denmark</option><option>Dominican Republic</option>
+            <option>Ecuador</option><option>Egypt</option><option>Estonia</option><option>Ethiopia</option>
+            <option>Finland</option><option>France</option>
+            <option>Georgia</option><option>Germany</option><option>Ghana</option><option>Greece</option><option>Guatemala</option>
+            <option>Hong Kong</option><option>Hungary</option>
+            <option>India</option><option>Indonesia</option><option>Iran</option><option>Iraq</option><option>Ireland</option><option>Israel</option><option>Italy</option>
+            <option>Japan</option><option>Jordan</option>
+            <option>Kazakhstan</option><option>Kenya</option><option>Kuwait</option>
+            <option>Latvia</option><option>Lebanon</option><option>Libya</option><option>Lithuania</option>
+            <option>Malaysia</option><option>Malta</option><option>Mexico</option><option>Morocco</option><option>Mozambique</option>
+            <option>Nepal</option><option>Netherlands</option><option>New Zealand</option><option>Nigeria</option><option>North Macedonia</option><option>Norway</option>
+            <option>Oman</option>
+            <option>Pakistan</option><option>Panama</option><option>Peru</option><option>Philippines</option><option>Poland</option><option>Portugal</option>
+            <option>Qatar</option>
+            <option>Romania</option><option>Russia</option><option>Rwanda</option>
+            <option>Saudi Arabia</option><option>Senegal</option><option>Serbia</option><option>Singapore</option><option>Slovakia</option><option>Slovenia</option><option>South Africa</option><option>South Korea</option><option>Spain</option><option>Sri Lanka</option><option>Sweden</option><option>Switzerland</option>
+            <option>Taiwan</option><option>Tanzania</option><option>Thailand</option><option>Tunisia</option><option>Turkey</option>
+            <option>UAE</option><option>Uganda</option><option>Ukraine</option><option>United Kingdom</option><option>United States</option><option>Uruguay</option>
+            <option>Venezuela</option><option>Vietnam</option>
+            <option>Yemen</option>
+            <option>Zambia</option><option>Zimbabwe</option>
+          </select>
           <button onclick="clearCountry()" style="background:none;border:1.5px solid var(--border2);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;color:var(--text3)" title="Clear">×</button>
         </div>
-        <datalist id="country-list">
-          <option>Afghanistan</option><option>Albania</option><option>Algeria</option><option>Angola</option><option>Argentina</option><option>Armenia</option><option>Australia</option><option>Austria</option><option>Azerbaijan</option>
-          <option>Bahrain</option><option>Bangladesh</option><option>Belarus</option><option>Belgium</option><option>Bolivia</option><option>Bosnia and Herzegovina</option><option>Brazil</option><option>Bulgaria</option>
-          <option>Cambodia</option><option>Cameroon</option><option>Canada</option><option>Chile</option><option>China</option><option>Colombia</option><option>Croatia</option><option>Cyprus</option><option>Czech Republic</option>
-          <option>Denmark</option><option>Dominican Republic</option>
-          <option>Ecuador</option><option>Egypt</option><option>Estonia</option><option>Ethiopia</option>
-          <option>Finland</option><option>France</option>
-          <option>Georgia</option><option>Germany</option><option>Ghana</option><option>Greece</option><option>Guatemala</option>
-          <option>Hong Kong</option><option>Hungary</option>
-          <option>India</option><option>Indonesia</option><option>Iran</option><option>Iraq</option><option>Ireland</option><option>Israel</option><option>Italy</option>
-          <option>Japan</option><option>Jordan</option>
-          <option>Kazakhstan</option><option>Kenya</option><option>Kuwait</option>
-          <option>Latvia</option><option>Lebanon</option><option>Libya</option><option>Lithuania</option>
-          <option>Malaysia</option><option>Malta</option><option>Mexico</option><option>Morocco</option><option>Mozambique</option>
-          <option>Nepal</option><option>Netherlands</option><option>New Zealand</option><option>Nigeria</option><option>North Macedonia</option><option>Norway</option>
-          <option>Oman</option>
-          <option>Pakistan</option><option>Panama</option><option>Peru</option><option>Philippines</option><option>Poland</option><option>Portugal</option>
-          <option>Qatar</option>
-          <option>Romania</option><option>Russia</option><option>Rwanda</option>
-          <option>Saudi Arabia</option><option>Senegal</option><option>Serbia</option><option>Singapore</option><option>Slovakia</option><option>Slovenia</option><option>South Africa</option><option>South Korea</option><option>Spain</option><option>Sri Lanka</option><option>Sweden</option><option>Switzerland</option>
-          <option>Taiwan</option><option>Tanzania</option><option>Thailand</option><option>Tunisia</option><option>Turkey</option>
-          <option>UAE</option><option>Uganda</option><option>Ukraine</option><option>United Kingdom</option><option>United States</option><option>Uruguay</option>
-          <option>Venezuela</option><option>Vietnam</option>
-          <option>Yemen</option>
-          <option>Zambia</option><option>Zimbabwe</option>
-        </datalist>
       </div>
       <div style="margin-top:12px">
         <div class="form-label" style="margin-bottom:8px">City <span style="color:var(--text3);font-weight:400">(optional — leave blank to search entire country)</span></div>
         <div style="display:flex;gap:8px;align-items:center;max-width:340px">
-          <input id="city-input" class="search-input" style="flex:1;margin:0"
-            placeholder="e.g. Athens, Dubai, London..."
+          <select id="city-input" class="search-input" style="flex:1;margin:0;cursor:pointer" onchange="onCitySelect();updateCountryBadge()" disabled>
+            <option value="">— Select country first —</option>
+          </select>
+          <button onclick="document.getElementById('city-input').value='';document.getElementById('city-custom-wrap').style.display='none';updateCountryBadge();" style="background:none;border:1.5px solid var(--border2);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;color:var(--text3)" title="Clear">×</button>
+        </div>
+        <div id="city-custom-wrap" style="display:none;margin-top:8px;max-width:340px">
+          <input id="city-custom-input" class="search-input" style="width:100%;box-sizing:border-box;margin:0"
+            placeholder="Type city name..."
             oninput="updateCountryBadge()"
             autocomplete="off">
-          <button onclick="document.getElementById('city-input').value='';updateCountryBadge();" style="background:none;border:1.5px solid var(--border2);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;color:var(--text3)" title="Clear">×</button>
         </div>
       </div>
       <div style="margin-top:16px">
@@ -980,15 +982,153 @@ function closeKpiDrill(){
 function initRegion(){
   updateKeyStatus();
 }
+const _citiesByCountry={
+  Afghanistan:['Kabul','Kandahar','Herat','Mazar-i-Sharif'],
+  Albania:['Tirana','Durrës','Vlorë','Shkodër'],
+  Algeria:['Algiers','Oran','Constantine','Annaba'],
+  Angola:['Luanda','Lubango','Huambo','Benguela'],
+  Argentina:['Buenos Aires','Córdoba','Rosario','Mendoza','Mar del Plata'],
+  Armenia:['Yerevan','Gyumri','Vanadzor'],
+  Australia:['Sydney','Melbourne','Brisbane','Perth','Adelaide'],
+  Austria:['Vienna','Graz','Linz','Salzburg','Innsbruck'],
+  Azerbaijan:['Baku','Ganja','Sumqayit'],
+  Bahrain:['Manama','Riffa','Muharraq'],
+  Bangladesh:['Dhaka','Chittagong','Khulna','Sylhet'],
+  Belarus:['Minsk','Brest','Grodno','Vitebsk'],
+  Belgium:['Brussels','Antwerp','Ghent','Bruges','Liège'],
+  Bolivia:['La Paz','Santa Cruz','Cochabamba','Sucre'],
+  'Bosnia and Herzegovina':['Sarajevo','Banja Luka','Mostar','Tuzla'],
+  Brazil:['São Paulo','Rio de Janeiro','Brasília','Salvador','Fortaleza','Manaus','Curitiba'],
+  Bulgaria:['Sofia','Plovdiv','Varna','Burgas','Stara Zagora'],
+  Cambodia:['Phnom Penh','Siem Reap','Sihanoukville'],
+  Cameroon:['Douala','Yaoundé','Garoua'],
+  Canada:['Toronto','Vancouver','Montreal','Calgary','Ottawa','Edmonton'],
+  Chile:['Santiago','Valparaíso','Concepción','Antofagasta'],
+  China:['Beijing','Shanghai','Guangzhou','Shenzhen','Chengdu','Hangzhou','Wuhan','Xian','Chongqing','Nanjing'],
+  Colombia:['Bogotá','Medellín','Cali','Barranquilla','Cartagena'],
+  Croatia:['Zagreb','Split','Dubrovnik','Rijeka','Zadar'],
+  Cyprus:['Nicosia','Limassol','Larnaca','Paphos'],
+  'Czech Republic':['Prague','Brno','Ostrava','Plzeň'],
+  Denmark:['Copenhagen','Aarhus','Odense','Aalborg'],
+  'Dominican Republic':['Santo Domingo','Santiago','Punta Cana'],
+  Ecuador:['Quito','Guayaquil','Cuenca'],
+  Egypt:['Cairo','Alexandria','Giza','Sharm El Sheikh','Hurghada','Luxor','Aswan'],
+  Estonia:['Tallinn','Tartu','Narva'],
+  Ethiopia:['Addis Ababa','Dire Dawa','Mekelle'],
+  Finland:['Helsinki','Espoo','Tampere','Turku','Oulu'],
+  France:['Paris','Lyon','Marseille','Toulouse','Nice','Bordeaux','Nantes','Strasbourg'],
+  Georgia:['Tbilisi','Kutaisi','Batumi','Rustavi'],
+  Germany:['Berlin','Hamburg','Munich','Cologne','Frankfurt','Stuttgart','Düsseldorf','Leipzig'],
+  Ghana:['Accra','Kumasi','Tamale'],
+  Greece:['Athens','Thessaloniki','Patras','Heraklion','Rhodes','Corfu','Santorini','Mykonos'],
+  Guatemala:['Guatemala City','Quetzaltenango','Escuintla'],
+  'Hong Kong':['Hong Kong Island','Kowloon','New Territories'],
+  Hungary:['Budapest','Debrecen','Miskolc','Pécs','Győr'],
+  India:['Mumbai','Delhi','Bangalore','Chennai','Kolkata','Hyderabad','Ahmedabad','Pune','Jaipur','Goa'],
+  Indonesia:['Jakarta','Bali','Surabaya','Bandung','Medan','Yogyakarta'],
+  Iran:['Tehran','Mashhad','Isfahan','Tabriz','Shiraz'],
+  Iraq:['Baghdad','Basra','Erbil','Mosul','Sulaymaniyah'],
+  Ireland:['Dublin','Cork','Limerick','Galway','Waterford'],
+  Israel:['Tel Aviv','Jerusalem','Haifa','Beersheba'],
+  Italy:['Rome','Milan','Naples','Turin','Florence','Venice','Palermo','Bologna','Genoa','Bari'],
+  Japan:['Tokyo','Osaka','Kyoto','Yokohama','Nagoya','Sapporo','Fukuoka','Hiroshima'],
+  Jordan:['Amman','Zarqa','Irbid','Aqaba'],
+  Kazakhstan:['Almaty','Astana','Shymkent','Karaganda'],
+  Kenya:['Nairobi','Mombasa','Kisumu','Nakuru'],
+  Kuwait:['Kuwait City','Hawalli','Salmiya'],
+  Latvia:['Riga','Daugavpils','Liepāja'],
+  Lebanon:['Beirut','Tripoli','Sidon','Jounieh'],
+  Libya:['Tripoli','Benghazi','Misrata'],
+  Lithuania:['Vilnius','Kaunas','Klaipėda','Šiauliai'],
+  Malaysia:['Kuala Lumpur','Penang','Johor Bahru','Ipoh','Kota Kinabalu'],
+  Malta:['Valletta','Sliema','St. Julian\'s','Mdina'],
+  Mexico:['Mexico City','Guadalajara','Monterrey','Cancún','Puebla','Tijuana'],
+  Morocco:['Casablanca','Marrakech','Rabat','Fez','Tangier','Agadir'],
+  Mozambique:['Maputo','Beira','Nampula'],
+  Nepal:['Kathmandu','Pokhara','Lalitpur'],
+  Netherlands:['Amsterdam','Rotterdam','The Hague','Utrecht','Eindhoven'],
+  'New Zealand':['Auckland','Wellington','Christchurch','Hamilton'],
+  Nigeria:['Lagos','Abuja','Kano','Ibadan','Port Harcourt'],
+  'North Macedonia':['Skopje','Bitola','Kumanovo'],
+  Norway:['Oslo','Bergen','Stavanger','Trondheim'],
+  Oman:['Muscat','Salalah','Sohar','Nizwa'],
+  Pakistan:['Karachi','Lahore','Islamabad','Rawalpindi','Faisalabad','Peshawar'],
+  Panama:['Panama City','Colón','David'],
+  Peru:['Lima','Arequipa','Trujillo','Cusco'],
+  Philippines:['Manila','Cebu City','Davao','Quezon City','Makati'],
+  Poland:['Warsaw','Kraków','Wrocław','Poznań','Gdańsk','Łódź'],
+  Portugal:['Lisbon','Porto','Braga','Coimbra','Faro'],
+  Qatar:['Doha','Al Wakrah','Al Rayyan'],
+  Romania:['Bucharest','Cluj-Napoca','Timișoara','Iași','Brașov'],
+  Russia:['Moscow','St Petersburg','Novosibirsk','Yekaterinburg','Kazan','Vladivostok','Sochi'],
+  Rwanda:['Kigali','Butare','Gisenyi'],
+  'Saudi Arabia':['Riyadh','Jeddah','Mecca','Medina','Dammam','Khobar','Tabuk'],
+  Senegal:['Dakar','Touba','Thiès'],
+  Serbia:['Belgrade','Novi Sad','Niš','Kragujevac'],
+  Singapore:['Singapore'],
+  Slovakia:['Bratislava','Košice','Prešov','Žilina'],
+  Slovenia:['Ljubljana','Maribor','Celje'],
+  'South Africa':['Johannesburg','Cape Town','Durban','Pretoria','Port Elizabeth'],
+  'South Korea':['Seoul','Busan','Incheon','Daegu','Daejeon'],
+  Spain:['Madrid','Barcelona','Valencia','Seville','Bilbao','Málaga','Alicante','Palma'],
+  'Sri Lanka':['Colombo','Kandy','Galle','Jaffna'],
+  Sweden:['Stockholm','Gothenburg','Malmö','Uppsala','Lund'],
+  Switzerland:['Zurich','Geneva','Bern','Basel','Lausanne'],
+  Taiwan:['Taipei','Kaohsiung','Taichung','Tainan'],
+  Tanzania:['Dar es Salaam','Arusha','Zanzibar','Mwanza'],
+  Thailand:['Bangkok','Chiang Mai','Phuket','Pattaya','Hua Hin','Koh Samui'],
+  Tunisia:['Tunis','Sfax','Sousse','Monastir'],
+  Turkey:['Istanbul','Ankara','Izmir','Antalya','Bursa','Adana','Gaziantep','Bodrum'],
+  UAE:['Dubai','Abu Dhabi','Sharjah','Ajman','Ras Al Khaimah'],
+  Uganda:['Kampala','Gulu','Mbarara','Jinja'],
+  Ukraine:['Kyiv','Kharkiv','Lviv','Odessa','Dnipro'],
+  'United Kingdom':['London','Manchester','Birmingham','Glasgow','Edinburgh','Liverpool','Bristol','Leeds'],
+  'United States':['New York','Los Angeles','Chicago','Houston','Miami','Dallas','San Francisco','Seattle','Boston','Las Vegas'],
+  Uruguay:['Montevideo','Salto','Paysandú'],
+  Venezuela:['Caracas','Maracaibo','Valencia','Barquisimeto'],
+  Vietnam:['Ho Chi Minh City','Hanoi','Da Nang','Hoi An','Nha Trang'],
+  Yemen:['Sanaa','Aden','Taiz','Hodeidah'],
+  Zambia:['Lusaka','Ndola','Kitwe','Livingstone'],
+  Zimbabwe:['Harare','Bulawayo','Mutare','Gweru']
+};
+function updateCityOptions(){
+  const country=document.getElementById('country-input').value;
+  const citySelect=document.getElementById('city-input');
+  const cities=_citiesByCountry[country]||[];
+  if(!country){
+    citySelect.innerHTML='<option value="">— Select country first —</option>';
+    citySelect.disabled=true;
+  }else{
+    citySelect.disabled=false;
+    citySelect.innerHTML='<option value="">All cities (entire country)</option>'+
+      cities.map(c=>`<option value="${c}">${c}</option>`).join('')+
+      '<option value="__custom__">✏️ Other city...</option>';
+    citySelect.value='';
+  }
+  document.getElementById('city-custom-wrap').style.display='none';
+  document.getElementById('city-custom-input').value='';
+}
+function onCitySelect(){
+  const v=document.getElementById('city-input').value;
+  document.getElementById('city-custom-wrap').style.display=(v==='__custom__')?'block':'none';
+  if(v!=='__custom__')document.getElementById('city-custom-input').value='';
+}
+function _getSearchCity(){
+  const v=document.getElementById('city-input').value||'';
+  return v==='__custom__'?(document.getElementById('city-custom-input').value||'').trim():v.trim();
+}
 function updateCountryBadge(){
   const c=(document.getElementById('country-input').value||'').trim();
-  const city=(document.getElementById('city-input').value||'').trim();
+  const city=_getSearchCity();
   document.getElementById('run-region-badge').textContent=
     c?(city?'🎯 '+city+', '+c:'🎯 '+c):'🎯 Select a country';
 }
 function clearCountry(){
   document.getElementById('country-input').value='';
-  document.getElementById('city-input').value='';
+  document.getElementById('city-input').innerHTML='<option value="">— Select country first —</option>';
+  document.getElementById('city-input').disabled=true;
+  document.getElementById('city-custom-wrap').style.display='none';
+  document.getElementById('city-custom-input').value='';
   document.getElementById('run-region-badge').textContent='🎯 Select a country';
 }
 
@@ -1323,7 +1463,7 @@ function toggleHwaOnlyMode(){
 
 async function startNetworkRun(){
   _searchCountry=(document.getElementById('country-input').value||'').trim();
-  _searchCity=(document.getElementById('city-input').value||'').trim();
+  _searchCity=_getSearchCity();
   _searchTypes=[...document.querySelectorAll('#type-options .type-chip.selected')].map(c=>c.dataset.type);
   _searchSpecs=[...document.querySelectorAll('#specialty-options .type-chip.selected')].map(c=>c.dataset.spec);
 

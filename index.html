@@ -1092,6 +1092,9 @@ Contact: Dr. Sami, Medical Officer | sami@healthwatch.gr
 OUTPUT MUST BE VALID JSON ONLY — no markdown, no backticks, no prose before or after.
 CRITICAL JSON RULES: All string values must be properly escaped. Use \\n for line breaks. Never use raw double-quotes inside strings — escape as \\".
 
+DEFAULT OUTPUT SCHEMA (use when asked for a provider list):
+{"providers":[{"name":"string","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"string","city":"string","website":"https://...","email":"contact@provider.com","phone":"+XX XXX XXX XXXX","accreditations":["JCI","ISO 9001"],"specialties":["Cardiology","Orthopedics"],"has_international_dept":true,"why_hwa":"1-2 sentences","contact_person":"string","contact_title":"string","linkedin_url":"","linkedin_verified":false,"cooperation_score":75,"industry_source":"itic|itij|jci|eurami|iamat|imtj|camts|mtqua|gha|bookimed|medigo|topdoctors|web"}]}
+
 GLOBAL INDUSTRY DATABASES — search your training knowledge of these first:
 • itic.net — ITIC member directory (TPAs, assistance companies, medical providers worldwide)
 • itij.com — ITIJ international assistance & travel insurance provider directory
@@ -1876,7 +1879,8 @@ Draw from (in priority order):
 5. National medical association registry and Ministry of Health hospital list for ${_searchCountry}
 6. Major known hospital networks/chains operating in ${_searchCountry}
 
-Order best-first: accreditation-listed → verified email+website → others. Return JSON only.`;
+Return ONLY this JSON format (no markdown, no backticks):
+{"providers":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":70,"industry_source":""}]}`;
     }
 
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
@@ -2013,7 +2017,10 @@ Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity+' (search prim
 ${typesLine}
 ${specsLine}${excludeLine}
 
-Using your training knowledge of global medical databases, find exactly 12 NEW verified providers in ${loc} matching the requested types and specialties. Draw from: ITIC, ITIJ, JCI, EURAMI, CAMTS, IAMAT, IMTJ, MTQUA, GHA, Bookimed, Medigo, TopDoctors, national medical association registry and Ministry of Health hospital list for ${_searchCountry}, and major hospital chains/networks operating there. Order: accreditation-listed first → verified email+website → others. Do NOT repeat any ALREADY FOUND provider. Return JSON only.`;
+Using your training knowledge of global medical databases, find exactly 12 NEW verified providers in ${loc} matching the requested types and specialties. Draw from: ITIC, ITIJ, JCI, EURAMI, CAMTS, IAMAT, IMTJ, MTQUA, GHA, Bookimed, Medigo, TopDoctors, national medical association registry and Ministry of Health hospital list for ${_searchCountry}, and major hospital chains/networks operating there. Order: accreditation-listed first → verified email+website → others. Do NOT repeat any ALREADY FOUND provider.
+
+Return ONLY this JSON format (no markdown, no backticks):
+{"providers":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":70,"industry_source":""}]}`;
 
   // Reset steps and progress bar for this batch
   setProgress(0,'');

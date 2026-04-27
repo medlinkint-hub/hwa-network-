@@ -1935,8 +1935,20 @@ Return ONLY this JSON format (no markdown, no backticks):
     }else{
       try{
         const parsed=_parseClaudeJSON(rawText);
-        finalProviders=(parsed.providers||[]).map(p=>({...p,cooperation_score:p.cooperation_score||65,contact_person:p.contact_person||''}));
-      }catch(_){ finalProviders=[]; }
+        // Accept providers from any top-level key Claude might use
+        const raw=parsed.providers||parsed.results||parsed.data||parsed.medical_providers||
+          (Array.isArray(parsed)?parsed:[]);
+        finalProviders=raw.map(p=>({...p,
+          cooperation_score:p.cooperation_score||65,
+          contact_person:p.contact_person||'',
+          contact_title:p.contact_title||'',
+          linkedin_url:p.linkedin_url||'',
+          linkedin_verified:p.linkedin_verified||false,
+          industry_source:p.industry_source||'',
+          accreditations:_toArr(p.accreditations),
+          specialties:_toArr(p.specialties)
+        }));
+      }catch(parseErr){ finalProviders=[]; }
     }
 
     // Deduplicate
@@ -1970,19 +1982,24 @@ Return ONLY this JSON format (no markdown, no backticks):
     _noHwaMsg='';
     document.getElementById('run-results').style.display='block';
     document.getElementById('run-cards').innerHTML='';
-    document.getElementById('results-title').textContent=`${finalProviders.length} Provider${finalProviders.length!==1?'s':''} Found`;
-    document.getElementById('results-sub').textContent=`${today} · ${loc} · ${hwaCount?hwaCount+' HWA partner'+(hwaCount!==1?'s':''):'AI search results'}`;
-    if(noHwaLoc||(!hwaCount&&(_searchCountry||_searchCity))){
-      const bannerLoc=noHwaLoc||loc;
-      document.getElementById('results-title').textContent=`Claude AI Results — No HWA Partners in "${bannerLoc}"`;
-      document.getElementById('results-sub').textContent=`${today} · ${bannerLoc} · No HWA partners available — ${finalProviders.length} Claude AI suggestions shown`;
+    if(noHwaLoc){
+      // Came from HWA-only search that found no partners — show fallback banner
+      document.getElementById('results-title').textContent=`Claude AI Results — No HWA Partners in "${noHwaLoc}"`;
+      document.getElementById('results-sub').textContent=`${today} · ${noHwaLoc} · No HWA partners available — ${finalProviders.length} Claude AI suggestion${finalProviders.length!==1?'s':''} shown`;
       document.getElementById('run-cards').insertAdjacentHTML('beforeend',`
         <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px 18px;margin-bottom:12px;font-size:13px;color:#856404;display:flex;align-items:flex-start;gap:10px">
           <span style="font-size:20px;line-height:1.2">⚠</span>
-          <div><strong>No HWA partners are currently available in "${bannerLoc}".</strong> The results below are Claude AI suggestions — verify before use and consider adding suitable providers to your HWA network.</div>
+          <div><strong>No HWA partners are currently available in "${noHwaLoc}".</strong> The results below are Claude AI suggestions — verify before use and consider adding suitable providers to your HWA network.</div>
         </div>`);
+    }else{
+      document.getElementById('results-title').textContent=`${finalProviders.length} Provider${finalProviders.length!==1?'s':''} Found`;
+      document.getElementById('results-sub').textContent=`${today} · ${loc} · ${hwaCount?hwaCount+' HWA partner'+(hwaCount!==1?'s':'')+' · ':''} ${finalProviders.length} providers`;
     }
-    finalProviders.forEach((p,i)=>renderRunCard(p,i));
+    if(!finalProviders.length){
+      document.getElementById('run-cards').innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--text3)"><div style="font-size:40px;margin-bottom:12px">🔍</div><div style="font-size:16px;font-weight:600;color:var(--navy);margin-bottom:8px">No providers found</div><div style="font-size:13px">Try selecting different provider types, or check that your Claude API key is set in Admin.</div></div>`;
+    }else{
+      finalProviders.forEach((p,i)=>renderRunCard(p,i));
+    }
 
     try{await db.collection('runSessions').add({date:today,country:_searchCountry,city:_searchCity,region:loc,found:finalProviders.length,types:_searchTypes,runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
 

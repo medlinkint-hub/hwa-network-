@@ -1887,7 +1887,15 @@ Provider types: ${typeStr}
 ${specStr?'Specialties: '+specStr:''}
 ${hasInsurance?'NOTE: For insurance/reinsurance types — find companies that could become HWA SERVICE CLIENTS (HWA will offer them medical assistance, cost containment, and AI claims services). Focus on: Claims Director, Medical Director, or Head of International Operations as contact_person.':''}
 Google Places found ${googleProviders.length} providers. Your tasks:
-1. Enrich each provider: find email, contact_person, contact_title, linkedin_url, linkedin_verified, specialties[], accreditations[], has_international_dept, why_hwa (1-2 sentences on value to HWA), cooperation_score (1-100), industry_source (itic|itij|jci|eurami|iamat|imtj|camts|mtqua|gha|lloyds|iais|amBest|insuranceEurope|bookimed|medigo|topdoctors|web).
+1. Enrich each provider — for EACH one visit their official website to find the real contact email:
+   - email: ONLY return an email found on the provider's official website, official directory listing, or LinkedIn page. DO NOT guess patterns like info@, contact@, admin@ — a wrong email is worse than no email. Leave blank if unsure.
+   - email_confidence: "verified" if you found it on official source during this search, "likely" if from high-confidence training data (major institution), "uncertain" if guessed — return "" for email if uncertain.
+   - contact_person: full name of Medical Director, International Patients Coordinator, or Claims Director (insurance). Only return if you can confirm they currently hold this role.
+   - contact_title: their exact current job title.
+   - linkedin_url: only if you confirmed a real LinkedIn profile URL for this person at this provider.
+   - linkedin_verified: true only if LinkedIn confirms current employment.
+   - phone: official switchboard number from their website.
+   - specialties[], accreditations[], has_international_dept, why_hwa (1-2 sentences), cooperation_score (1-100), industry_source.
 2. Find up to ${additionalCount} ADDITIONAL verified ${hasInsurance?'insurance/reinsurance companies':'providers'} in ${loc} — draw from ${hasInsurance?'Lloyd\'s market (lloyds.com), Insurance Europe (insuranceeurope.eu), AM Best (ambest.com), IAIS member list, national insurance supervisor registries (FCA, ACPR, BaFin, IVASS, DGSFP), AXA Partners, Allianz Partners, Europ Assistance, and major reinsurers (Munich Re, Swiss Re, Hannover Re, SCOR)':'ITIC, ITIJ, JCI, EURAMI, IAMAT, IMTJ, CAMTS, MTQUA, GHA, Bookimed, Medigo, national medical association registries'}.
 
 PROVIDERS TO ENRICH:
@@ -1896,7 +1904,7 @@ ${providerList}
 ALREADY FOUND — do NOT repeat: ${googleProviders.map(p=>p.name).join(' | ')}
 
 Return ONLY valid JSON (no markdown, no backticks):
-{"enriched":[{"index":0,"email":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70,"industry_source":""}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":65,"industry_source":"itic|itij|jci|eurami|iamat|imtj|camts|web"}]}`;
+{"enriched":[{"index":0,"email":"","email_confidence":"verified|likely|uncertain","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"phone":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70,"industry_source":""}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance","country":"","city":"","website":"","email":"","email_confidence":"verified|likely|uncertain","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":65,"industry_source":""}]}`;
     }else{
       const insOnly=_searchTypes.every(t=>t==='insurance'||t==='reinsurance');
       const hasIns=_searchTypes.some(t=>t==='insurance'||t==='reinsurance');
@@ -1926,19 +1934,22 @@ Draw from:
 5. National medical association registry and Ministry of Health hospital list for ${_searchCountry}
 6. Major hospital networks/chains operating in ${_searchCountry}`}
 
+EMAIL RULES — critical: only return an email you found on the provider's official website or official directory. DO NOT guess patterns (info@, contact@, admin@). If unsure, leave email blank and set email_confidence to "uncertain". A wrong email is worse than no email.
+
 Return ONLY this JSON format (no markdown, no backticks):
-{"providers":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":70,"industry_source":""}]}`;
+{"providers":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance","country":"","city":"","website":"","email":"","email_confidence":"verified|likely|uncertain","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":70,"industry_source":""}]}`;
     }
 
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',signal:controller.signal,
       headers:{
         'Content-Type':'application/json','x-api-key':apiKey,
-        'anthropic-version':'2023-06-01',
+        'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05',
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
         model:'claude-sonnet-4-6',max_tokens:3000,
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:3}],
         system:SYSTEM_PROMPT,
         messages:[{role:'user',content:claudeMsg}]
       })
@@ -1959,7 +1970,9 @@ Return ONLY this JSON format (no markdown, no backticks):
         (parsed.enriched||[]).forEach(e=>{
           const p=googleProviders[e.index];
           if(!p)return;
-          p.email=e.email||p.email||'';
+          p.email=e.email_confidence==='uncertain'?'':(e.email||p.email||'');
+          p.email_confidence=e.email_confidence||'';
+          p.phone=e.phone||p.phone||'';
           p.contact_person=e.contact_person||'';
           p.contact_title=e.contact_title||'';
           p.linkedin_url=e.linkedin_url||'';
@@ -1974,7 +1987,7 @@ Return ONLY this JSON format (no markdown, no backticks):
         const existingNames=new Set(googleProviders.map(p=>p.name.toLowerCase().trim()));
         const additional=(parsed.additional||[])
           .filter(p=>p.name&&!existingNames.has(p.name.toLowerCase().trim()))
-          .map(p=>({...p,cooperation_score:p.cooperation_score||65,contact_person:p.contact_person||'',contact_title:p.contact_title||'',linkedin_url:p.linkedin_url||'',linkedin_verified:p.linkedin_verified||false,industry_source:p.industry_source||''}));
+          .map(p=>({...p,cooperation_score:p.cooperation_score||65,contact_person:p.contact_person||'',contact_title:p.contact_title||'',linkedin_url:p.linkedin_url||'',linkedin_verified:p.linkedin_verified||false,industry_source:p.industry_source||'',email_confidence:p.email_confidence||'',email:p.email_confidence==='uncertain'?'':(p.email||'')}));
         finalProviders=[...googleProviders,...additional];
       }catch(_){
         finalProviders=[...googleProviders];
@@ -1992,6 +2005,8 @@ Return ONLY this JSON format (no markdown, no backticks):
           linkedin_url:p.linkedin_url||'',
           linkedin_verified:p.linkedin_verified||false,
           industry_source:p.industry_source||'',
+          email_confidence:p.email_confidence||'',
+          email:p.email_confidence==='uncertain'?'':(p.email||''),
           accreditations:_toArr(p.accreditations),
           specialties:_toArr(p.specialties)
         }));
@@ -2241,7 +2256,7 @@ function renderRunCard(p,idx){
     <div class="card-body">
       ${locationWarn}
       ${contactHtml}
-      ${p.email?`<div class="card-row"><span class="card-row-icon">✉</span><span class="card-row-val"><a href="mailto:${p.email}">${p.email}</a></span></div>`:''}
+      ${p.email?(()=>{const conf=p.email_confidence||'';const badge=conf==='verified'?'<span style="background:#16a34a;color:#fff;font-size:9px;font-weight:700;border-radius:3px;padding:1px 5px;margin-left:6px">✓ Verified</span>':conf==='likely'?'<span style="background:#ca8a04;color:#fff;font-size:9px;font-weight:700;border-radius:3px;padding:1px 5px;margin-left:6px">~ Likely</span>':'<span style="background:#9ca3af;color:#fff;font-size:9px;font-weight:700;border-radius:3px;padding:1px 5px;margin-left:6px">? Unverified</span>';return`<div class="card-row"><span class="card-row-icon">✉</span><span class="card-row-val"><a href="mailto:${p.email}">${p.email}</a>${badge}</span></div>`;})():''}
       ${p.phone?`<div class="card-row"><span class="card-row-icon">📞</span><span class="card-row-val">${p.phone}</span></div>`:''}
       ${p.website?`<div class="card-row"><span class="card-row-icon">🌐</span><span class="card-row-val"><a href="${p.website}" target="_blank">${p.website.replace('https://','')}</a></span></div>`:''}
       ${accHtml?`<div class="card-row"><span class="card-row-icon">🏅</span><span class="card-row-val"><div class="accs">${accHtml}</div></span></div>`:''}

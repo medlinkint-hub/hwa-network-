@@ -1160,7 +1160,7 @@ RUSSIA: Minzdrav (rosminzdrav.ru), prodoctorov.ru, napopravku.ru. Search: "ча�
 TURKEY: TTB (ttb.org.tr), saglik.gov.tr health tourism list, doktortakvimi.com, hospitalar.com.tr. Search: "özel hastane","klinik","fizyoterapi","özel ambulans"
 SERBIA: LKS (lks.org.rs), zdravlje.gov.rs, dr-max.rs. Search: "privatna klinika","fizioterapija"
 CROATIA: HLK (hlk.hr), zdravlje.gov.hr, poliklinika.hr. Search: "privatna klinika","fizioterapija"
-BULGARIA: BLS (blsm.bg), mh.government.bg, doctorbg.com. Search: "частна клиника","физиотерапия"
+BULGARIA: BLS (blsm.bg), MH Bulgaria (mh.government.bg), doctorbg.com, bls-bg.org, NHIF (nhif.bg). Known providers: Tokuda Hospital Sofia (tokudahospital.bg), Acibadem City Clinic Sofia (acibademcityclinic.bg), UMBAL Alexandrovska Sofia (alexandrovska.com), Pirogov Emergency Hospital Sofia, Intermed Clinic Sofia, Lozen Medical Centre. Insurance: Allianz Bulgaria (allianz.bg), Generali Bulgaria (generali.bg), Groupama Bulgaria, ДЗИ (dzi.bg), Bulstrad Life, Uniqa Bulgaria (uniqa.bg). Search: "частна клиника","физиотерапия","частна болница","медицински център","застраховател"
 SLOVENIA: ZZS (zdravniskazbornica.si), NIJZ, mojizdravniki.si. Search: "zasebna klinika","fizioterapija"
 ALBANIA: Ministry of Health Albania (shendetesia.gov.al), Albanian Medical Association
 NORTH MACEDONIA: MOH North Macedonia (zdravstvo.gov.mk), Macedonian Medical Chamber
@@ -1933,15 +1933,21 @@ Draw from:
 5. National insurance supervisor registry for ${_searchCountry} (e.g. FCA, ACPR, BaFin, IVASS, DGSFP, EIOPA members)
 6. Major international groups with operations in ${_searchCountry}: AXA, Allianz, Generali, Zurich, AIG, Chubb, Munich Re, Swiss Re, Hannover Re, SCOR, Everest Re, Lloyd\'s coverholders
 7. Regional/domestic insurers and reinsurers active in ${_searchCountry}`:
-`Using your knowledge of global medical provider databases, find exactly 12 real verified providers in ${loc} matching the requested types.
+`Using your training knowledge AND web search, find real verified providers in ${loc} matching the requested types.
 
-Draw from:
-1. ITIC, ITIJ, EURAMI, CAMTS — assistance & air medical networks
-2. JCI, NABH, GHA, MTQUA — accredited hospitals
-3. IAMAT, IMTJ — international medical assistance & travel networks
-4. Bookimed, Medigo, TopDoctors, Doctoralia — verified clinic directories
-5. National medical association registry and Ministry of Health hospital list for ${_searchCountry}
-6. Major hospital networks/chains operating in ${_searchCountry}`}
+IMPORTANT: You MUST return at least 8 providers. Do NOT return an empty array. If you cannot find 12, return as many as you know — even 3 real providers is better than 0. Use web search to find more.
+
+Draw from (use ALL relevant sources):
+1. Web search: "${_searchCountry} private hospital", "${_searchCountry} international clinic", "${_searchCountry} medical center"
+2. ITIC, ITIJ, EURAMI, CAMTS — assistance & air medical networks
+3. JCI, NABH, GHA, MTQUA — accredited hospitals (check JCI website for ${_searchCountry})
+4. IAMAT, IMTJ — international medical assistance & travel networks
+5. Bookimed, Medigo, TopDoctors, Doctoralia — verified clinic directories
+6. National medical association registry and Ministry of Health hospital list for ${_searchCountry} (see SYSTEM_PROMPT for country-specific sources)
+7. Major hospital networks/chains with presence in ${_searchCountry}
+8. Your training data knowledge of well-known hospitals and clinics in ${_searchCountry}
+
+CRITICAL: Return providers with real names, addresses, and websites. Never return placeholder names. If a field is unknown, leave it blank — do not guess.`}
 
 EMAIL RULES — critical: only return an email you found on the provider's official website or official directory. DO NOT guess patterns (info@, contact@, admin@). If unsure, leave email blank and set email_confidence to "uncertain". A wrong email is worse than no email.
 
@@ -1957,8 +1963,8 @@ Return ONLY this JSON format (no markdown, no backticks):
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',max_tokens:3000,
-        tools:[{type:'web_search_20250305',name:'web_search',max_uses:3}],
+        model:'claude-sonnet-4-6',max_tokens:4096,
+        tools:[{type:'web_search_20250305',name:'web_search',max_uses:5}],
         system:SYSTEM_PROMPT,
         messages:[{role:'user',content:claudeMsg}]
       })
@@ -2005,9 +2011,15 @@ Return ONLY this JSON format (no markdown, no backticks):
       try{
         const parsed=_parseClaudeJSON(rawText);
         // Accept providers from any top-level key Claude might use
-        const raw=parsed.providers||parsed.results||parsed.data||parsed.medical_providers||
+        let raw=parsed.providers||parsed.results||parsed.data||parsed.medical_providers||
+          parsed.hospitals||parsed.clinics||parsed.companies||parsed.insurers||
           (Array.isArray(parsed)?parsed:[]);
-        finalProviders=raw.map(p=>({...p,
+        // If still empty, try any array value in the top-level object
+        if(!raw.length){
+          const arrVal=Object.values(parsed).find(v=>Array.isArray(v)&&v.length>0);
+          if(arrVal)raw=arrVal;
+        }
+        finalProviders=raw.filter(p=>p&&p.name).map(p=>({...p,
           cooperation_score:p.cooperation_score||65,
           contact_person:p.contact_person||'',
           contact_title:p.contact_title||'',
@@ -2019,7 +2031,11 @@ Return ONLY this JSON format (no markdown, no backticks):
           accreditations:_toArr(p.accreditations),
           specialties:_toArr(p.specialties)
         }));
-      }catch(parseErr){ finalProviders=[]; }
+        if(!finalProviders.length)console.warn('[HWA] Claude returned 0 providers. Raw response:',rawText.slice(0,500));
+      }catch(parseErr){
+        console.warn('[HWA] Parse failed:',parseErr.message,'Raw:',rawText.slice(0,500));
+        finalProviders=[];
+      }
     }
 
     // Deduplicate

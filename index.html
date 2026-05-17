@@ -340,8 +340,6 @@ a{color:inherit;text-decoration:none}
   .search-input,.filter-select,.form-input{background:#1a1d2e;color:var(--text)}
 .btn-outline{background:#1a1d2e;color:#a0c4f8}
   .why-box{background:#111827}
-  .social-search-panel{background:#0f1a2e;border-color:#1e3a6e}
-  .social-result-card{background:#1a1d2e}
 }
 
 /* ── SOCIAL MEDIA ── */
@@ -352,16 +350,6 @@ a{color:inherit;text-decoration:none}
 .social-wa{background:#25d366;color:#fff}
 .social-li{background:#0077b5;color:#fff}
 .social-badges-row{display:flex;flex-wrap:wrap;gap:0;margin-top:4px}
-.btn-social{background:linear-gradient(135deg,#1877f2,#0077b5);color:#fff;border:none;border-radius:6px;
-  padding:9px 14px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;
-  gap:6px;transition:all .2s;white-space:nowrap}
-.btn-social:hover{opacity:.88;transform:translateY(-1px)}
-.btn-social:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.social-search-panel{background:#f0f6ff;border:1.5px solid #bfdbfe;border-radius:var(--r);
-  padding:16px 18px;margin-top:16px}
-.social-search-panel .form-label{color:#1e40af}
-.social-result-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;font-size:13px}
-.social-result-card .src-tag{display:inline-block;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:700;margin-right:6px}
 </style>
 </head>
 <body>
@@ -530,24 +518,6 @@ a{color:inherit;text-decoration:none}
           <span class="type-chip" data-spec="Dentistry" onclick="this.classList.toggle('selected')">🦷 Dentistry</span>
         </div>
       </div>
-      <!-- Social Media Search Panel -->
-      <div class="social-search-panel" id="social-search-panel">
-        <div class="form-label" style="margin-bottom:10px;display:flex;align-items:center;gap:8px">
-          📱 Social Media Search
-          <span style="font-weight:400;color:var(--text3);font-size:11px">— find ambulance providers via Facebook, LinkedIn &amp; more</span>
-        </div>
-        <div style="font-size:12px;color:#374151;margin-bottom:12px;line-height:1.5">
-          Search Facebook pages/groups, LinkedIn company listings, WhatsApp business directories, and local social media for ambulance providers in your target location. Results are added to the main search.
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <button class="btn-social" id="social-run-btn" onclick="startSocialMediaSearch()">
-            📱 Search Social Media
-          </button>
-          <div id="social-search-status" style="font-size:12px;color:var(--text3)"></div>
-        </div>
-        <div id="social-search-results" style="margin-top:12px;display:none"></div>
-      </div>
-
       <div style="margin-top:16px">
         <button id="hwa-only-toggle" onclick="toggleHwaOnlyMode()" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:var(--r2);border:2px solid var(--border2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);transition:all .2s">
           <span id="hwa-only-icon">☐</span> Search HWA Partners Only
@@ -1987,6 +1957,10 @@ Google Places found ${googleProviders.length} providers. Your tasks:
    - linkedin_url: only if you confirmed a real LinkedIn profile URL for this person at this provider.
    - linkedin_verified: true only if LinkedIn confirms current employment.
    - phone: official switchboard number from their website.
+   - facebook_url: official Facebook page URL if found (especially for ambulance providers).
+   - twitter_url: official Twitter/X account URL if found.
+   - instagram_url: official Instagram account URL if found.
+   - whatsapp: WhatsApp Business number if publicly listed.
    - specialties[], accreditations[], has_international_dept, why_hwa (1-2 sentences), cooperation_score (1-100), industry_source.
 2. Find up to ${additionalCount} ADDITIONAL verified ${hasInsurance?'insurance/reinsurance companies':'providers'} in ${loc} — draw from ${hasInsurance?'Lloyd\'s market (lloyds.com), Insurance Europe (insuranceeurope.eu), AM Best (ambest.com), IAIS member list, national insurance supervisor registries (FCA, ACPR, BaFin, IVASS, DGSFP), AXA Partners, Allianz Partners, Europ Assistance, and major reinsurers (Munich Re, Swiss Re, Hannover Re, SCOR)':'ITIC, ITIJ, JCI, EURAMI, IAMAT, IMTJ, CAMTS, MTQUA, GHA, Bookimed, Medigo, national medical association registries'}.
 
@@ -1996,7 +1970,7 @@ ${providerList}
 ALREADY FOUND — do NOT repeat: ${googleProviders.map(p=>p.name).join(' | ')}
 
 Return ONLY valid JSON (no markdown, no backticks):
-{"enriched":[{"index":0,"email":"","email_confidence":"verified|likely|uncertain","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"phone":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70,"industry_source":""}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance","country":"","city":"","website":"","email":"","email_confidence":"verified|likely|uncertain","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":65,"industry_source":""}]}`;
+{"enriched":[{"index":0,"email":"","email_confidence":"verified|likely|uncertain","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"phone":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70,"industry_source":"","facebook_url":"","twitter_url":"","instagram_url":"","whatsapp":""}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance","country":"","city":"","website":"","email":"","email_confidence":"verified|likely|uncertain","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":65,"industry_source":"","facebook_url":"","twitter_url":"","instagram_url":"","whatsapp":""}]}`;
     }else{
       const insOnly=_searchTypes.every(t=>t==='insurance'||t==='reinsurance');
       const hasIns=_searchTypes.some(t=>t==='insurance'||t==='reinsurance');
@@ -2035,7 +2009,7 @@ CRITICAL: Return providers with real names, addresses, and websites. Never retur
 EMAIL RULES — critical: only return an email you found on the provider's official website or official directory. DO NOT guess patterns (info@, contact@, admin@). If unsure, leave email blank and set email_confidence to "uncertain". A wrong email is worse than no email.
 
 Return ONLY this JSON format (no markdown, no backticks):
-{"providers":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance","country":"","city":"","website":"","email":"","email_confidence":"verified|likely|uncertain","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":70,"industry_source":""}]}`;
+{"providers":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance","country":"","city":"","website":"","email":"","email_confidence":"verified|likely|uncertain","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":70,"industry_source":"","facebook_url":"","twitter_url":"","instagram_url":"","whatsapp":""}]}`;
     }
 
     // Multi-turn loop: Claude 4.x uses web search tool which requires multi-turn
@@ -2093,6 +2067,10 @@ Return ONLY this JSON format (no markdown, no backticks):
           p.has_international_dept=e.has_international_dept||false;
           p.why_hwa=e.why_hwa||'';
           p.cooperation_score=e.cooperation_score||p.cooperation_score||70;
+          if(e.facebook_url)p.facebook_url=e.facebook_url;
+          if(e.twitter_url)p.twitter_url=e.twitter_url;
+          if(e.instagram_url)p.instagram_url=e.instagram_url;
+          if(e.whatsapp)p.whatsapp=e.whatsapp;
         });
         const existingNames=new Set(googleProviders.map(p=>p.name.toLowerCase().trim()));
         const additional=(parsed.additional||[])
@@ -2124,7 +2102,11 @@ Return ONLY this JSON format (no markdown, no backticks):
           email_confidence:p.email_confidence||'',
           email:p.email_confidence==='uncertain'?'':(p.email||''),
           accreditations:_toArr(p.accreditations),
-          specialties:_toArr(p.specialties)
+          specialties:_toArr(p.specialties),
+          facebook_url:p.facebook_url||'',
+          twitter_url:p.twitter_url||'',
+          instagram_url:p.instagram_url||'',
+          whatsapp:p.whatsapp||''
         }));
         if(!finalProviders.length)console.warn('[HWA] Claude returned 0 providers. Raw response:',rawText.slice(0,500));
       }catch(parseErr){
@@ -2219,7 +2201,7 @@ ${specsLine}${excludeLine}
 Using your training knowledge of global medical databases, find exactly 12 NEW verified providers in ${loc} matching the requested types and specialties. Draw from: ITIC, ITIJ, JCI, EURAMI, CAMTS, IAMAT, IMTJ, MTQUA, GHA, Bookimed, Medigo, TopDoctors, national medical association registry and Ministry of Health hospital list for ${_searchCountry}, and major hospital chains/networks operating there. Order: accreditation-listed first → verified email+website → others. Do NOT repeat any ALREADY FOUND provider.
 
 Return ONLY this JSON format (no markdown, no backticks):
-{"providers":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":70,"industry_source":""}]}`;
+{"providers":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi","country":"","city":"","website":"","email":"","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":70,"industry_source":"","facebook_url":"","twitter_url":"","instagram_url":"","whatsapp":""}]}`;
 
   // Reset steps and progress bar for this batch
   setProgress(0,'');
@@ -2409,7 +2391,6 @@ function renderRunCard(p,idx){
         : (p.email
             ? `<button class="btn-gen-email" onclick="generateEmailForRun(${idx},this)">✉ Generate & Send Email</button><button class="btn-find-email" onclick="findEmailForRun(${idx},this)" style="margin-left:6px;padding:9px 14px;font-size:12px">🔍 Recheck</button>`
             : `<button class="btn-find-email" onclick="findAndGenerateEmailForRun(${idx},this)">🔍 Find Email & Generate</button>`)}
-      <button class="btn-social" style="padding:7px 11px;font-size:11px" onclick="findSocialMediaForRun(${idx},this)" title="Find social media profiles">📱 Social</button>
       <label class="save-check">
         <input type="checkbox" ${p._isHWA?'style="display:none"':'checked'} id="chk-${idx}" onchange="updateSaveCount()">
         ${p._isHWA?'':'Save to DB'}
@@ -2583,232 +2564,6 @@ Return ONLY JSON (no other text): {"email":"","contact_person":"","contact_title
 async function findEmailForRun(idx,btn){const p=runResults[idx];if(p)await findContactEmail(p,btn,null);}
 async function findEmailForDb(docId,btn){const p=currentProviders.find(x=>x.id===docId);if(p)await findContactEmail(p,btn,docId);}
 
-// ── Social Media Profile Finder ─────────────────────────
-async function findSocialMediaProfiles(p,btnEl,docId){
-  if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
-  const orig=btnEl.innerHTML;
-  btnEl.disabled=true;
-  btnEl.innerHTML='📱 Searching...';
-  try{
-    const query=`Find the official social media profiles for this company:
-
-Company: ${p.name}
-Website: ${p.website||'unknown'}
-Country: ${p.country||''}
-City: ${p.city||''}
-Type: ${p.type||''}
-
-Search for:
-1. Facebook page (official business page, NOT personal profiles or generic groups)
-2. Twitter/X account (official @handle)
-3. Instagram account (official business account)
-4. WhatsApp Business number (if publicly listed for scheduling/contact)
-
-For each, verify the account actually belongs to this company by checking the name, location, and content match.
-
-Return ONLY JSON (no other text):
-{"facebook_url":"","twitter_url":"","instagram_url":"","whatsapp":"","found_on":["list of sources where confirmed"]}`;
-
-    const msgs=[{role:'user',content:query}];
-    let raw='',lastStop='';
-    for(let t=0;t<8;t++){
-      const resp=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05','anthropic-dangerous-direct-browser-access':'true'},
-        body:JSON.stringify({model:'claude-opus-4-7',max_tokens:1000,tools:[{type:'web_search_20250305',name:'web_search',max_uses:4}],messages:msgs})
-      });
-      if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error '+resp.status);}
-      const d=await resp.json();
-      lastStop=d.stop_reason;
-      const txt=d.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-      if(txt)raw=txt;
-      if(d.stop_reason==='end_turn')break;
-      if(d.stop_reason==='tool_use'){
-        msgs.push({role:'assistant',content:d.content});
-        const tr=d.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:''}));
-        if(tr.length)msgs.push({role:'user',content:tr}); else break;
-      }else break;
-    }
-    const m=raw.match(/\{[\s\S]*\}/);
-    if(!m)throw new Error('No result');
-    const found=JSON.parse(m[0]);
-    const updated={};
-    if(found.facebook_url){p.facebook_url=found.facebook_url;updated.facebook_url=found.facebook_url;}
-    if(found.twitter_url){p.twitter_url=found.twitter_url;updated.twitter_url=found.twitter_url;}
-    if(found.instagram_url){p.instagram_url=found.instagram_url;updated.instagram_url=found.instagram_url;}
-    if(found.whatsapp){p.whatsapp=found.whatsapp;updated.whatsapp=found.whatsapp;}
-    const count=Object.keys(updated).length;
-    if(count===0){
-      showToast('No social media profiles found for this provider','info');
-      btnEl.disabled=false;btnEl.innerHTML=orig;
-      return;
-    }
-    if(docId){
-      await db.collection('providers').doc(docId).update(updated);
-      const idx=currentProviders.findIndex(x=>x.id===docId);
-      if(idx>=0)Object.assign(currentProviders[idx],updated);
-      await loadProviders();
-    }
-    // Refresh card in run results to show new badges
-    const cardEl=btnEl.closest('.provider-card');
-    if(cardEl){
-      const sb=[];
-      if(p.facebook_url)sb.push(`<a class="social-badge social-fb" href="${p.facebook_url}" target="_blank" rel="noopener">f Facebook</a>`);
-      if(p.twitter_url)sb.push(`<a class="social-badge social-tw" href="${p.twitter_url}" target="_blank" rel="noopener">𝕏 Twitter/X</a>`);
-      if(p.instagram_url)sb.push(`<a class="social-badge social-ig" href="${p.instagram_url}" target="_blank" rel="noopener">📷 Instagram</a>`);
-      if(p.whatsapp)sb.push(`<a class="social-badge social-wa" href="https://wa.me/${p.whatsapp.replace(/\D/g,'')}" target="_blank" rel="noopener">💬 WhatsApp</a>`);
-      if(sb.length){
-        // Update or insert social badges row in card body
-        let socialRow=cardEl.querySelector('.social-badges-row')?.closest('.card-row');
-        if(!socialRow){
-          const row=document.createElement('div');row.className='card-row';
-          row.innerHTML=`<span class="card-row-icon">📱</span><span class="card-row-val"><div class="social-badges-row">${sb.join('')}</div></span>`;
-          const whyBox=cardEl.querySelector('.why-box');
-          const cardBody=cardEl.querySelector('.card-body');
-          if(whyBox)cardBody.insertBefore(row,whyBox); else cardBody.appendChild(row);
-        }else{
-          socialRow.querySelector('.social-badges-row').innerHTML=sb.join('');
-        }
-      }
-    }
-    showToast(`Found ${count} social media profile${count!==1?'s':''} ✓`,'success');
-    btnEl.innerHTML='✓ Done';
-    setTimeout(()=>{btnEl.disabled=false;btnEl.innerHTML=orig;},2500);
-  }catch(e){
-    showToast('Social search failed: '+e.message,'error');
-    btnEl.disabled=false;btnEl.innerHTML=orig;
-  }
-}
-async function findSocialMediaForRun(idx,btn){const p=runResults[idx];if(p)await findSocialMediaProfiles(p,btn,null);}
-async function findSocialMediaForDb(docId,btn){const p=currentProviders.find(x=>x.id===docId);if(p)await findSocialMediaProfiles(p,btn,docId);}
-
-// ── Social Media Search for Ambulance Providers ─────────
-async function startSocialMediaSearch(){
-  if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
-  const country=document.getElementById('country-input').value;
-  if(!country){showToast('Please select a country first','error');return;}
-  const cityEl=document.getElementById('city-input');
-  const customCityEl=document.getElementById('city-custom-input');
-  const city=customCityEl&&document.getElementById('city-custom-wrap').style.display!=='none'
-    ?customCityEl.value.trim()
-    :(cityEl.value!=='— Select country first —'&&cityEl.value?cityEl.value:'');
-  const loc=city?`${city}, ${country}`:country;
-
-  const btn=document.getElementById('social-run-btn');
-  const statusEl=document.getElementById('social-search-status');
-  const resultsEl=document.getElementById('social-search-results');
-  btn.disabled=true; btn.innerHTML='📱 Searching...';
-  statusEl.textContent='Scanning Facebook, LinkedIn, WhatsApp directories...';
-  resultsEl.style.display='none'; resultsEl.innerHTML='';
-
-  try{
-    const query=`SOCIAL MEDIA AMBULANCE SEARCH — ${new Date().toISOString().split('T')[0]}
-Location: ${loc}
-
-Find ambulance service providers (ground ambulance AND air ambulance) in ${loc} that are discoverable via social media. Search:
-1. Facebook business pages for ambulance companies in ${loc} — look for pages with "ambulance", "ambulance service", "HEMS", "air rescue", "medical transport" in the name
-2. LinkedIn company pages for ambulance/medical transport operators in ${loc}
-3. Local Facebook groups or community pages where ambulance services are listed
-4. WhatsApp Business numbers or directories for ambulance booking in ${loc}
-5. Instagram accounts of ambulance companies operating in ${loc}
-6. Any local health/emergency service directories discoverable via web
-
-For each provider found, extract:
-- name: official company name
-- type: "ground_ambulance" or "air_ambulance"
-- country: "${country}"
-- city: "${city||country}"
-- website: official website if found
-- phone: contact/booking phone number
-- email: contact email if listed
-- facebook_url: Facebook page URL
-- twitter_url: Twitter/X account URL
-- instagram_url: Instagram account URL
-- whatsapp: WhatsApp business number
-- why_hwa: 1-sentence reason HWA should partner with them
-- cooperation_score: 1-100
-
-Return at least 3 providers. Return ONLY JSON:
-{"providers":[{"name":"","type":"ground_ambulance","country":"","city":"","website":"","phone":"","email":"","facebook_url":"","twitter_url":"","instagram_url":"","whatsapp":"","why_hwa":"","cooperation_score":70}]}`;
-
-    const msgs=[{role:'user',content:query}];
-    let raw='';
-    for(let t=0;t<10;t++){
-      const resp=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05','anthropic-dangerous-direct-browser-access':'true'},
-        body:JSON.stringify({model:'claude-opus-4-7',max_tokens:4000,tools:[{type:'web_search_20250305',name:'web_search',max_uses:6}],messages:msgs})
-      });
-      if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error '+resp.status);}
-      const d=await resp.json();
-      const txt=d.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-      if(txt)raw=txt;
-      if(d.stop_reason==='end_turn')break;
-      if(d.stop_reason==='tool_use'){
-        msgs.push({role:'assistant',content:d.content});
-        const tr=d.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:''}));
-        if(tr.length)msgs.push({role:'user',content:tr}); else break;
-      }else break;
-    }
-
-    const m=raw.match(/\{[\s\S]*\}/);
-    if(!m)throw new Error('No results returned');
-    const parsed=JSON.parse(m[0]);
-    const providers=(parsed.providers||[]).filter(p=>p&&p.name);
-    if(!providers.length){
-      statusEl.textContent='No ambulance providers found on social media for this location.';
-      btn.disabled=false;btn.innerHTML='📱 Search Social Media';
-      return;
-    }
-
-    // Render results
-    statusEl.textContent=`Found ${providers.length} provider${providers.length!==1?'s':''} via social media`;
-    resultsEl.style.display='block';
-    const hasSocial=p=>p.facebook_url||p.twitter_url||p.instagram_url||p.whatsapp;
-    resultsEl.innerHTML=providers.map((p,i)=>{
-      const sb=[];
-      if(p.facebook_url)sb.push(`<a class="social-badge social-fb" href="${p.facebook_url}" target="_blank" rel="noopener">f Facebook</a>`);
-      if(p.twitter_url)sb.push(`<a class="social-badge social-tw" href="${p.twitter_url}" target="_blank" rel="noopener">𝕏 Twitter/X</a>`);
-      if(p.instagram_url)sb.push(`<a class="social-badge social-ig" href="${p.instagram_url}" target="_blank" rel="noopener">📷 Instagram</a>`);
-      if(p.whatsapp)sb.push(`<a class="social-badge social-wa" href="https://wa.me/${(p.whatsapp||'').replace(/\D/g,'')}" target="_blank" rel="noopener">💬 WhatsApp</a>`);
-      return`<div class="social-result-card">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <strong style="font-size:13px;color:var(--navy)">${p.name}</strong>
-          <span style="background:${p.type==='air_ambulance'?'#0e7490':'#c0392b'};color:#fff;font-size:10px;font-weight:700;border-radius:3px;padding:1px 6px">${p.type==='air_ambulance'?'✈️ Air Amb.':'🚑 Ground Amb.'}</span>
-          <span class="src-tag" style="background:#1877f2;color:#fff">Social Media</span>
-        </div>
-        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">📍 ${p.city||''}${p.city&&p.country?', ':''}${p.country||''}${p.phone?' · 📞 '+p.phone:''}</div>
-        ${p.website?`<div style="font-size:12px;margin-bottom:4px">🌐 <a href="${p.website}" target="_blank" style="color:var(--teal)">${p.website.replace('https://','')}</a></div>`:''}
-        ${sb.length?`<div class="social-badges-row" style="margin-bottom:6px">${sb.join('')}</div>`:'<div style="font-size:11px;color:var(--text3);margin-bottom:6px">No social profiles found</div>'}
-        ${p.why_hwa?`<div style="font-size:11px;color:var(--text2);font-style:italic">${p.why_hwa}</div>`:''}
-        <div style="margin-top:8px">
-          <button class="btn btn-primary btn-sm" onclick="addSocialResultToRun(${JSON.stringify(p).replace(/"/g,'&quot;')})">+ Add to Results</button>
-        </div>
-      </div>`;
-    }).join('');
-
-    btn.disabled=false;btn.innerHTML='📱 Search Again';
-  }catch(e){
-    showToast('Social media search failed: '+e.message,'error');
-    statusEl.textContent='Search failed: '+e.message;
-    btn.disabled=false;btn.innerHTML='📱 Search Social Media';
-  }
-}
-
-function addSocialResultToRun(p){
-  // Ensure run results section is visible
-  document.getElementById('run-results').style.display='block';
-  if(!document.getElementById('results-title').textContent||document.getElementById('results-title').textContent==='Providers Found')
-    document.getElementById('results-title').textContent='Providers Found';
-  // Avoid duplicates
-  const exists=runResults.some(r=>(r.name||'').toLowerCase().trim()===(p.name||'').toLowerCase().trim());
-  if(exists){showToast('Provider already in results','info');return;}
-  runResults.push(p);
-  renderRunCard(p,runResults.length-1);
-  document.getElementById('save-bar').classList.add('visible');
-  updateSaveCount();
-  showToast(`${p.name} added to results ✓`,'success');
-}
 async function findAndGenerateEmailForRun(idx,btn){
   const p=runResults[idx];if(!p)return;
   await findContactEmail(p,btn,null,true);
@@ -2949,7 +2704,6 @@ function renderTable(providers){
           if(p.instagram_url)sb.push(`<a class="social-badge social-ig" href="${p.instagram_url}" target="_blank" rel="noopener" style="margin-top:3px">📷</a>`);
           if(p.whatsapp)sb.push(`<a class="social-badge social-wa" href="https://wa.me/${(p.whatsapp||'').replace(/\D/g,'')}" target="_blank" rel="noopener" style="margin-top:3px">💬</a>`);
           return sb.length?`<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:3px">${sb.join('')}</div>`:'';})()}
-        <button style="background:#1877f2;color:#fff;border:none;border-radius:3px;padding:2px 6px;font-size:10px;font-weight:600;cursor:pointer;margin-top:4px;display:inline-flex;align-items:center;gap:3px" onclick="findSocialMediaForDb('${p.id}',this)">📱 Find Social</button>
       </td>
       <td>
         ${p.email?`<div style="font-size:12px;color:var(--text2)">${p.email}</div>`:''}

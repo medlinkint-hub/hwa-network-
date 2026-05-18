@@ -2485,6 +2485,7 @@ Return ONLY JSON (no other text): {"email":"","contact_person":"","contact_title
         body:JSON.stringify({
           model:'claude-opus-4-7',max_tokens:1500,
           tools:[{type:'web_search_20250305',name:'web_search',max_uses:5}],
+          system:SYSTEM_PROMPT,
           messages:_feMsgs
         })
       });
@@ -2731,7 +2732,7 @@ function filterProviders(){
   const network=document.getElementById('db-network').value;
   const filtered=currentProviders.filter(p=>{
     if(q&&!`${p.name}${p.country}${p.city}${p.email}${p.contact_person||''}`.toLowerCase().includes(q))return false;
-    if(type&&p.type!==type.toLowerCase().replace(/ \/ /,'/').replace(/ /,'_'))return false;
+    if(type&&p.type!==type.toLowerCase().replace(/ \/ /g,'/').replace(/ /g,'_'))return false;
     if(status&&p.status!==status)return false;
     if(network&&p.inNetwork!==network)return false;
     if(_hwaFilterOn&&p.inNetwork!=='Yes')return false;

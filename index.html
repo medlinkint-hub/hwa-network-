@@ -1960,6 +1960,12 @@ ${providerList}
 
 ALREADY FOUND — do NOT repeat: ${googleProviders.map(p=>p.name).join(' | ')}
 
+TYPE RULES — MANDATORY (apply to all additional providers):
+- Name contains "air ambulance", "air rescue", "HEMS", "medevac", "aeromedical", "flight nurse", "medical flight" → type MUST be "air_ambulance"
+- Name contains "ambulance", "ambulanz", "Rettungsdienst", "SAMU", "SMUR", "EMS", "EKAB", "krankentransport" → type MUST be "ground_ambulance"
+- Name contains "hospital", "medical center", "klinik", "Kliniken" → type MUST be "hospital"
+- NEVER assign type "clinic" to any ambulance, air rescue, or HEMS provider.
+
 Return ONLY valid JSON (no markdown, no backticks):
 {"enriched":[{"index":0,"email":"","email_confidence":"verified|likely|uncertain","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"phone":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70,"industry_source":""}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance","country":"","city":"","website":"","email":"","email_confidence":"verified|likely|uncertain","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":65,"industry_source":""}]}`;
     }else{
@@ -1998,6 +2004,12 @@ Draw from (use ALL relevant sources):
 CRITICAL: Return providers with real names, addresses, and websites. Never return placeholder names. If a field is unknown, leave it blank — do not guess.`}
 
 EMAIL RULES — critical: only return an email you found on the provider's official website or official directory. DO NOT guess patterns (info@, contact@, admin@). If unsure, leave email blank and set email_confidence to "uncertain". A wrong email is worse than no email.
+
+TYPE RULES — MANDATORY:
+- Provider name contains "air ambulance", "air rescue", "HEMS", "medevac", "aeromedical", "flight nurse", "medical flight" → type MUST be "air_ambulance". NEVER "clinic".
+- Provider name contains "ambulance", "ambulanz", "Rettungsdienst", "SAMU", "SMUR", "EMS", "EKAB", "krankentransport", "ambulans" → type MUST be "ground_ambulance". NEVER "clinic".
+- Provider name contains "hospital", "medical center", "Klinik", "Kliniken" → type MUST be "hospital".
+- Only use "clinic" for actual clinics, polyclinics, medical practices, or specialist centres — NEVER for ambulance or air rescue operators.
 
 Return ONLY this JSON format (no markdown, no backticks):
 {"providers":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance","country":"","city":"","website":"","email":"","email_confidence":"verified|likely|uncertain","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":70,"industry_source":""}]}`;
@@ -2097,6 +2109,15 @@ Return ONLY this JSON format (no markdown, no backticks):
         finalProviders=[];
       }
     }
+
+    // ── Name-based type correction — overrides AI/Google misclassifications ──
+    finalProviders.forEach(p=>{
+      const n=(p.name||'').toLowerCase();
+      if(/air.?ambulance|air.?rescue|aeromedical|\bhems\b|medevac|air.?med\b|air.?evac|\brega\b|flight.?nurse|medical.?flight/i.test(n))
+        p.type='air_ambulance';
+      else if(/ground.?ambulance|ambulance.?service|ambulanz|rettungsdienst|krankentransport|\bsamu\b|\bsmur\b|\bems\b|\bekab\b|ambulans|ambulância|ambulance/i.test(n)&&p.type!=='air_ambulance')
+        p.type='ground_ambulance';
+    });
 
     // Deduplicate
     const seen=new Set();

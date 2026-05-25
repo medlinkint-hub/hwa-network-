@@ -1365,6 +1365,18 @@ CLOSING:
 
 IMPORTANT: Write freshly for this specific provider. Reference their actual name, city, and type. Tone: formal, confident. Length: 250–350 words.`;
 
+// ── Shared type correction — applied at both initial render and post-AI ──
+function fixProviderTypeByName(p){
+  const n=(p.name||'').toLowerCase();
+  // Air ambulance: English + German (Luftrettung, Luftambulanz, Rettungsflug) + French (SMUH, REGA) + generic
+  if(/air.?ambulance|air.?rescue|aeromedical|\bhems\b|medevac|air.?med\b|air.?evac|\brega\b|flight.?nurse|medical.?flight|luftrettung|luftambulanz|rettungsflug|luftrettungs/i.test(n)){
+    p.type='air_ambulance';
+  // Ground ambulance: English + German (Rettungsdienst, Ambulanz, Krankentransport, Rettung) + French/Italian + generic "ambulance"
+  }else if(/\bambulance\b|ambulanz|rettungsdienst|krankentransport|ambulans|ambulância|ambulanza|\bsamu\b|\bsmur\b|\bekab\b|soccorso.?sanitario|croce.?rossa.?soccorso|notarzt(?!zentrum)/i.test(n)){
+    p.type='ground_ambulance';
+  }
+}
+
 let _searchActive=false;
 let _searchCountry='';
 let _searchCity='';
@@ -1920,8 +1932,9 @@ async function _runUnified(){
         else if(plTypes.some(t=>t.includes('doctor')||t.includes('physician')))pType='doctor';
         else if(plTypes.some(t=>t.includes('taxi')||t.includes('transportation')))pType='taxi';
         // Name-based detection — must come after Google type checks so specific wins
-        if(/air.?ambulance|air.?rescue|aeromedical|hems|medevac|flight.?nurse|air.?med|rega|air.?evac/i.test(plName))pType='air_ambulance';
-        else if(/ground.?ambulance|ambulance.?service|\bems\b|paramedic|rettungsdienst|\bsamu\b|\bsmur\b/i.test(plName)&&pType==='clinic')pType='ground_ambulance';
+        const tmpP={name:pl.displayName?.text||'',type:pType};
+        fixProviderTypeByName(tmpP);
+        pType=tmpP.type;
         return{
           name:pl.displayName?.text||'Unknown',type:pType,
           country:_searchCountry,city:detectedCity||_searchCity||_searchCountry,
@@ -1936,6 +1949,7 @@ async function _runUnified(){
       });
       // Show GP results immediately — don't wait for Claude
       if(googleProviders.length>0){
+        googleProviders.forEach(fixProviderTypeByName);
         runResults=[...googleProviders];
         document.getElementById('run-results').style.display='block';
         document.getElementById('results-title').textContent=`${googleProviders.length} Providers Found`;
@@ -2133,13 +2147,7 @@ Return ONLY this JSON format (no markdown, no backticks):
     }
 
     // ── Name-based type correction — overrides AI/Google misclassifications ──
-    finalProviders.forEach(p=>{
-      const n=(p.name||'').toLowerCase();
-      if(/air.?ambulance|air.?rescue|aeromedical|\bhems\b|medevac|air.?med\b|air.?evac|\brega\b|flight.?nurse|medical.?flight/i.test(n))
-        p.type='air_ambulance';
-      else if(/ground.?ambulance|ambulance.?service|ambulanz|rettungsdienst|krankentransport|\bsamu\b|\bsmur\b|\bems\b|\bekab\b|ambulans|ambulância|ambulance/i.test(n)&&p.type!=='air_ambulance')
-        p.type='ground_ambulance';
-    });
+    finalProviders.forEach(fixProviderTypeByName);
 
     // Deduplicate
     const seen=new Set();

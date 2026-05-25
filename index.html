@@ -1891,11 +1891,15 @@ async function _runUnified(){
         const addrParts=addr.split(',').map(s=>s.trim());
         const detectedCity=addrParts.length>=2?addrParts[addrParts.length-2]:_searchCity||'';
         const plTypes=pl.types||[];
+        const plName=(pl.displayName?.text||'').toLowerCase();
         let pType='clinic';
         if(plTypes.some(t=>t.includes('hospital')))pType='hospital';
         else if(plTypes.some(t=>t.includes('physiotherapist')||t.includes('physical_therapy')))pType='physical_therapy';
         else if(plTypes.some(t=>t.includes('doctor')||t.includes('physician')))pType='doctor';
         else if(plTypes.some(t=>t.includes('taxi')||t.includes('transportation')))pType='taxi';
+        // Name-based detection — must come after Google type checks so specific wins
+        if(/air.?ambulance|air.?rescue|aeromedical|hems|medevac|flight.?nurse|air.?med|rega|air.?evac/i.test(plName))pType='air_ambulance';
+        else if(/ground.?ambulance|ambulance.?service|\bems\b|paramedic|rettungsdienst|\bsamu\b|\bsmur\b/i.test(plName)&&pType==='clinic')pType='ground_ambulance';
         return{
           name:pl.displayName?.text||'Unknown',type:pType,
           country:_searchCountry,city:detectedCity||_searchCity||_searchCountry,
@@ -2903,6 +2907,8 @@ async function importFromExcel(){
     'hospital':'hospital','νοσοκομ':'hospital','κλινικ':'clinic',
     'clinic':'clinic','ambulance':'ground_ambulance','ασθενοφ':'ground_ambulance',
     'air ambulance':'air_ambulance','air_ambulance':'air_ambulance','αεροδ':'air_ambulance',
+    'air rescue':'air_ambulance','aeromedical':'air_ambulance','hems':'air_ambulance',
+    'medevac':'air_ambulance','air med':'air_ambulance','air evac':'air_ambulance','rega':'air_ambulance',
     'tpa':'tpa','assistance':'tpa','ασφαλ':'tpa',
     'physical therapy':'physical_therapy','physiotherapy':'physical_therapy',
     'rehab':'physical_therapy','φυσικ':'physical_therapy',

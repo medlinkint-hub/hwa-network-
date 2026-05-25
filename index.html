@@ -2448,7 +2448,16 @@ async function generateEmail(p,btnEl,docId){
   btnEl.innerHTML='⏳ Generating...';
   const specs=(p.specialties||p.specialty||[]);
   const specsStr=Array.isArray(specs)?specs.join(', '):(specs||'General');
-  const userMsg=`Generate cooperation email for:
+  const isAirAmb=p.type==='air_ambulance';
+  const userMsg=isAirAmb
+    ? `GENERATE HWA SERVICES PROPOSAL EMAIL — type = air_ambulance
+Provider (recipient): ${p.name}
+City: ${p.city||''}, ${p.country||''}
+Contact: ${p.contact_person?p.contact_person+' ('+( p.contact_title||'Operations')+')':`Operations Director of ${p.name}`}
+Provider email: ${p.email||'[not available — leave To: blank, user will fill in]'}
+
+Use the air_ambulance section of your instructions. HWA is PROPOSING TO PROVIDE ground support services TO this company. Do NOT send a network invitation.`
+    : `Generate cooperation email for:
 Provider: ${p.name}
 Type: ${p.type||''}
 City: ${p.city||''}, ${p.country||''}

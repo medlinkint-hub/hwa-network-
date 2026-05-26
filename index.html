@@ -1950,12 +1950,13 @@ async function _runUnified(){
       // Show GP results immediately — don't wait for Claude
       if(googleProviders.length>0){
         googleProviders.forEach(fixProviderTypeByName);
-        runResults=[...googleProviders];
+        const gpFiltered=_searchTypes.length?googleProviders.filter(p=>_searchTypes.includes(p.type)):googleProviders;
+        runResults=[...gpFiltered];
         document.getElementById('run-results').style.display='block';
-        document.getElementById('results-title').textContent=`${googleProviders.length} Providers Found`;
+        document.getElementById('results-title').textContent=`${gpFiltered.length} Providers Found`;
         document.getElementById('results-sub').textContent=`${today} · ${loc} · Enriching with AI...`;
         document.getElementById('run-cards').innerHTML='';
-        googleProviders.forEach((p,i)=>renderRunCard(p,i));
+        gpFiltered.forEach((p,i)=>renderRunCard(p,i));
       }
       setProgress(30,`${googleProviders.length} providers found — enriching with AI...`);
     }catch(gpErr){
@@ -2037,7 +2038,8 @@ Draw from (use ALL relevant sources):
 7. Major hospital networks/chains with presence in ${_searchCountry}
 8. Your training data knowledge of well-known hospitals and clinics in ${_searchCountry}
 
-CRITICAL: Return providers with real names, addresses, and websites. Never return placeholder names. If a field is unknown, leave it blank — do not guess.`}
+CRITICAL: Return providers with real names, addresses, and websites. Never return placeholder names. If a field is unknown, leave it blank — do not guess.
+STRICT TYPE FILTER: Only return providers whose type matches one of the requested types: ${typeStr}. Do NOT add hospitals, clinics, or other types that were not requested.`}
 
 EMAIL RULES — critical: only return an email you found on the provider's official website or official directory. DO NOT guess patterns (info@, contact@, admin@). If unsure, leave email blank and set email_confidence to "uncertain". A wrong email is worse than no email.
 
@@ -2148,6 +2150,11 @@ Return ONLY this JSON format (no markdown, no backticks):
 
     // ── Name-based type correction — overrides AI/Google misclassifications ──
     finalProviders.forEach(fixProviderTypeByName);
+
+    // ── Filter to requested types only ──
+    if(_searchTypes.length){
+      finalProviders=finalProviders.filter(p=>_searchTypes.includes(p.type));
+    }
 
     // Deduplicate
     const seen=new Set();

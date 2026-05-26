@@ -612,7 +612,17 @@ a{color:inherit;text-decoration:none}
         </div>
         <button class="btn btn-primary" onclick="saveGooglePlacesKey()" style="flex-shrink:0;margin-bottom:1px">Save Key</button>
       </div>
-      <div style="font-size:12px;color:var(--text3)">Enables Google Places + AI dual-source search. Key stored securely in Firestore. Requires Places API (New) enabled in Google Cloud Console.</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+        <label class="gp-toggle-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+          <div class="gp-toggle-wrap" style="position:relative;width:44px;height:24px;flex-shrink:0">
+            <input type="checkbox" id="gp-enabled-toggle" style="opacity:0;width:0;height:0;position:absolute" onchange="saveGooglePlacesEnabled(this.checked)">
+            <span id="gp-toggle-track" style="position:absolute;inset:0;border-radius:12px;background:#ccc;transition:background 0.2s;cursor:pointer" onclick="document.getElementById('gp-enabled-toggle').click()"></span>
+            <span id="gp-toggle-thumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:transform 0.2s;pointer-events:none"></span>
+          </div>
+          <span id="gp-toggle-label" style="font-size:13px;font-weight:600;color:var(--text2)">Google Places Search: OFF</span>
+        </label>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:6px">When ON: dual-source search (Google Places + AI). When OFF: AI-only search. Key stored securely in Firestore.</div>
     </div>
     <div class="admin-card">
       <h3>🔐 App Password</h3>
@@ -819,7 +829,22 @@ function updateKeyStatus(){
     :'<span style="font-size:12px;background:#fee2e2;color:#991b1b;border-radius:20px;padding:4px 12px;font-weight:600">⚠ API Key Missing</span>';
 }
 
-// ── Google Places Key ───────────────────────────────────
+// ── Google Places Key + Toggle ──────────────────────────
+let googlePlacesEnabled=false;
+
+function _applyGpToggleUI(enabled){
+  const track=document.getElementById('gp-toggle-track');
+  const thumb=document.getElementById('gp-toggle-thumb');
+  const label=document.getElementById('gp-toggle-label');
+  const cb=document.getElementById('gp-enabled-toggle');
+  if(!track)return;
+  track.style.background=enabled?'#4f46e5':'#ccc';
+  thumb.style.transform=enabled?'translateX(20px)':'translateX(0)';
+  if(label)label.textContent='Google Places Search: '+(enabled?'ON':'OFF');
+  if(cb)cb.checked=enabled;
+  googlePlacesEnabled=enabled;
+}
+
 async function loadGooglePlacesKey(){
   try{
     const doc=await db.collection('config').doc('googlePlacesKey').get();
@@ -827,7 +852,18 @@ async function loadGooglePlacesKey(){
       googlePlacesKey=doc.data().key;
       updateKeyStatus();
     }
+    const togDoc=await db.collection('config').doc('googlePlacesEnabled').get();
+    const enabled=togDoc.exists?togDoc.data().enabled===true:false;
+    _applyGpToggleUI(enabled);
   }catch(e){}
+}
+
+async function saveGooglePlacesEnabled(enabled){
+  _applyGpToggleUI(enabled);
+  try{
+    await db.collection('config').doc('googlePlacesEnabled').set({enabled,updatedBy:currentUser?.email||'',updatedAt:new Date()});
+    showToast('Google Places search '+(enabled?'enabled ✓':'disabled ✓'),'success');
+  }catch(e){showToast('Save failed: '+e.message,'error');}
 }
 
 async function saveGooglePlacesKey(){
@@ -1898,7 +1934,7 @@ async function _runUnified(){
 
   // ── STEP 0: Google Places ────────────────────────────────
   let googleProviders=[];
-  if(googlePlacesKey){
+  if(googlePlacesKey&&googlePlacesEnabled){
     try{
       const typeQueries=_searchTypes.map(t=>({
         hospital:'hospital',clinic:'medical clinic',ground_ambulance:'ambulance service',

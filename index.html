@@ -1300,21 +1300,21 @@ CRITICAL JSON RULES: Use \\n for line breaks. Escape double-quotes inside string
 ══════════════════════════════════════════════
 IF provider type = "insurance" OR "reinsurance":
 ══════════════════════════════════════════════
-Generate a business development email offering HWA's services TO the insurance/reinsurance company.
+CRITICAL: HWA is PROPOSING TO PROVIDE services TO this insurance/reinsurance company. This is a service proposal — NOT a network invitation. The insurance company is the client.
 
-SUBJECT: "Medical Assistance & AI Claims Services — HealthWatch Assistance & [Company Name]"
+SUBJECT: "Medical Assistance Services Proposal — HealthWatch Assistance S.A. & [Company Name]"
 
-PARAGRAPH 1 — Introduction:
-"Dear [Mr./Ms. Last Name or Claims Director / Medical Director of Company Name],\\nMy name is Dr. Sami, Medical Officer at HealthWatch Assistance S.A. (HWA), a specialist international medical assistance and TPA company based in Greece, with an active provider network across Europe, the Middle East, North Africa, and Asia."
+PARAGRAPH 1 — Introduction (personalise with company name and country):
+"Dear [contact name / Claims Director or Medical Director of {company name}],\\nMy name is Dr. Sami, Medical Officer at HealthWatch Assistance S.A. (HWA), a specialist international medical assistance and TPA company headquartered in Thessaloniki, Greece. I am writing to propose our medical assistance services to {company name} for your policyholders travelling to or residing in Greece, Cyprus, and across our wider network territories."
 
-PARAGRAPH 2 — Services HWA offers to them (be specific, 4 sentences):
-"We offer a comprehensive suite of services designed to reduce your claims costs and improve policyholder outcomes:\\n• 24/7 Medical Helpline & Emergency Assistance — multi-lingual medical coordinators handle your policyholders' emergencies worldwide, from hospitalisation to medical evacuation.\\n• AI-Powered Claims Assessment — our proprietary AI system analyses medical invoices, flags over-billing, and cross-references treatment codes against local tariffs, reducing fraudulent or inflated claims by an average of 18–25%.\\n• Direct Billing Network — 600+ pre-negotiated hospitals, clinics, and specialists across 40+ countries provide cashless treatment, eliminating reimbursement delays for your clients.\\n• Cost Containment & Second Medical Opinion — pre-authorisation, medical necessity review, and independent second opinions keep treatment costs within benchmark ranges."
+PARAGRAPH 2 — Services HWA proposes to provide — MUST include ALL as bullet points:
+"HWA proposes to provide {company name} with the following services:\\n\\n• 24/7 Medical Case Management — multilingual coordinators handling your policyholders' emergencies from first notification through to discharge or repatriation; hospital admission facilitation and direct billing with pre-negotiated providers\\n• HWA Medical Network in Greece & Cyprus — access to our curated network of vetted hospitals, specialist clinics, GPs, diagnostic centres, and pharmacies across mainland Greece, all major islands, and Cyprus, with direct billing and pre-agreed tariffs\\n• Guarantee of Payment (GOP) — rapid GOP issuance to Greek and Cypriot hospitals and clinics, eliminating out-of-pocket payments for your clients\\n• Repatriation & Medical Escorts — full coordination of commercial medical repatriations (MEDIF, airline liaison, escort provision) and air ambulance repatriation for critical patients\\n• Cost Containment & Audit — medical bill review and negotiation, pre-authorisation, medical necessity review, and fraud assessment to reduce claims costs\\n• On-Ground Support — home nursing, physiotherapy, medical equipment hire, pharmacy delivery, and interpreter services post-discharge"
 
-PARAGRAPH 3 — Why now / value proposition (2 sentences):
-Reference the company's country/market and explain why outsourcing medical assistance to a specialist TPA like HWA makes commercial sense — reduced claims ratio, improved client satisfaction, and no need to maintain an in-house medical desk.
+PARAGRAPH 3 — Value proposition (2 sentences, reference company's country/market):
+Explain why partnering with a specialist local TPA like HWA makes commercial sense for {company name} — reduced claims ratio, no need to maintain an in-house medical desk in Greece/Cyprus, and guaranteed quality of care for their policyholders.
 
 PARAGRAPH 4 — Call to action:
-"I would welcome a short call or video meeting to walk you through our service model and discuss how we can support your policyholders in [country/region]. Please reply to this email or reach me directly at sami@healthwatch.gr."
+"I would welcome a short call or video meeting to present our service model in detail, share our provider network coverage, and discuss how HWA can best support {company name}'s policyholders. Please reply to this email or reach me directly at sami@healthwatch.gr."
 
 CLOSING:
 "Kind regards,\\nDr. Sami\\nMedical Officer\\nHealthWatch Assistance S.A.\\nThermi, Thessaloniki, Greece\\nEmail: sami@healthwatch.gr\\nwww.healthwatch.gr"
@@ -2456,6 +2456,7 @@ async function generateEmail(p,btnEl,docId){
   const specs=(p.specialties||p.specialty||[]);
   const specsStr=Array.isArray(specs)?specs.join(', '):(specs||'General');
   const isAirAmb=p.type==='air_ambulance';
+  const isInsurance=p.type==='insurance'||p.type==='reinsurance';
   const userMsg=isAirAmb
     ? `GENERATE HWA SERVICES PROPOSAL EMAIL — type = air_ambulance
 Provider (recipient): ${p.name}
@@ -2464,6 +2465,14 @@ Contact: ${p.contact_person?p.contact_person+' ('+( p.contact_title||'Operations
 Provider email: ${p.email||'[not available — leave To: blank, user will fill in]'}
 
 Use the air_ambulance section of your instructions. HWA is PROPOSING TO PROVIDE ground support services TO this company. Do NOT send a network invitation.`
+    : isInsurance
+    ? `GENERATE HWA SERVICES PROPOSAL EMAIL — type = ${p.type}
+Provider (recipient): ${p.name}
+City: ${p.city||''}, ${p.country||''}
+Contact: ${p.contact_person?p.contact_person+' ('+(p.contact_title||'Claims/Medical Director')+')':`Claims Director or Medical Director of ${p.name}`}
+Provider email: ${p.email||'[not available — leave To: blank, user will fill in]'}
+
+Use the insurance/reinsurance section of your instructions. HWA is PROPOSING TO PROVIDE medical assistance services TO this company. Do NOT send a network invitation.`
     : `Generate cooperation email for:
 Provider: ${p.name}
 Type: ${p.type||''}

@@ -530,8 +530,8 @@ a{color:inherit;text-decoration:none}
     <div class="progress-box" id="progress-box">
       <div class="section-title" style="margin-bottom:16px">Search Progress</div>
       <div class="progress-steps" id="progress-steps">
-        <div class="step" id="step-0"><div class="step-icon">1</div><span id="step-0-text">Searching verified providers...</span></div>
-        <div class="step" id="step-1"><div class="step-icon">2</div><span id="step-1-text">Enriching with contacts & emails...</span></div>
+        <div class="step" id="step-0"><div class="step-icon">1</div><span id="step-0-text">Searching Google Places, Healthsites.io...</span></div>
+        <div class="step" id="step-1"><div class="step-icon">2</div><span id="step-1-text">Enriching with AI + Hunter.io emails...</span></div>
         <div class="step" id="step-2"><div class="step-icon">✓</div><span id="step-2-text">Complete</span></div>
       </div>
       <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
@@ -629,6 +629,28 @@ a{color:inherit;text-decoration:none}
       <div style="font-size:12px;color:var(--text3);margin-top:6px">When ON: dual-source search (Google Places + AI). When OFF: AI-only search. Key stored securely in Firestore.</div>
     </div>
     <div class="admin-card">
+      <h3>🏥 Healthsites.io API Key</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Healthsites.io API Key</label>
+          <input type="password" class="form-input" id="healthsites-key-input" placeholder="Your Healthsites.io key">
+        </div>
+        <button class="btn btn-primary" onclick="saveHealthsitesKey()" style="flex-shrink:0;margin-bottom:1px">Save Key</button>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:6px">Free OpenStreetMap medical facility database — hospitals, clinics, doctors, physiotherapists. Register free at <strong>healthsites.io</strong>. Key stored securely in Firestore.</div>
+    </div>
+    <div class="admin-card">
+      <h3>✉️ Hunter.io API Key</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Hunter.io API Key</label>
+          <input type="password" class="form-input" id="hunter-key-input" placeholder="Your Hunter.io API key">
+        </div>
+        <button class="btn btn-primary" onclick="saveHunterKey()" style="flex-shrink:0;margin-bottom:1px">Save Key</button>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:6px">Finds verified contact emails from provider domains — runs automatically after AI enrichment for providers with a website but no email. Register free at <strong>hunter.io</strong>. Key stored securely in Firestore.</div>
+    </div>
+    <div class="admin-card">
       <h3>🔐 App Password</h3>
       <div class="form-row">
         <div class="form-group">
@@ -716,6 +738,8 @@ let currentProviders = [];
 let runResults = [];
 let apiKey = '';
 let googlePlacesKey = '';
+let healthsitesKey = '';
+let hunterKey = '';
 let _passwordOk = false; // guard: app only opens after password verified
 
 // ── Auth ───────────────────────────────────────────────
@@ -860,6 +884,14 @@ async function loadGooglePlacesKey(){
     const enabled=togDoc.exists?togDoc.data().enabled===true:false;
     _applyGpToggleUI(enabled);
   }catch(e){}
+  try{
+    const hsDoc=await db.collection('config').doc('healthsitesKey').get();
+    if(hsDoc.exists&&hsDoc.data().key)healthsitesKey=hsDoc.data().key;
+  }catch(e){}
+  try{
+    const hunDoc=await db.collection('config').doc('hunterKey').get();
+    if(hunDoc.exists&&hunDoc.data().key)hunterKey=hunDoc.data().key;
+  }catch(e){}
 }
 
 async function saveGooglePlacesEnabled(enabled){
@@ -879,6 +911,26 @@ async function saveGooglePlacesKey(){
     updateKeyStatus();
     showToast('Google Places key saved ✓','success');
     document.getElementById('google-places-key-input').value='AIza••••••••••••••••';
+  }catch(e){showToast('Save failed: '+e.message,'error');}
+}
+async function saveHealthsitesKey(){
+  const val=document.getElementById('healthsites-key-input').value.trim();
+  if(!val){showToast('Enter a Healthsites.io API key','error');return;}
+  try{
+    await db.collection('config').doc('healthsitesKey').set({key:val,updatedBy:currentUser.email,updatedAt:new Date()});
+    healthsitesKey=val;
+    showToast('Healthsites.io key saved ✓','success');
+    document.getElementById('healthsites-key-input').value='••••••••••••••••••••';
+  }catch(e){showToast('Save failed: '+e.message,'error');}
+}
+async function saveHunterKey(){
+  const val=document.getElementById('hunter-key-input').value.trim();
+  if(!val){showToast('Enter a Hunter.io API key','error');return;}
+  try{
+    await db.collection('config').doc('hunterKey').set({key:val,updatedBy:currentUser.email,updatedAt:new Date()});
+    hunterKey=val;
+    showToast('Hunter.io key saved ✓','success');
+    document.getElementById('hunter-key-input').value='••••••••••••••••••••';
   }catch(e){showToast('Save failed: '+e.message,'error');}
 }
 
@@ -2057,6 +2109,65 @@ async function _runUnified(){
   }
   setStep(0,'done');
 
+  // ── STEP 0b: Healthsites.io ──────────────────────────────
+  let healthsitesProviders=[];
+  if(healthsitesKey){
+    const HS_TAG_MAP={hospital:'hospital',clinic:'clinic',doctor:'doctors',physical_therapy:'physiotherapist'};
+    const hsTags=[...new Set(_searchTypes.map(t=>HS_TAG_MAP[t]).filter(Boolean))];
+    const hsCountry=_normalizeCountry(_searchCountry); // ISO-2 or original name
+    for(const tag of hsTags){
+      try{
+        const hsResp=await fetch(
+          `https://healthsites.io/api/v2/facilities/?api-key=${encodeURIComponent(healthsitesKey)}&country=${encodeURIComponent(hsCountry)}&tag=${tag}&page=1`,
+          {headers:{Accept:'application/json'}}
+        );
+        if(!hsResp.ok)continue;
+        const hsData=await hsResp.json();
+        const TYPE_FROM_TAG={hospital:'hospital',clinic:'clinic',doctors:'doctor',physiotherapist:'physical_therapy'};
+        (hsData.results||[]).forEach(fac=>{
+          const attrs=fac.attributes||{};
+          const name=attrs.name||fac.name||'';
+          if(!name)return;
+          const city=attrs['addr:city']||attrs['addr:town']||attrs['addr:district']||_searchCity||_searchCountry;
+          // City filter
+          if(_searchCity){
+            const sc=_searchCity.toLowerCase();
+            if(city&&!city.toLowerCase().includes(sc)&&!sc.includes(city.toLowerCase()))return;
+          }
+          const p={
+            name,type:TYPE_FROM_TAG[tag]||'clinic',
+            country:_searchCountry,city,
+            address:[attrs['addr:street'],attrs['addr:housenumber']].filter(Boolean).join(' '),
+            website:attrs['contact:website']||attrs.website||'',
+            email:attrs['contact:email']||'',
+            phone:attrs['contact:phone']||'',
+            accreditations:[],specialties:_searchSpecs.length?[..._searchSpecs]:[],
+            has_international_dept:false,why_hwa:'',cooperation_score:60,
+            contact_person:'',contact_title:'',
+            _source:'healthsites'
+          };
+          fixProviderTypeByName(p);
+          healthsitesProviders.push(p);
+        });
+      }catch(e){/* skip failed tag */}
+    }
+    // Merge into googleProviders pool (dedup by name)
+    if(healthsitesProviders.length>0){
+      const existingNames=new Set(googleProviders.map(p=>p.name.toLowerCase().trim()));
+      const hsNew=healthsitesProviders.filter(p=>!existingNames.has(p.name.toLowerCase().trim()));
+      googleProviders=[...googleProviders,...hsNew];
+      // Update display
+      if(hsNew.length>0){
+        const allSrc=[...runResults,...hsNew.filter(p=>_searchTypes.length?_searchTypes.includes(p.type):true)];
+        const seen2=new Set();
+        runResults=allSrc.filter(p=>{const k=p.name.toLowerCase().trim();if(seen2.has(k))return false;seen2.add(k);return true;});
+        document.getElementById('results-title').textContent=`${runResults.length} Providers Found`;
+        runResults.forEach((p,i)=>{if(!document.getElementById('chk-'+i))renderRunCard(p,i);});
+      }
+      showToast(`Healthsites.io: +${hsNew.length} facility records`,'success');
+    }
+  }
+
   // ── STEP 1: Claude AI — enrich + supplemental ───────────
   setStep(1,'active'); setProgress(40,'Enriching & qualifying providers...');
   const controller=new AbortController();
@@ -2269,6 +2380,51 @@ Return ONLY this JSON format (no markdown, no backticks):
       if(!key||seen.has(key))return false;
       seen.add(key);return true;
     });
+
+    // ── Hunter.io email enrichment ──────────────────────────
+    if(hunterKey&&finalProviders.length>0){
+      const toEnrich=finalProviders.filter(p=>p.website&&!p.email).slice(0,8);
+      for(const p of toEnrich){
+        try{
+          const rawDomain=p.website.startsWith('http')?p.website:'https://'+p.website;
+          const domain=new URL(rawDomain).hostname.replace(/^www\./,'');
+          let hunterResp;
+          if(p.contact_person){
+            const parts=p.contact_person.trim().split(/\s+/);
+            if(parts.length>=2){
+              const fn=encodeURIComponent(parts[0]);
+              const ln=encodeURIComponent(parts[parts.length-1]);
+              hunterResp=await fetch(`https://api.hunter.io/v2/email-finder?domain=${encodeURIComponent(domain)}&first_name=${fn}&last_name=${ln}&api_key=${hunterKey}`);
+              if(hunterResp.ok){
+                const hd=await hunterResp.json();
+                if(hd.data?.email){
+                  p.email=hd.data.email;
+                  p.email_confidence=(hd.data.score||0)>=80?'verified':'likely';
+                  p._hunter=true;
+                  continue;
+                }
+              }
+            }
+          }
+          // Fallback: domain search
+          hunterResp=await fetch(`https://api.hunter.io/v2/domain-search?domain=${encodeURIComponent(domain)}&api_key=${hunterKey}&limit=5&type=personal`);
+          if(!hunterResp.ok)continue;
+          const hd=await hunterResp.json();
+          const emails=(hd.data?.emails||[]).sort((a,b)=>(b.confidence||0)-(a.confidence||0));
+          if(!emails.length)continue;
+          const best=emails.find(e=>/director|medical|doctor|head|manager|ceo|operations|coordinator/i.test((e.position||'')+(e.department||'')))||emails[0];
+          if(best?.value){
+            p.email=best.value;
+            p.email_confidence=(best.confidence||0)>=80?'verified':'likely';
+            if(!p.contact_person&&best.first_name&&best.last_name){
+              p.contact_person=`${best.first_name} ${best.last_name}`.trim();
+              p.contact_title=best.position||'';
+            }
+            p._hunter=true;
+          }
+        }catch(e){/* skip failed domain */}
+      }
+    }
 
     // Cross-reference with HWA network (mark existing partners)
     try{
@@ -3451,6 +3607,14 @@ async function loadAdminData(){
     if(doc.exists&&doc.data().key){
       document.getElementById('google-places-key-input').value='AIza••••••••••••••••';
     }
+  }catch(e){}
+  try{
+    const hsDoc=await db.collection('config').doc('healthsitesKey').get();
+    if(hsDoc.exists&&hsDoc.data().key)document.getElementById('healthsites-key-input').value='••••••••••••••••••••';
+  }catch(e){}
+  try{
+    const hunDoc=await db.collection('config').doc('hunterKey').get();
+    if(hunDoc.exists&&hunDoc.data().key)document.getElementById('hunter-key-input').value='••••••••••••••••••••';
   }catch(e){}
   try{
     const snap=await db.collection('runSessions').orderBy('createdAt','desc').limit(15).get();

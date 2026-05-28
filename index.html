@@ -488,6 +488,7 @@ a{color:inherit;text-decoration:none}
           <span class="type-chip" data-type="tpa" onclick="this.classList.toggle('selected')">🤝 TPA / Assistance</span>
           <span class="type-chip" data-type="insurance" onclick="this.classList.toggle('selected')">🛡️ Insurance Co.</span>
           <span class="type-chip" data-type="reinsurance" onclick="this.classList.toggle('selected')">♻️ Reinsurance Co.</span>
+          <span class="type-chip" data-type="ipmi" onclick="this.classList.toggle('selected')">🌐 IPMI</span>
           <span class="type-chip" data-type="taxi" onclick="this.classList.toggle('selected')">🚖 Taxi</span>
         </div>
       </div>
@@ -1143,9 +1144,15 @@ OUTPUT MUST BE VALID JSON ONLY — no markdown, no backticks, no prose before or
 CRITICAL JSON RULES: All string values must be properly escaped. Use \\n for line breaks. Never use raw double-quotes inside strings — escape as \\".
 
 DEFAULT OUTPUT SCHEMA (use when asked for a provider list):
-{"providers":[{"name":"string","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance","country":"string","city":"string","website":"https://...","email":"contact@provider.com","phone":"+XX XXX XXX XXXX","accreditations":["JCI","ISO 9001","Lloyd's Coverholder"],"specialties":["Cardiology","Orthopedics"],"has_international_dept":true,"why_hwa":"1-2 sentences","contact_person":"string","contact_title":"string","linkedin_url":"","linkedin_verified":false,"cooperation_score":75,"industry_source":"itic|itij|jci|eurami|iamat|imtj|camts|mtqua|gha|lloyds|iais|amBest|insuranceEurope|bookimed|medigo|topdoctors|web"}]}
+{"providers":[{"name":"string","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance|ipmi","country":"string","city":"string","website":"https://...","email":"contact@provider.com","phone":"+XX XXX XXX XXXX","accreditations":["JCI","ISO 9001","Lloyd's Coverholder"],"specialties":["Cardiology","Orthopedics"],"has_international_dept":true,"why_hwa":"1-2 sentences","contact_person":"string","contact_title":"string","linkedin_url":"","linkedin_verified":false,"cooperation_score":75,"industry_source":"itic|itij|jci|eurami|iamat|imtj|camts|mtqua|gha|lloyds|iais|amBest|insuranceEurope|ipmiMarket|itij|bookimed|medigo|topdoctors|web"}]}
 
 GLOBAL INDUSTRY DATABASES — search your training knowledge of these first:
+
+IPMI (use when type=ipmi — International Private Medical Insurance):
+• Major IPMI insurers: Cigna Global (cigna.com), Aetna International (aetna.com), Bupa Global (bupaglobal.com), AXA Global Healthcare (axaglobalhealthcare.com), Allianz Care (allianzcare.com), Now Health International (now-health.com), Pacific Cross (pacificcross.com), MSH International (msh-intl.com), Foyer Global Health (foyerglobalhealth.com), William Russell (william-russell.com), GeoBlue (geo-blue.com), HealthCare International (hcitravel.com), April International (april-international.com), Integra Global (integraglobal.com), Henner (groupe-henner.com), Generali Global Health (generaliglobalhealth.com), Maxis Global Benefits (maxisglobalbenefits.com)
+• itij.com — ITIJ IPMI market intelligence & directory
+• IPMI Guide: ipmi-guide.com
+• Pacific Prime (pacificprime.com) — IPMI broker & company directory
 
 INSURANCE & REINSURANCE (use when type=insurance or type=reinsurance):
 • lloyds.com — Lloyd's of London market participants & coverholders directory
@@ -1381,6 +1388,28 @@ CLOSING:
 "Kind regards,\\nDr. Sami\\nMedical Officer\\nHealthWatch Assistance S.A.\\nThermi, Thessaloniki, Greece\\nEmail: sami@healthwatch.gr\\nwww.healthwatch.gr"
 
 ══════════════════════════════════════════════
+IF provider type = "ipmi":
+══════════════════════════════════════════════
+CRITICAL: HWA is PROPOSING TO PROVIDE services TO this IPMI (International Private Medical Insurance) company. They are a potential HWA client. This is a service proposal — NOT a network invitation.
+
+SUBJECT: "Medical Assistance & IPMI Support Services Proposal — HealthWatch Assistance S.A. & [Company Name]"
+
+PARAGRAPH 1 — Introduction (personalise with company name and country):
+"Dear [contact name / Medical Director or Operations Director of {company name}],\\nMy name is Dr. Sami, Medical Officer at HealthWatch Assistance S.A. (HWA), a specialist international medical assistance and TPA company headquartered in Thessaloniki, Greece. I am reaching out to propose our medical assistance, case management, and network services to {company name} in support of your internationally mobile members in Greece, Cyprus, and our broader covered territories."
+
+PARAGRAPH 2 — Services HWA proposes — MUST include ALL bullet points:
+"HWA proposes to provide {company name} with the following services:\\n\\n• 24/7 Medical Case Management — multilingual coordinators supporting your expatriate and globally mobile policyholders from first notification through to discharge or repatriation; hospital admission facilitation and direct billing\\n• HWA Medical Network in Greece & Cyprus — access to our curated network of vetted hospitals, specialist clinics, GPs, diagnostic centres, and pharmacies across mainland Greece, all major islands, and Cyprus; direct billing with pre-agreed IPMI-compatible tariffs\\n• Guarantee of Payment (GOP) — rapid GOP issuance to local providers, eliminating out-of-pocket expenses for your members and reducing reimbursement claims volume\\n• Repatriation & Medical Escorts — full coordination of medical repatriations (commercial MEDIF and air ambulance) for critically ill or injured members requiring transfer to their home country or a higher-level facility\\n• Cost Containment & Audit — medical bill review, negotiation, pre-authorisation, medical necessity review, and fraud assessment tailored to IPMI claims patterns\\n• Customised AI Evaluation — AI-powered assessment of medical and non-medical claims, automated review of IPMI policy coverage and exclusions, and detection of discrepancies between submitted claims and policy terms — reducing claims leakage and accelerating settlement\\n• On-Ground Support — home nursing, physiotherapy, medical equipment hire, pharmacy delivery, and interpreter services for members requiring ongoing post-discharge care"
+
+PARAGRAPH 3 — Value proposition (2 sentences, reference company's international member base):
+Explain why partnering with HWA makes strategic sense for {company name} — a single accountable partner for the entire member journey in Greece and Cyprus, combining local medical expertise with AI-driven cost control and IPMI-grade service standards.
+
+PARAGRAPH 4 — Call to action:
+"I would welcome a short call to present our service model, IPMI-specific capabilities, and AI evaluation tools in detail. Please reply to this email or reach me directly at sami@healthwatch.gr."
+
+CLOSING:
+"Kind regards,\\nDr. Sami\\nMedical Officer\\nHealthWatch Assistance S.A.\\nThermi, Thessaloniki, Greece\\nEmail: sami@healthwatch.gr\\nwww.healthwatch.gr"
+
+══════════════════════════════════════════════
 IF provider type = "air_ambulance":
 ══════════════════════════════════════════════
 CRITICAL: HWA is PROPOSING TO PROVIDE services TO this air ambulance company. This is NOT a network invitation. HWA is the service provider. The air ambulance company is the client being approached.
@@ -1435,6 +1464,8 @@ function fixProviderTypeByName(p){
   // Ground ambulance: English + German (Rettungsdienst, Ambulanz, Krankentransport, Rettung) + French/Italian + generic "ambulance"
   }else if(/\bambulance\b|ambulanz|rettungsdienst|krankentransport|ambulans|ambulância|ambulanza|\bsamu\b|\bsmur\b|\bekab\b|soccorso.?sanitario|croce.?rossa.?soccorso|notarzt(?!zentrum)/i.test(n)){
     p.type='ground_ambulance';
+  }else if(/\bipmi\b|international.?private.?medical|international.?health.?insur|expat.?insur|expat.?health|global.?health.?insur|global.?medical.?insur/i.test(n)){
+    p.type='ipmi';
   }
 }
 
@@ -1799,7 +1830,7 @@ async function _runHwaOnly(){
     }
 
     // Type filter — skip if all types selected
-    const allTypes=['hospital','clinic','physical_therapy','doctor','ground_ambulance','air_ambulance','tpa','taxi','insurance','reinsurance'];
+    const allTypes=['hospital','clinic','physical_therapy','doctor','ground_ambulance','air_ambulance','tpa','taxi','insurance','reinsurance','ipmi'];
     if(_searchTypes.length&&_searchTypes.length<allTypes.length){
       all=all.filter(p=>!p.type||_searchTypes.includes(p.type));
     }
@@ -2035,23 +2066,24 @@ async function _runUnified(){
     if(googleProviders.length>0){
       const providerList=googleProviders.map((p,i)=>`${i+1}. ${p.name} | ${p.city}, ${p.country} | ${p.website||'no website'} | ${p.phone||'no phone'}`).join('\n');
       const additionalCount=Math.max(4,12-googleProviders.length);
-      const hasInsurance=_searchTypes.some(t=>t==='insurance'||t==='reinsurance');
+      const hasInsurance=_searchTypes.some(t=>t==='insurance'||t==='reinsurance'||t==='ipmi');
+      const hasIpmi=_searchTypes.some(t=>t==='ipmi');
       claudeMsg=`UNIFIED NETWORK RUN — Date: ${today}
 Location: ${loc}
 Provider types: ${typeStr}
 ${specStr?'Specialties: '+specStr:''}
-${hasInsurance?'NOTE: For insurance/reinsurance types — find companies that could become HWA SERVICE CLIENTS (HWA will offer them medical assistance, cost containment, and AI claims services). Focus on: Claims Director, Medical Director, or Head of International Operations as contact_person.':''}
+${hasInsurance?`NOTE: For insurance/reinsurance/IPMI types — find companies that could become HWA SERVICE CLIENTS (HWA will offer them medical assistance, cost containment, and AI claims services). Focus on: Claims Director, Medical Director, or Head of International Operations as contact_person.${hasIpmi?' IPMI = International Private Medical Insurance companies — specialist insurers for expatriates and globally mobile individuals (e.g. Cigna Global, Aetna International, Bupa Global, AXA Global Healthcare, Allianz Care, Now Health International, Pacific Cross, MSH International, Foyer Global Health, William Russell).':''}`:''}
 Google Places found ${googleProviders.length} providers. Your tasks:
 1. Enrich each provider — for EACH one visit their official website to find the real contact email:
    - email: ONLY return an email found on the provider's official website, official directory listing, or LinkedIn page. DO NOT guess patterns like info@, contact@, admin@ — a wrong email is worse than no email. Leave blank if unsure.
    - email_confidence: "verified" if you found it on official source during this search, "likely" if from high-confidence training data (major institution), "uncertain" if guessed — return "" for email if uncertain.
-   - contact_person: full name of Medical Director, International Patients Coordinator, or Claims Director (insurance). Only return if you can confirm they currently hold this role.
+   - contact_person: full name of Medical Director, International Patients Coordinator, or Claims Director (insurance/IPMI). Only return if you can confirm they currently hold this role.
    - contact_title: their exact current job title.
    - linkedin_url: only if you confirmed a real LinkedIn profile URL for this person at this provider.
    - linkedin_verified: true only if LinkedIn confirms current employment.
    - phone: official switchboard number from their website.
    - specialties[], accreditations[], has_international_dept, why_hwa (1-2 sentences), cooperation_score (1-100), industry_source.
-2. Find up to ${additionalCount} ADDITIONAL verified ${hasInsurance?'insurance/reinsurance companies':'providers'} in ${loc} — draw from ${hasInsurance?'Lloyd\'s market (lloyds.com), Insurance Europe (insuranceeurope.eu), AM Best (ambest.com), IAIS member list, national insurance supervisor registries (FCA, ACPR, BaFin, IVASS, DGSFP), AXA Partners, Allianz Partners, Europ Assistance, and major reinsurers (Munich Re, Swiss Re, Hannover Re, SCOR)':'ITIC, ITIJ, JCI, EURAMI, IAMAT, IMTJ, CAMTS, MTQUA, GHA, Bookimed, Medigo, national medical association registries'}.
+2. Find up to ${additionalCount} ADDITIONAL verified ${hasIpmi?'IPMI companies':hasInsurance?'insurance/reinsurance companies':'providers'} in ${loc} — draw from ${hasIpmi?'IPMI specialists: Cigna Global, Aetna International, Bupa Global, AXA Global Healthcare, Allianz Care, Now Health International, Pacific Cross, MSH International, Foyer Global Health, William Russell, GeoBlue, HealthCare International, April International — focus on companies with REGIONAL offices in '+loc:hasInsurance?'Lloyd\'s market (lloyds.com), Insurance Europe (insuranceeurope.eu), AM Best (ambest.com), IAIS member list, national insurance supervisor registries (FCA, ACPR, BaFin, IVASS, DGSFP), AXA Partners, Allianz Partners, Europ Assistance, and major reinsurers (Munich Re, Swiss Re, Hannover Re, SCOR)':'ITIC, ITIJ, JCI, EURAMI, IAMAT, IMTJ, CAMTS, MTQUA, GHA, Bookimed, Medigo, national medical association registries'}.
 
 PROVIDERS TO ENRICH:
 ${providerList}
@@ -2062,20 +2094,32 @@ TYPE RULES — MANDATORY (apply to all additional providers):
 - Name contains "air ambulance", "air rescue", "HEMS", "medevac", "aeromedical", "flight nurse", "medical flight" → type MUST be "air_ambulance"
 - Name contains "ambulance", "ambulanz", "Rettungsdienst", "SAMU", "SMUR", "EMS", "EKAB", "krankentransport" → type MUST be "ground_ambulance"
 - Name contains "hospital", "medical center", "klinik", "Kliniken" → type MUST be "hospital"
-- NEVER assign type "clinic" to any ambulance, air rescue, or HEMS provider.
+- Name contains "IPMI", "international private medical", "international health insurance", "expat insurance", "expat health", "global health insurance" → type MUST be "ipmi"
+- NEVER assign type "clinic" to any ambulance, air rescue, HEMS, or IPMI provider.
 
 Return ONLY valid JSON (no markdown, no backticks):
-{"enriched":[{"index":0,"email":"","email_confidence":"verified|likely|uncertain","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"phone":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70,"industry_source":""}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance","country":"","city":"","website":"","email":"","email_confidence":"verified|likely|uncertain","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":65,"industry_source":""}]}`;
+{"enriched":[{"index":0,"email":"","email_confidence":"verified|likely|uncertain","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"phone":"","specialties":[],"accreditations":[],"has_international_dept":false,"why_hwa":"","cooperation_score":70,"industry_source":""}],"additional":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance|ipmi","country":"","city":"","website":"","email":"","email_confidence":"verified|likely|uncertain","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":65,"industry_source":""}]}`;
     }else{
-      const insOnly=_searchTypes.every(t=>t==='insurance'||t==='reinsurance');
-      const hasIns=_searchTypes.some(t=>t==='insurance'||t==='reinsurance');
+      const insOnly=_searchTypes.every(t=>t==='insurance'||t==='reinsurance'||t==='ipmi');
+      const hasIns=_searchTypes.some(t=>t==='insurance'||t==='reinsurance'||t==='ipmi');
+      const ipmiOnly=_searchTypes.every(t=>t==='ipmi');
+      const hasIpmi2=_searchTypes.some(t=>t==='ipmi');
       claudeMsg=`NETWORK RUN — Date: ${today}
 Country: ${_searchCountry}${_searchCity?' — City: '+_searchCity+' (search primarily here, expand to nearby if needed)':' (search across the entire country)'}
 Provider types required: ${typeStr}
 ${specStr?'Medical specialties: '+specStr:''}
-${hasIns?'\nNOTE: For insurance/reinsurance — find companies HWA can offer its services TO (medical assistance, cost containment, AI claims). Target contact: Claims Director, Medical Director, or Head of International Operations.':''}
+${hasIns?`\nNOTE: For insurance/reinsurance/IPMI types — find companies HWA can offer its services TO (medical assistance, cost containment, AI claims). Target contact: Claims Director, Medical Director, or Head of International Operations.${hasIpmi2?' IPMI = International Private Medical Insurance — specialist insurers covering expatriates and globally mobile individuals globally (e.g. Cigna Global, Aetna International, Bupa Global, AXA Global Healthcare, Allianz Care, Now Health International, Pacific Cross, MSH International, Foyer Global Health, William Russell, GeoBlue, HealthCare International, April International).':''}`:''}
 
-${insOnly?`Using your knowledge of global insurance markets, find exactly 12 real verified insurance or reinsurance companies in ${loc}.
+${ipmiOnly?`Using your knowledge of the global IPMI (International Private Medical Insurance) market, find exactly 12 real verified IPMI companies with presence or operations relevant to ${loc}.
+
+IPMI companies are specialist insurers that provide health coverage to expatriates and internationally mobile individuals worldwide.
+
+Draw from:
+1. Major global IPMI insurers: Cigna Global, Aetna International, Bupa Global, AXA Global Healthcare, Allianz Care (Allianz Partners), Now Health International, Pacific Cross, MSH International, Foyer Global Health, William Russell, GeoBlue (part of Independence Blue Cross), HealthCare International, April International, Integra Global, Henner, Generali Global Health, Assurant Health, Zurich International, Maxis Global Benefits
+2. Regional IPMI specialists with operations in ${_searchCountry}
+3. IAIS member companies with IPMI product lines
+4. Companies listed on ITIJ (International Travel & Health Insurance Journal) IPMI market intelligence`:
+insOnly?`Using your knowledge of global insurance markets, find exactly 12 real verified insurance or reinsurance companies in ${loc}.
 
 Draw from:
 1. Lloyd\'s market participants (lloyds.com) — syndicates and coverholders
@@ -2108,10 +2152,11 @@ TYPE RULES — MANDATORY:
 - Provider name contains "air ambulance", "air rescue", "HEMS", "medevac", "aeromedical", "flight nurse", "medical flight" → type MUST be "air_ambulance". NEVER "clinic".
 - Provider name contains "ambulance", "ambulanz", "Rettungsdienst", "SAMU", "SMUR", "EMS", "EKAB", "krankentransport", "ambulans" → type MUST be "ground_ambulance". NEVER "clinic".
 - Provider name contains "hospital", "medical center", "Klinik", "Kliniken" → type MUST be "hospital".
-- Only use "clinic" for actual clinics, polyclinics, medical practices, or specialist centres — NEVER for ambulance or air rescue operators.
+- Provider name contains "IPMI", "international private medical", "expat insurance", "expat health", "global health insurance" OR company is a known IPMI insurer (Cigna Global, Aetna International, Bupa Global, AXA Global Healthcare, Allianz Care, Now Health International, etc.) → type MUST be "ipmi".
+- Only use "clinic" for actual clinics, polyclinics, medical practices, or specialist centres — NEVER for ambulance, air rescue, or IPMI operators.
 
 Return ONLY this JSON format (no markdown, no backticks):
-{"providers":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance","country":"","city":"","website":"","email":"","email_confidence":"verified|likely|uncertain","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":70,"industry_source":""}]}`;
+{"providers":[{"name":"","type":"hospital|clinic|ground_ambulance|air_ambulance|tpa|physical_therapy|doctor|taxi|insurance|reinsurance|ipmi","country":"","city":"","website":"","email":"","email_confidence":"verified|likely|uncertain","phone":"","accreditations":[],"specialties":[],"has_international_dept":false,"why_hwa":"","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"cooperation_score":70,"industry_source":""}]}`;
     }
 
     // Multi-turn loop: Claude 4.x uses web search tool which requires multi-turn
@@ -2500,7 +2545,7 @@ function updateSaveCount(){
   document.getElementById('save-bar-sub').textContent=`${checked} provider${checked!==1?'s':''} selected`;
 }
 function typeLabel(t){
-  return{hospital:'🏥 Hospital',clinic:'🏢 Clinic',ground_ambulance:'🚑 Ground Amb.',air_ambulance:'✈️ Air Amb.',tpa:'🤝 TPA',physical_therapy:'🏋️ Physical Therapy',doctor:'👨‍⚕️ Doctor/Specialist',taxi:'🚖 Taxi',insurance:'🛡️ Insurance Co.',reinsurance:'♻️ Reinsurance Co.'}[t]||t;
+  return{hospital:'🏥 Hospital',clinic:'🏢 Clinic',ground_ambulance:'🚑 Ground Amb.',air_ambulance:'✈️ Air Amb.',tpa:'🤝 TPA',physical_therapy:'🏋️ Physical Therapy',doctor:'👨‍⚕️ Doctor/Specialist',taxi:'🚖 Taxi',insurance:'🛡️ Insurance Co.',reinsurance:'♻️ Reinsurance Co.',ipmi:'🌐 IPMI Co.'}[t]||t;
 }
 function buildMailto(p){
   const subj=encodeURIComponent(p.email_subject||'Partnership Proposal — HealthWatch Assistance');
@@ -2519,6 +2564,7 @@ async function generateEmail(p,btnEl,docId){
   const isAirAmb=p.type==='air_ambulance';
   const isInsurance=p.type==='insurance'||p.type==='reinsurance';
   const isTpa=p.type==='tpa';
+  const isIpmi=p.type==='ipmi';
   const userMsg=isAirAmb
     ? `GENERATE HWA SERVICES PROPOSAL EMAIL — type = air_ambulance
 Provider (recipient): ${p.name}
@@ -2543,6 +2589,14 @@ Contact: ${p.contact_person?p.contact_person+' ('+(p.contact_title||'Operations/
 Provider email: ${p.email||'[not available — leave To: blank, user will fill in]'}
 
 Use the tpa section of your instructions. HWA is PROPOSING TO PROVIDE medical assistance services, provider network access, and AI claims evaluation TO this TPA/assistance company as a potential client. Do NOT send a network invitation.`
+    : isIpmi
+    ? `GENERATE HWA SERVICES PROPOSAL EMAIL — type = ipmi
+Provider (recipient): ${p.name}
+City: ${p.city||''}, ${p.country||''}
+Contact: ${p.contact_person?p.contact_person+' ('+(p.contact_title||'Medical/Operations Director')+')':`Medical Director or Operations Director of ${p.name}`}
+Provider email: ${p.email||'[not available — leave To: blank, user will fill in]'}
+
+Use the ipmi section of your instructions. HWA is PROPOSING TO PROVIDE medical assistance services, provider network access, and AI claims evaluation TO this IPMI company as a potential client. Do NOT send a network invitation.`
     : `Generate cooperation email for:
 Provider: ${p.name}
 Type: ${p.type||''}
@@ -3059,7 +3113,9 @@ async function importFromExcel(){
     'physical therapy':'physical_therapy','physiotherapy':'physical_therapy',
     'rehab':'physical_therapy','φυσικ':'physical_therapy',
     'doctor':'doctor','ιατρ':'doctor','γιατρ':'doctor',
-    'specialist':'doctor','physician':'doctor','taxi':'taxi','ταξί':'taxi','ταξι':'taxi'
+    'specialist':'doctor','physician':'doctor','taxi':'taxi','ταξί':'taxi','ταξι':'taxi',
+    'ipmi':'ipmi','international private medical':'ipmi','international health insurance':'ipmi',
+    'expat insurance':'ipmi','expat health':'ipmi','global health insurance':'ipmi','global medical insurance':'ipmi'
   };
   function mapType(raw){
     // Handle comma-separated types (e.g. "Doctor, Clinic, Ambulance") — use first match
@@ -3344,7 +3400,7 @@ ${list}`}]
             const city=(parts[1]||'').trim();
             const country=(parts[2]||'').trim();
             const type=(parts[3]||'').trim();
-            const validTypes=['hospital','clinic','ground_ambulance','air_ambulance','tpa','physical_therapy','doctor','taxi'];
+            const validTypes=['hospital','clinic','ground_ambulance','air_ambulance','tpa','physical_therapy','doctor','taxi','insurance','reinsurance','ipmi'];
             const update={};
             if(city&&city!=='?'&&city!==p.city)update.city=city;
             if(country&&country!=='?'&&country!==p.country)update.country=country;

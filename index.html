@@ -637,6 +637,16 @@ a{color:inherit;text-decoration:none}
         </div>
         <button class="btn btn-primary" onclick="saveHealthsitesKey()" style="flex-shrink:0;margin-bottom:1px">Save Key</button>
       </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+          <div style="position:relative;width:44px;height:24px;flex-shrink:0">
+            <input type="checkbox" id="hs-enabled-toggle" style="opacity:0;width:0;height:0;position:absolute" onchange="saveHealthsitesEnabled(this.checked)">
+            <span id="hs-toggle-track" style="position:absolute;inset:0;border-radius:12px;background:#ccc;transition:background 0.2s;cursor:pointer"></span>
+            <span id="hs-toggle-thumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:transform 0.2s;pointer-events:none"></span>
+          </div>
+          <span id="hs-toggle-label" style="font-size:13px;font-weight:600;color:var(--text2)">Healthsites Search: OFF</span>
+        </label>
+      </div>
       <div style="font-size:12px;color:var(--text3);margin-top:6px">Free OpenStreetMap medical facility database — hospitals, clinics, doctors, physiotherapists. Register free at <strong>healthsites.io</strong>. Key stored securely in Firestore.</div>
     </div>
     <div class="admin-card">
@@ -648,7 +658,17 @@ a{color:inherit;text-decoration:none}
         </div>
         <button class="btn btn-primary" onclick="saveHunterKey()" style="flex-shrink:0;margin-bottom:1px">Save Key</button>
       </div>
-      <div style="font-size:12px;color:var(--text3);margin-top:6px">Finds verified contact emails from provider domains — runs automatically after AI enrichment for providers with a website but no email. Register free at <strong>hunter.io</strong>. Key stored securely in Firestore.</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+          <div style="position:relative;width:44px;height:24px;flex-shrink:0">
+            <input type="checkbox" id="hun-enabled-toggle" style="opacity:0;width:0;height:0;position:absolute" onchange="saveHunterEnabled(this.checked)">
+            <span id="hun-toggle-track" style="position:absolute;inset:0;border-radius:12px;background:#ccc;transition:background 0.2s;cursor:pointer"></span>
+            <span id="hun-toggle-thumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:transform 0.2s;pointer-events:none"></span>
+          </div>
+          <span id="hun-toggle-label" style="font-size:13px;font-weight:600;color:var(--text2)">Hunter.io Email Search: OFF</span>
+        </label>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:6px">Finds verified contact emails from provider domains — runs after AI enrichment for providers with a website but no email. Register free at <strong>hunter.io</strong>. Key stored securely in Firestore.</div>
     </div>
     <div class="admin-card">
       <h3>🔐 App Password</h3>
@@ -739,7 +759,9 @@ let runResults = [];
 let apiKey = '';
 let googlePlacesKey = '';
 let healthsitesKey = '';
+let healthsitesEnabled = false;
 let hunterKey = '';
+let hunterEnabled = false;
 let _passwordOk = false; // guard: app only opens after password verified
 
 // ── Auth ───────────────────────────────────────────────
@@ -873,6 +895,13 @@ function _applyGpToggleUI(enabled){
   googlePlacesEnabled=enabled;
 }
 
+function _applyToggleUI(track,thumb,label,cb,enabled,onText,offText){
+  if(!track)return;
+  track.style.background=enabled?'#4f46e5':'#ccc';
+  thumb.style.transform=enabled?'translateX(20px)':'translateX(0)';
+  if(label)label.textContent=enabled?onText:offText;
+  if(cb)cb.checked=enabled;
+}
 async function loadGooglePlacesKey(){
   try{
     const doc=await db.collection('config').doc('googlePlacesKey').get();
@@ -887,11 +916,59 @@ async function loadGooglePlacesKey(){
   try{
     const hsDoc=await db.collection('config').doc('healthsitesKey').get();
     if(hsDoc.exists&&hsDoc.data().key)healthsitesKey=hsDoc.data().key;
+    const hsTog=await db.collection('config').doc('healthsitesEnabled').get();
+    const hsEnabled=hsTog.exists?hsTog.data().enabled===true:false;
+    healthsitesEnabled=hsEnabled;
+    _applyToggleUI(
+      document.getElementById('hs-toggle-track'),
+      document.getElementById('hs-toggle-thumb'),
+      document.getElementById('hs-toggle-label'),
+      document.getElementById('hs-enabled-toggle'),
+      hsEnabled,'Healthsites Search: ON','Healthsites Search: OFF'
+    );
   }catch(e){}
   try{
     const hunDoc=await db.collection('config').doc('hunterKey').get();
     if(hunDoc.exists&&hunDoc.data().key)hunterKey=hunDoc.data().key;
+    const hunTog=await db.collection('config').doc('hunterEnabled').get();
+    const hunEnabled=hunTog.exists?hunTog.data().enabled===true:false;
+    hunterEnabled=hunEnabled;
+    _applyToggleUI(
+      document.getElementById('hun-toggle-track'),
+      document.getElementById('hun-toggle-thumb'),
+      document.getElementById('hun-toggle-label'),
+      document.getElementById('hun-enabled-toggle'),
+      hunEnabled,'Hunter.io Email Search: ON','Hunter.io Email Search: OFF'
+    );
   }catch(e){}
+}
+async function saveHealthsitesEnabled(enabled){
+  healthsitesEnabled=enabled;
+  _applyToggleUI(
+    document.getElementById('hs-toggle-track'),
+    document.getElementById('hs-toggle-thumb'),
+    document.getElementById('hs-toggle-label'),
+    document.getElementById('hs-enabled-toggle'),
+    enabled,'Healthsites Search: ON','Healthsites Search: OFF'
+  );
+  try{
+    await db.collection('config').doc('healthsitesEnabled').set({enabled,updatedBy:currentUser?.email||'',updatedAt:new Date()});
+    showToast('Healthsites.io search '+(enabled?'enabled ✓':'disabled ✓'),'success');
+  }catch(e){showToast('Save failed: '+e.message,'error');}
+}
+async function saveHunterEnabled(enabled){
+  hunterEnabled=enabled;
+  _applyToggleUI(
+    document.getElementById('hun-toggle-track'),
+    document.getElementById('hun-toggle-thumb'),
+    document.getElementById('hun-toggle-label'),
+    document.getElementById('hun-enabled-toggle'),
+    enabled,'Hunter.io Email Search: ON','Hunter.io Email Search: OFF'
+  );
+  try{
+    await db.collection('config').doc('hunterEnabled').set({enabled,updatedBy:currentUser?.email||'',updatedAt:new Date()});
+    showToast('Hunter.io email search '+(enabled?'enabled ✓':'disabled ✓'),'success');
+  }catch(e){showToast('Save failed: '+e.message,'error');}
 }
 
 async function saveGooglePlacesEnabled(enabled){
@@ -2111,7 +2188,7 @@ async function _runUnified(){
 
   // ── STEP 0b: Healthsites.io ──────────────────────────────
   let healthsitesProviders=[];
-  if(healthsitesKey){
+  if(healthsitesKey&&healthsitesEnabled){
     const HS_TAG_MAP={hospital:'hospital',clinic:'clinic',doctor:'doctors',physical_therapy:'physiotherapist'};
     const hsTags=[...new Set(_searchTypes.map(t=>HS_TAG_MAP[t]).filter(Boolean))];
     const hsCountry=_normalizeCountry(_searchCountry); // ISO-2 or original name
@@ -2382,7 +2459,7 @@ Return ONLY this JSON format (no markdown, no backticks):
     });
 
     // ── Hunter.io email enrichment ──────────────────────────
-    if(hunterKey&&finalProviders.length>0){
+    if(hunterKey&&hunterEnabled&&finalProviders.length>0){
       const toEnrich=finalProviders.filter(p=>p.website&&!p.email).slice(0,8);
       for(const p of toEnrich){
         try{

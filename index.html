@@ -386,6 +386,7 @@ a{color:inherit;text-decoration:none}
   <div class="tab-bar" id="tab-bar">
     <button class="tab-btn active" onclick="showTab('dashboard')" data-tab="dashboard">📊 Dashboard</button>
     <button class="tab-btn" onclick="showTab('run')" data-tab="run">🔍 Network Run</button>
+    <button class="tab-btn" onclick="showTab('finder')" data-tab="finder">🎯 Contact Finder</button>
     <button class="tab-btn" onclick="showTab('providers')" data-tab="providers">📋 Providers</button>
     <button class="tab-btn" id="admin-tab-btn" onclick="showTab('admin')" data-tab="admin" style="display:none">⚙️ Admin</button>
   </div>
@@ -555,6 +556,97 @@ a{color:inherit;text-decoration:none}
         <button class="btn btn-primary" onclick="saveSelectedProviders()" id="save-all-btn">Save Selected</button>
       </div>
     </div>
+  </div>
+
+  <!-- CONTACT FINDER -->
+  <div id="tab-finder" class="tab-content" style="display:none">
+    <div class="run-config">
+      <div class="run-header">
+        <div>
+          <div class="section-title">Contact Finder</div>
+          <div class="section-sub">Know the provider name but missing contact details? Enter what you have — we'll find the rest.</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px">
+        <div>
+          <div class="form-label">Provider / Hospital Name <span style="color:var(--red)">*</span></div>
+          <input class="search-input" id="cf-name" placeholder="e.g. Evangelismos Hospital" style="margin-top:6px">
+        </div>
+        <div>
+          <div class="form-label">Country <span style="color:var(--red)">*</span></div>
+          <select id="cf-country" class="search-input" style="margin-top:6px;cursor:pointer">
+            <option value="">— Select a country —</option>
+            <option>Afghanistan</option><option>Albania</option><option>Algeria</option><option>Angola</option><option>Argentina</option><option>Armenia</option><option>Australia</option><option>Austria</option><option>Azerbaijan</option>
+            <option>Bahrain</option><option>Bangladesh</option><option>Belarus</option><option>Belgium</option><option>Bolivia</option><option>Bosnia and Herzegovina</option><option>Brazil</option><option>Bulgaria</option>
+            <option>Cambodia</option><option>Cameroon</option><option>Canada</option><option>Chile</option><option>China</option><option>Colombia</option><option>Croatia</option><option>Cyprus</option><option>Czech Republic</option>
+            <option>Denmark</option><option>Dominican Republic</option><option>Ecuador</option><option>Egypt</option><option>Estonia</option><option>Ethiopia</option>
+            <option>Finland</option><option>France</option><option>Georgia</option><option>Germany</option><option>Ghana</option><option>Greece</option><option>Guatemala</option>
+            <option>Hong Kong</option><option>Hungary</option>
+            <option>India</option><option>Indonesia</option><option>Iran</option><option>Iraq</option><option>Ireland</option><option>Israel</option><option>Italy</option>
+            <option>Japan</option><option>Jordan</option>
+            <option>Kazakhstan</option><option>Kenya</option><option>Kuwait</option>
+            <option>Latvia</option><option>Lebanon</option><option>Libya</option><option>Lithuania</option><option>Luxembourg</option>
+            <option>Malaysia</option><option>Malta</option><option>Mexico</option><option>Moldova</option><option>Montenegro</option><option>Morocco</option><option>Mozambique</option><option>Myanmar</option>
+            <option>Nepal</option><option>Netherlands</option><option>New Zealand</option><option>Nigeria</option><option>North Macedonia</option><option>Norway</option>
+            <option>Oman</option><option>Pakistan</option><option>Panama</option><option>Peru</option><option>Philippines</option><option>Poland</option><option>Portugal</option>
+            <option>Qatar</option><option>Romania</option><option>Russia</option><option>Rwanda</option>
+            <option>Saudi Arabia</option><option>Senegal</option><option>Serbia</option><option>Singapore</option><option>Slovakia</option><option>Slovenia</option><option>South Africa</option><option>South Korea</option><option>Spain</option><option>Sri Lanka</option><option>Sweden</option><option>Switzerland</option>
+            <option>Taiwan</option><option>Tanzania</option><option>Thailand</option><option>Tunisia</option><option>Turkey</option>
+            <option>UAE</option><option>Uganda</option><option>UK</option><option>Ukraine</option><option>Uruguay</option><option>USA</option>
+            <option>Venezuela</option><option>Vietnam</option><option>Yemen</option><option>Zambia</option><option>Zimbabwe</option>
+          </select>
+        </div>
+        <div>
+          <div class="form-label">City <span style="color:var(--text3);font-weight:400">(optional)</span></div>
+          <input class="search-input" id="cf-city" placeholder="e.g. Athens" style="margin-top:6px">
+        </div>
+        <div>
+          <div class="form-label">Website <span style="color:var(--text3);font-weight:400">(optional — speeds up email search)</span></div>
+          <input class="search-input" id="cf-website" placeholder="e.g. evangelismos.gr" style="margin-top:6px">
+        </div>
+        <div>
+          <div class="form-label">Provider Type <span style="color:var(--text3);font-weight:400">(optional)</span></div>
+          <select id="cf-type" class="search-input" style="margin-top:6px;cursor:pointer">
+            <option value="">— Any type —</option>
+            <option value="hospital">🏥 Hospital</option>
+            <option value="clinic">🏢 Clinic</option>
+            <option value="physical_therapy">🏋️ Physical Therapy</option>
+            <option value="doctor">👨‍⚕️ Doctor / Specialist</option>
+            <option value="ground_ambulance">🚑 Ground Ambulance</option>
+            <option value="air_ambulance">✈️ Air Ambulance</option>
+            <option value="tpa">🤝 TPA / Assistance</option>
+            <option value="insurance">🛡️ Insurance</option>
+            <option value="reinsurance">♻️ Reinsurance</option>
+            <option value="ipmi">🌐 IPMI</option>
+          </select>
+        </div>
+        <div>
+          <div class="form-label">Additional info <span style="color:var(--text3);font-weight:400">(optional — address, registration, speciality…)</span></div>
+          <input class="search-input" id="cf-extra" placeholder="e.g. private hospital, cardiac surgery centre" style="margin-top:6px">
+        </div>
+      </div>
+      <div style="margin-top:18px;display:flex;gap:10px;align-items:center">
+        <button class="btn btn-primary" id="cf-search-btn" onclick="runContactFinder()" style="padding:11px 28px;font-size:14px">🎯 Find Contact Details</button>
+        <button class="btn btn-outline btn-sm" onclick="clearContactFinder()">Clear</button>
+        <span id="cf-status" style="font-size:13px;color:var(--text3)"></span>
+      </div>
+    </div>
+
+    <div id="cf-progress" style="display:none;margin-top:16px">
+      <div class="progress-box">
+        <div class="section-title" style="margin-bottom:14px">Searching…</div>
+        <div class="progress-steps" id="cf-steps">
+          <div class="step" id="cf-step-0"><div class="step-icon">1</div><span>Google Places lookup</span></div>
+          <div class="step" id="cf-step-1"><div class="step-icon">2</div><span>Healthsites.io + Hunter.io</span></div>
+          <div class="step" id="cf-step-2"><div class="step-icon">3</div><span>Claude AI web search</span></div>
+          <div class="step" id="cf-step-3"><div class="step-icon">✓</div><span>Complete</span></div>
+        </div>
+        <div class="progress-bar-wrap"><div class="progress-bar" id="cf-progress-bar"></div></div>
+        <div class="progress-status" id="cf-progress-status">Starting…</div>
+      </div>
+    </div>
+
+    <div id="cf-result" style="display:none;margin-top:20px"></div>
   </div>
 
   <!-- PROVIDERS DATABASE -->
@@ -3669,6 +3761,276 @@ ${list}`}]
   }finally{
     btn.disabled=false;
   }
+}
+
+// ── Contact Finder ────────────────────────────────────────
+function _cfStep(n,state){
+  const el=document.getElementById('cf-step-'+n);
+  if(!el)return;
+  el.className='step '+(state==='done'?'done':state==='active'?'active':'');
+  if(state==='active')document.getElementById('cf-progress-status').textContent=el.querySelector('span').textContent+'…';
+}
+function _cfProgress(pct,msg){
+  const bar=document.getElementById('cf-progress-bar');
+  if(bar)bar.style.width=pct+'%';
+  if(msg)document.getElementById('cf-progress-status').textContent=msg;
+}
+
+async function runContactFinder(){
+  const name=(document.getElementById('cf-name').value||'').trim();
+  const country=(document.getElementById('cf-country').value||'').trim();
+  if(!name){showToast('Enter a provider name','error');return;}
+  if(!country){showToast('Select a country','error');return;}
+  const city=(document.getElementById('cf-city').value||'').trim();
+  const website=(document.getElementById('cf-website').value||'').trim();
+  const type=document.getElementById('cf-type').value||'';
+  const extra=(document.getElementById('cf-extra').value||'').trim();
+
+  if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
+
+  const btn=document.getElementById('cf-search-btn');
+  btn.disabled=true;btn.textContent='⏳ Searching…';
+  document.getElementById('cf-progress').style.display='block';
+  document.getElementById('cf-result').style.display='none';
+  document.getElementById('cf-status').textContent='';
+  _cfStep(0,'active');_cfProgress(5,'Starting search…');
+
+  let found={name,country,city,website:'',email:'',email_confidence:'',phone:'',address:'',contact_person:'',contact_title:'',linkedin_url:'',linkedin_verified:false,type:type||'',cooperation_score:70,why_hwa:'',notes:'',_sources:[]};
+
+  // ── STEP 0: Google Places ────────────────────────────────
+  if(googlePlacesKey&&googlePlacesEnabled){
+    try{
+      const q=`${name} ${city||''} ${country}`.trim();
+      const gpResp=await fetch('https://places.googleapis.com/v1/places:searchText',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Goog-Api-Key':googlePlacesKey,'X-Goog-FieldMask':'places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.types,places.id'},
+        body:JSON.stringify({textQuery:q,maxResultCount:3,languageCode:'en'})
+      });
+      if(gpResp.ok){
+        const gpData=await gpResp.json();
+        const best=(gpData.places||[])[0];
+        if(best){
+          if(best.internationalPhoneNumber||best.nationalPhoneNumber)found.phone=best.internationalPhoneNumber||best.nationalPhoneNumber;
+          if(best.websiteUri&&!found.website)found.website=best.websiteUri;
+          if(best.formattedAddress)found.address=best.formattedAddress;
+          found._sources.push('Google Places');
+        }
+      }
+    }catch(e){}
+  }
+  _cfStep(0,'done');_cfStep(1,'active');_cfProgress(25,'Checking Healthsites.io & Hunter.io…');
+
+  // ── STEP 1a: Healthsites.io ──────────────────────────────
+  if(healthsitesKey&&healthsitesEnabled&&type&&['hospital','clinic','doctor','physical_therapy'].includes(type)){
+    try{
+      const HS_TAG={hospital:'hospital',clinic:'clinic',doctor:'doctors',physical_therapy:'physiotherapist'};
+      const tag=HS_TAG[type]||'hospital';
+      const hsCountry=_normalizeCountry(country);
+      const hsResp=await fetch(`https://healthsites.io/api/v2/facilities/?api-key=${encodeURIComponent(healthsitesKey)}&country=${encodeURIComponent(hsCountry)}&tag=${tag}&page=1`,{headers:{Accept:'application/json'}});
+      if(hsResp.ok){
+        const hsData=await hsResp.json();
+        const match=(hsData.results||[]).find(f=>{
+          const n=(f.attributes?.name||f.name||'').toLowerCase();
+          return n.includes(name.toLowerCase().split(' ')[0])||name.toLowerCase().includes(n.split(' ')[0]);
+        });
+        if(match){
+          const a=match.attributes||{};
+          if(a['contact:email']&&!found.email){found.email=a['contact:email'];found.email_confidence='verified';found._sources.push('Healthsites.io');}
+          if(a['contact:phone']&&!found.phone)found.phone=a['contact:phone'];
+          if(a['contact:website']&&!found.website)found.website=a['contact:website'];
+        }
+      }
+    }catch(e){}
+  }
+
+  // ── STEP 1b: Hunter.io ───────────────────────────────────
+  const domainSrc=found.website||website;
+  if(hunterKey&&hunterEnabled&&domainSrc&&!found.email){
+    try{
+      const rawDomain=domainSrc.startsWith('http')?domainSrc:'https://'+domainSrc;
+      const domain=new URL(rawDomain).hostname.replace(/^www\./,'');
+      const hResp=await fetch(`https://api.hunter.io/v2/domain-search?domain=${encodeURIComponent(domain)}&api_key=${hunterKey}&limit=5`);
+      if(hResp.ok){
+        const hd=await hResp.json();
+        const emails=(hd.data?.emails||[]).sort((a,b)=>(b.confidence||0)-(a.confidence||0));
+        const best=emails.find(e=>/director|medical|doctor|head|manager|international|coordinator/i.test((e.position||'')+(e.department||'')))||emails[0];
+        if(best?.value){
+          found.email=best.value;
+          found.email_confidence=(best.confidence||0)>=80?'verified':'likely';
+          if(!found.contact_person&&best.first_name&&best.last_name)found.contact_person=`${best.first_name} ${best.last_name}`.trim();
+          if(!found.contact_title&&best.position)found.contact_title=best.position;
+          found._sources.push('Hunter.io');
+        }
+      }
+    }catch(e){}
+  }
+  _cfStep(1,'done');_cfStep(2,'active');_cfProgress(50,'Claude AI searching the web…');
+
+  // ── STEP 2: Claude AI with web search ────────────────────
+  const knownInfo=[
+    found.phone?`Phone: ${found.phone}`:'',
+    found.website?`Website: ${found.website}`:'',
+    found.address?`Address: ${found.address}`:'',
+    found.email?`Email already found: ${found.email}`:'',
+    website&&!found.website?`User-provided website: ${website}`:'',
+    city?`City: ${city}`:'',
+    extra?`Additional info: ${extra}`:'',
+    type?`Provider type: ${type}`:'',
+  ].filter(Boolean).join('\n');
+
+  const cfPrompt=`CONTACT FINDER TASK — Date: ${new Date().toISOString().split('T')[0]}
+
+Find complete contact details for this specific medical provider:
+Name: ${name}
+Country: ${country}
+${knownInfo}
+
+${found.email?'Email already found — focus on verifying it and finding contact person, LinkedIn.':'Priority: find the real email address for international/medical correspondence.'}
+
+Instructions:
+1. Search for the provider's official website. Visit their Contact, About, Team, International Patients pages.
+2. Find and verify:
+   - email: the best contact email for international medical correspondence (International Department, Medical Director, international@, or general contact). ONLY return an email you actually find — do not guess patterns.
+   - email_confidence: "verified" if found on official website/directory during this search, "likely" if from reliable training data, "uncertain" if guessed
+   - phone: switchboard or international department phone number
+   - website: official website URL
+   - address: full street address
+   - contact_person: full name of Medical Director, International Patients Coordinator, or equivalent (only if you can confirm current role)
+   - contact_title: exact current job title
+   - linkedin_url: confirmed LinkedIn profile URL for the contact person (only if verified)
+   - why_hwa: 1-2 sentences on why HWA (international medical assistance company in Greece) should partner with this provider
+   - cooperation_score: 1-100 score (higher = more relevant for HWA international medical assistance)
+   - notes: any useful findings (e.g. accreditations, international patient department details, languages spoken)
+
+Return ONLY valid JSON — no markdown, no backticks:
+{"name":"${name}","email":"","email_confidence":"verified|likely|uncertain","phone":"","website":"","address":"","city":"${city||''}","country":"${country}","contact_person":"","contact_title":"","linkedin_url":"","linkedin_verified":false,"why_hwa":"","cooperation_score":70,"notes":""}`;
+
+  try{
+    const _msgs=[{role:'user',content:cfPrompt}];
+    let rawText='',_lastStop='';
+    const controller=new AbortController();
+    const abort=setTimeout(()=>controller.abort(),120000);
+    for(let _turn=0;_turn<8;_turn++){
+      const resp=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',signal:controller.signal,
+        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:'claude-opus-4-7',max_tokens:4096,tools:[{type:'web_search_20250305',name:'web_search',max_uses:6}],system:SYSTEM_PROMPT,messages:_msgs})
+      });
+      if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error');}
+      const _d=await resp.json();
+      _lastStop=_d.stop_reason;
+      const _txt=_d.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+      if(_txt)rawText=_txt;
+      if(_d.stop_reason==='end_turn')break;
+      if(_d.stop_reason==='tool_use'){
+        _msgs.push({role:'assistant',content:_d.content});
+        const _tr=_d.content.filter(b=>b.type==='tool_use').map(b=>({type:'tool_result',tool_use_id:b.id,content:''}));
+        if(_tr.length)_msgs.push({role:'user',content:_tr});
+        else break;
+      }else break;
+    }
+    clearTimeout(abort);
+    if(rawText){
+      try{
+        const ai=_parseClaudeJSON(rawText);
+        if(ai.email&&ai.email_confidence!=='uncertain'){if(!found.email||ai.email_confidence==='verified'){found.email=ai.email;found.email_confidence=ai.email_confidence;}}
+        if(ai.phone&&!found.phone)found.phone=ai.phone;
+        if(ai.website&&!found.website)found.website=ai.website;
+        if(ai.address&&!found.address)found.address=ai.address;
+        if(ai.city&&!found.city)found.city=ai.city;
+        if(ai.contact_person)found.contact_person=ai.contact_person;
+        if(ai.contact_title)found.contact_title=ai.contact_title;
+        if(ai.linkedin_url)found.linkedin_url=ai.linkedin_url;
+        if(ai.linkedin_verified)found.linkedin_verified=ai.linkedin_verified;
+        if(ai.why_hwa)found.why_hwa=ai.why_hwa;
+        if(ai.cooperation_score)found.cooperation_score=ai.cooperation_score;
+        if(ai.notes)found.notes=ai.notes;
+        found._sources.push('Claude AI');
+      }catch(e){}
+    }
+  }catch(e){showToast('Claude search error: '+e.message,'error');}
+
+  _cfStep(2,'done');_cfStep(3,'done');_cfProgress(100,'Done');
+
+  // ── Render result ─────────────────────────────────────────
+  found.type=found.type||type||'clinic';
+  fixProviderTypeByName(found);
+  document.getElementById('cf-result').style.display='block';
+  const confBadge=found.email_confidence==='verified'?'<span style="font-size:10px;background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:10px;font-weight:700">VERIFIED</span>':found.email_confidence==='likely'?'<span style="font-size:10px;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:10px;font-weight:700">LIKELY</span>':'';
+  const srcBadges=found._sources.map(s=>`<span style="font-size:10px;background:var(--navy);color:#fff;padding:2px 7px;border-radius:10px">${s}</span>`).join(' ');
+  function cfRow(label,val,extra=''){
+    if(!val)return`<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;opacity:0.45"><span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap">${label}</span><span style="font-size:13px;color:var(--text3);font-style:italic">Not found</span></div>`;
+    return`<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="flex:1;min-width:0"><span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:2px">${label}</span><span style="font-size:13px;color:var(--text);font-weight:500;word-break:break-all">${val}</span>${extra?`<span style="margin-left:6px">${extra}</span>`:''}</div><button onclick="navigator.clipboard.writeText('${val.replace(/'/g,"\\'")}');showToast('Copied','success')" style="flex-shrink:0;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;color:var(--text2)">Copy</button></div>`;
+  }
+  document.getElementById('cf-result').innerHTML=`
+    <div class="admin-card" style="max-width:700px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:var(--navy)">${found.name}</div>
+          <div style="font-size:13px;color:var(--text3);margin-top:2px">${typeLabel(found.type)||found.type||''} · ${found.city||''} ${found.country}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${srcBadges}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Cooperation Score</div>
+          <div style="font-size:28px;font-weight:700;color:var(--navy)">${found.cooperation_score}</div>
+        </div>
+      </div>
+      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px">
+        ${cfRow('Email',found.email,confBadge+(found.email?`<button onclick="navigator.clipboard.writeText('${(found.email||'').replace(/'/g,"\\'")}').then(()=>showToast('Email copied','success'))" style="margin-left:6px;background:var(--navy);color:#fff;border:none;border-radius:5px;padding:3px 9px;font-size:11px;cursor:pointer">📋</button>`:'')).replace('Copy','📋 Copy')}
+        ${cfRow('Phone',found.phone)}
+        ${cfRow('Website',found.website)}
+        ${cfRow('Address',found.address)}
+        ${cfRow('Contact Person',found.contact_person+(found.contact_title?' — '+found.contact_title:''))}
+        ${found.linkedin_url?cfRow('LinkedIn',found.linkedin_url):''}
+      </div>
+      ${found.why_hwa?`<div style="font-size:13px;color:var(--text2);background:var(--bg);padding:12px;border-radius:8px;margin-bottom:14px;line-height:1.6"><strong>Why HWA:</strong> ${found.why_hwa}</div>`:''}
+      ${found.notes?`<div style="font-size:12px;color:var(--text3);background:var(--bg);padding:10px 12px;border-radius:8px;margin-bottom:14px;line-height:1.6"><strong>Notes:</strong> ${found.notes}</div>`:''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="_cfSaveToDb()">💾 Save to Database</button>
+        <button class="btn btn-outline btn-sm" onclick="_cfGenerateEmail()">✉️ Generate Email</button>
+        <button class="btn btn-outline btn-sm" onclick="runContactFinder()">🔄 Search Again</button>
+      </div>
+    </div>`;
+
+  window._cfCurrentResult=found;
+  document.getElementById('cf-status').textContent=`Found via: ${found._sources.join(', ')||'search'}`;
+  btn.disabled=false;btn.textContent='🎯 Find Contact Details';
+}
+
+async function _cfSaveToDb(){
+  const p=window._cfCurrentResult;
+  if(!p){showToast('No result to save','error');return;}
+  try{
+    await db.collection('providers').add({
+      ...p,_sources:undefined,
+      inNetwork:'No',outreachStatus:'New',hwaPartner:false,
+      addedAt:new Date().toISOString(),addedBy:currentUser?.email||'',
+      source:'contact-finder'
+    });
+    showToast('Saved to database ✓','success');
+    loadProviders();
+  }catch(e){showToast('Save failed: '+e.message,'error');}
+}
+
+async function _cfGenerateEmail(){
+  const p=window._cfCurrentResult;
+  if(!p){showToast('No result to generate email for','error');return;}
+  showTab('run');
+  await new Promise(r=>setTimeout(r,200));
+  const tmp={...p,id:'_cf_tmp'};
+  const dummy=document.createElement('button');
+  dummy.onclick=()=>{};
+  await generateEmail(tmp,dummy,'_cf_tmp');
+}
+
+function clearContactFinder(){
+  ['cf-name','cf-city','cf-website','cf-extra'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('cf-country').value='';
+  document.getElementById('cf-type').value='';
+  document.getElementById('cf-progress').style.display='none';
+  document.getElementById('cf-result').style.display='none';
+  document.getElementById('cf-status').textContent='';
+  window._cfCurrentResult=null;
 }
 
 // ── Admin ─────────────────────────────────────────────────

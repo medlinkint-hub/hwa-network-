@@ -700,6 +700,21 @@ a{color:inherit;text-decoration:none}
       <div style="font-size:12px;color:var(--text3)">Key is stored securely in Firestore. All team members use the same key.</div>
     </div>
     <div class="admin-card">
+      <h3>🤖 AI Model <span style="font-size:11px;font-weight:400;color:var(--text3)">— personal preference · stored in your browser</span></h3>
+      <div style="background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#d97706;line-height:1.5">
+        💰 Cost tip: Haiku is ~20× cheaper than Opus. Use Sonnet for everyday searches; switch to Opus only when maximum reasoning quality is needed.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Select AI Model</label>
+        <select class="form-input" id="ai-model-select" onchange="saveAiModelPref()">
+          <option value="claude-haiku-4-5-20251001">⚡ Haiku 4.5 — Fastest &amp; cheapest</option>
+          <option value="claude-sonnet-4-6">⚖️ Sonnet 4.6 — Balanced · Recommended</option>
+          <option value="claude-opus-4-8">🏆 Opus 4.8 — Most capable (highest cost)</option>
+        </select>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:6px">Not shared with other team members — each person can choose their own model.</div>
+    </div>
+    <div class="admin-card">
       <h3>🗺️ Google Places API Key</h3>
       <div class="form-row">
         <div class="form-group">
@@ -2097,7 +2112,7 @@ async function _runHwaOnly(){
               'anthropic-dangerous-direct-browser-access':'true'
             },
             body:JSON.stringify({
-              model:'claude-opus-4-7',max_tokens:3000,
+              model:getAiModel(),max_tokens:3000,
               tools:[{type:'web_search_20250305',name:'web_search',max_uses:4}],
               system:SYSTEM_PROMPT,
               messages:[{role:'user',content:`VALIDATE AND ENRICH HWA PROVIDERS — Date: ${today}
@@ -2451,7 +2466,7 @@ Return ONLY this JSON format (no markdown, no backticks):
           'anthropic-dangerous-direct-browser-access':'true'
         },
         body:JSON.stringify({
-          model:'claude-opus-4-7',max_tokens:8192,
+          model:getAiModel(),max_tokens:8192,
           tools:[{type:'web_search_20250305',name:'web_search',max_uses:5}],
           system:SYSTEM_PROMPT,messages:_msgs
         })
@@ -2699,7 +2714,7 @@ Return ONLY this JSON format (no markdown, no backticks):
           'anthropic-dangerous-direct-browser-access':'true'
         },
         body:JSON.stringify({
-          model:'claude-opus-4-7',max_tokens:8192,
+          model:getAiModel(),max_tokens:8192,
           tools:[{type:'web_search_20250305',name:'web_search',max_uses:4}],
           system:SYSTEM_PROMPT,messages:_bMsgs
         })
@@ -2937,7 +2952,7 @@ Provider email: ${p.email||'[not available — leave To: blank, user will fill i
         'anthropic-version':'2023-06-01',
         'anthropic-dangerous-direct-browser-access':'true'
       },
-      body:JSON.stringify({model:'claude-opus-4-7',max_tokens:2000,system:EMAIL_PROMPT,messages:[{role:'user',content:userMsg}]})
+      body:JSON.stringify({model:getAiModel(),max_tokens:2000,system:EMAIL_PROMPT,messages:[{role:'user',content:userMsg}]})
     });
     if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error '+resp.status);}
     const data=await resp.json();
@@ -3012,7 +3027,7 @@ Return ONLY JSON (no other text): {"email":"","contact_person":"","contact_title
           'anthropic-dangerous-direct-browser-access':'true'
         },
         body:JSON.stringify({
-          model:'claude-opus-4-7',max_tokens:1500,
+          model:getAiModel(),max_tokens:1500,
           tools:[{type:'web_search_20250305',name:'web_search',max_uses:5}],
           messages:_feMsgs
         })
@@ -3544,7 +3559,7 @@ async function _enrichImported(providers){
         'anthropic-dangerous-direct-browser-access':'true'
       },
       body:JSON.stringify({
-        model:'claude-opus-4-7',max_tokens:2500,
+        model:getAiModel(),max_tokens:2500,
         system:SYSTEM_PROMPT,
         messages:[{role:'user',content:`ENRICH HWA PARTNER PROVIDERS — for each below, search the web and find:
 email, contact_person (medical director or international coordinator), contact_title (job title),
@@ -3690,7 +3705,7 @@ async function fixAllHwaData(){
             'anthropic-dangerous-direct-browser-access':'true'
           },
           body:JSON.stringify({
-            model:'claude-opus-4-7',max_tokens:3000,
+            model:getAiModel(),max_tokens:3000,
             system:'You are a medical data quality specialist. Correct provider location and type data. Output ONLY pipe-separated lines.',
             messages:[{role:'user',content:`Fix location and type data for each provider.
 
@@ -3914,7 +3929,7 @@ Return ONLY valid JSON — no markdown, no backticks:
       const resp=await fetch('https://api.anthropic.com/v1/messages',{
         method:'POST',signal:controller.signal,
         headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-beta':'web-search-2025-03-05','anthropic-dangerous-direct-browser-access':'true'},
-        body:JSON.stringify({model:'claude-opus-4-7',max_tokens:4096,tools:[{type:'web_search_20250305',name:'web_search',max_uses:6}],system:SYSTEM_PROMPT,messages:_msgs})
+        body:JSON.stringify({model:getAiModel(),max_tokens:4096,tools:[{type:'web_search_20250305',name:'web_search',max_uses:6}],system:SYSTEM_PROMPT,messages:_msgs})
       });
       if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error');}
       const _d=await resp.json();
@@ -4091,7 +4106,7 @@ Provider email: ${p.email||'[not available — leave To: blank, user will fill i
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-opus-4-7',max_tokens:2000,system:EMAIL_PROMPT,messages:[{role:'user',content:userMsg}]})
+      body:JSON.stringify({model:getAiModel(),max_tokens:2000,system:EMAIL_PROMPT,messages:[{role:'user',content:userMsg}]})
     });
     if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error '+resp.status);}
     const data=await resp.json();
@@ -4139,7 +4154,24 @@ function clearContactFinder(){
 }
 
 // ── Admin ─────────────────────────────────────────────────
+function getAiModel(){
+  return localStorage.getItem('hwa_ai_model')||'claude-sonnet-4-6';
+}
+function saveAiModelPref(){
+  const sel=document.getElementById('ai-model-select');
+  if(!sel)return;
+  localStorage.setItem('hwa_ai_model',sel.value);
+  const label=sel.options[sel.selectedIndex]?.text?.split(' — ')[0]||sel.value;
+  showToast('AI model set to: '+label,'success');
+}
+function loadAiModelPref(){
+  const stored=localStorage.getItem('hwa_ai_model');
+  const sel=document.getElementById('ai-model-select');
+  if(sel&&stored)sel.value=stored;
+}
+
 async function loadAdminData(){
+  loadAiModelPref();
   try{
     const doc=await db.collection('config').doc('api').get();
     if(doc.exists&&doc.data().anthropicKey){

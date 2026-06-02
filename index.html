@@ -3987,8 +3987,30 @@ Return ONLY valid JSON — no markdown, no backticks:
       ${found.notes?`<div style="font-size:12px;color:var(--text3);background:var(--bg);padding:10px 12px;border-radius:8px;margin-bottom:14px;line-height:1.6"><strong>Notes:</strong> ${found.notes}</div>`:''}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary" onclick="_cfSaveToDb()">💾 Save to Database</button>
-        <button class="btn btn-outline btn-sm" onclick="_cfGenerateEmail()">✉️ Generate Email</button>
+        <button class="btn btn-outline btn-sm" id="cf-email-btn" onclick="_cfGenerateEmail(this)">✉️ Generate Email</button>
         <button class="btn btn-outline btn-sm" onclick="runContactFinder()">🔄 Search Again</button>
+      </div>
+      <div id="cf-email-panel" style="display:none;margin-top:18px;border-top:1px solid var(--border);padding-top:18px">
+        <div style="font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px">✉️ Generated Email</div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Subject</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div id="cf-email-subject" style="flex:1;font-size:13px;font-weight:600;color:var(--navy);background:var(--bg);padding:8px 11px;border-radius:6px;border:1px solid var(--border)"></div>
+            <button onclick="navigator.clipboard.writeText(document.getElementById('cf-email-subject').textContent).then(()=>showToast('Subject copied','success'))" style="flex-shrink:0;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 11px;cursor:pointer;font-size:11px;color:var(--text2)">Copy</button>
+          </div>
+        </div>
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">Body</div>
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <div id="cf-email-body" style="flex:1;font-size:12px;color:var(--text2);background:var(--bg);padding:12px;border-radius:6px;border:1px solid var(--border);white-space:pre-wrap;line-height:1.7;max-height:360px;overflow-y:auto"></div>
+            <button onclick="navigator.clipboard.writeText(document.getElementById('cf-email-body').textContent).then(()=>showToast('Body copied','success'))" style="flex-shrink:0;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 11px;cursor:pointer;font-size:11px;color:var(--text2)">Copy</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" id="cf-open-outlook-btn">📧 Open in Outlook</button>
+          <button class="btn btn-outline btn-sm" onclick="navigator.clipboard.writeText('Subject: '+document.getElementById('cf-email-subject').textContent+'\n\n'+document.getElementById('cf-email-body').textContent).then(()=>showToast('Email copied','success'))">📋 Copy Full Email</button>
+          <button class="btn btn-outline btn-sm" id="cf-email-btn-regen" onclick="_cfGenerateEmail(this)">🔄 Regenerate</button>
+        </div>
       </div>
     </div>`;
 
@@ -4012,15 +4034,98 @@ async function _cfSaveToDb(){
   }catch(e){showToast('Save failed: '+e.message,'error');}
 }
 
-async function _cfGenerateEmail(){
+async function _cfGenerateEmail(btnEl){
   const p=window._cfCurrentResult;
   if(!p){showToast('No result to generate email for','error');return;}
-  showTab('run');
-  await new Promise(r=>setTimeout(r,200));
-  const tmp={...p,id:'_cf_tmp'};
-  const dummy=document.createElement('button');
-  dummy.onclick=()=>{};
-  await generateEmail(tmp,dummy,'_cf_tmp');
+  if(!apiKey){showToast('API key missing — set it in Admin tab','error');return;}
+
+  const orig=btnEl?btnEl.innerHTML:'✉️ Generate Email';
+  if(btnEl){btnEl.disabled=true;btnEl.innerHTML='⏳ Generating...';}
+
+  const specs=(p.specialties||[]);
+  const specsStr=Array.isArray(specs)?specs.join(', '):(specs||'General');
+  const isAirAmb=p.type==='air_ambulance';
+  const isInsurance=p.type==='insurance'||p.type==='reinsurance';
+  const isTpa=p.type==='tpa';
+  const isIpmi=p.type==='ipmi';
+  const userMsg=isAirAmb
+    ?`GENERATE HWA SERVICES PROPOSAL EMAIL — type = air_ambulance
+Provider (recipient): ${p.name}
+City: ${p.city||''}, ${p.country||''}
+Contact: ${p.contact_person?p.contact_person+' ('+(p.contact_title||'Operations')+')':`Operations Director of ${p.name}`}
+Provider email: ${p.email||'[not available — leave To: blank, user will fill in]'}
+
+Use the air_ambulance section of your instructions. HWA is PROPOSING TO PROVIDE ground support services TO this company. Do NOT send a network invitation.`
+    :isInsurance
+    ?`GENERATE HWA SERVICES PROPOSAL EMAIL — type = ${p.type}
+Provider (recipient): ${p.name}
+City: ${p.city||''}, ${p.country||''}
+Contact: ${p.contact_person?p.contact_person+' ('+(p.contact_title||'Claims/Medical Director')+')':`Claims Director or Medical Director of ${p.name}`}
+Provider email: ${p.email||'[not available — leave To: blank, user will fill in]'}
+
+Use the insurance/reinsurance section of your instructions. HWA is PROPOSING TO PROVIDE medical assistance services, provider network access, and AI claims evaluation TO this company. Do NOT send a network invitation.`
+    :isTpa
+    ?`GENERATE HWA SERVICES PROPOSAL EMAIL — type = tpa
+Provider (recipient): ${p.name}
+City: ${p.city||''}, ${p.country||''}
+Contact: ${p.contact_person?p.contact_person+' ('+(p.contact_title||'Operations/Medical Director')+')':`Operations Director or Medical Director of ${p.name}`}
+Provider email: ${p.email||'[not available — leave To: blank, user will fill in]'}
+
+Use the tpa section of your instructions. HWA is PROPOSING TO PROVIDE medical assistance services, provider network access, and AI claims evaluation TO this TPA/assistance company as a potential client. Do NOT send a network invitation.`
+    :isIpmi
+    ?`GENERATE HWA SERVICES PROPOSAL EMAIL — type = ipmi
+Provider (recipient): ${p.name}
+City: ${p.city||''}, ${p.country||''}
+Contact: ${p.contact_person?p.contact_person+' ('+(p.contact_title||'Medical/Operations Director')+')':`Medical Director or Operations Director of ${p.name}`}
+Provider email: ${p.email||'[not available — leave To: blank, user will fill in]'}
+
+Use the ipmi section of your instructions. HWA is PROPOSING TO PROVIDE medical assistance services, provider network access, and AI claims evaluation TO this IPMI company as a potential client. Do NOT send a network invitation.`
+    :`Generate cooperation email for:
+Provider: ${p.name}
+Type: ${p.type||''}
+City: ${p.city||''}, ${p.country||''}
+Specialties: ${specsStr||'General'}
+Provider email: ${p.email||'[not available — leave To: blank, user will fill in]'}`;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-opus-4-7',max_tokens:2000,system:EMAIL_PROMPT,messages:[{role:'user',content:userMsg}]})
+    });
+    if(!resp.ok){const err=await resp.json();throw new Error(err.error?.message||'API error '+resp.status);}
+    const data=await resp.json();
+    let raw=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    if(!raw)throw new Error('No response from Claude');
+    let clean=raw.trim().replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
+    const m=clean.match(/\{[\s\S]*\}/); if(m)clean=m[0];
+    clean=clean.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,'');
+    const emailData=JSON.parse(clean);
+    p.email_subject=emailData.subject||'Partnership — HealthWatch Assistance';
+    p.email_body=(emailData.body||'').replace(/\\n/g,'\n');
+
+    // Display inline
+    const panel=document.getElementById('cf-email-panel');
+    document.getElementById('cf-email-subject').textContent=p.email_subject;
+    document.getElementById('cf-email-body').textContent=p.email_body;
+    // Wire up Outlook button
+    const outlookBtn=document.getElementById('cf-open-outlook-btn');
+    if(outlookBtn){
+      outlookBtn.onclick=()=>{
+        const a=document.createElement('a');
+        a.href=`mailto:${p.email||''}?subject=${encodeURIComponent(p.email_subject)}&body=${encodeURIComponent(p.email_body)}`;
+        a.click();
+      };
+    }
+    if(panel)panel.style.display='block';
+    // Scroll to email panel
+    requestAnimationFrame(()=>panel?.scrollIntoView({behavior:'smooth',block:'nearest'}));
+    showToast('Email generated ✓','success');
+  }catch(e){
+    showToast('Email generation failed: '+e.message,'error');
+  }finally{
+    if(btnEl){btnEl.disabled=false;btnEl.innerHTML=orig;}
+  }
 }
 
 function clearContactFinder(){

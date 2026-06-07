@@ -388,6 +388,7 @@ a{color:inherit;text-decoration:none}
     <button class="tab-btn" onclick="showTab('run')" data-tab="run">🔍 Network Run</button>
     <button class="tab-btn" onclick="showTab('finder')" data-tab="finder">🎯 Contact Finder</button>
     <button class="tab-btn" onclick="showTab('providers')" data-tab="providers">📋 Providers</button>
+    <button class="tab-btn" onclick="showTab('searchlog')" data-tab="searchlog">📊 Search Log</button>
     <button class="tab-btn" id="admin-tab-btn" onclick="showTab('admin')" data-tab="admin" style="display:none">⚙️ Admin</button>
   </div>
 
@@ -687,6 +688,51 @@ a{color:inherit;text-decoration:none}
   </div>
 
   <!-- ADMIN -->
+  <!-- ══════════════════ SEARCH LOG ══════════════════ -->
+  <div id="tab-searchlog" class="tab-content" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div>
+        <h2 style="font-size:18px;font-weight:700;color:var(--navy);margin:0 0 3px">📊 Search Log</h2>
+        <div style="font-size:13px;color:var(--text3)" id="searchlog-count">Every provider search is automatically saved here.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline" onclick="downloadAllSearchLog()" style="font-size:13px">⬇ Download All (Excel)</button>
+      </div>
+    </div>
+
+    <!-- Runs table -->
+    <div style="overflow-x:auto;margin-bottom:24px">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.07)">
+        <thead>
+          <tr style="background:var(--navy);color:#fff">
+            <th style="padding:11px 14px;text-align:left;font-weight:600;white-space:nowrap">Date & Time</th>
+            <th style="padding:11px 14px;text-align:left;font-weight:600">Country</th>
+            <th style="padding:11px 14px;text-align:left;font-weight:600">City</th>
+            <th style="padding:11px 14px;text-align:left;font-weight:600">Types Searched</th>
+            <th style="padding:11px 14px;text-align:center;font-weight:600"># Found</th>
+            <th style="padding:11px 14px;text-align:left;font-weight:600">Run By</th>
+            <th style="padding:11px 14px;text-align:center;font-weight:600">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="searchlog-tbody">
+          <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Expanded run detail panel -->
+    <div id="searchlog-detail" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <h3 id="searchlog-detail-title" style="font-size:14px;font-weight:700;color:var(--navy);margin:0"></h3>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-outline btn-sm" id="searchlog-detail-dl">⬇ Download This Run</button>
+          <button class="btn btn-ghost btn-sm" onclick="closeSearchLogDetail()">✕ Close</button>
+        </div>
+      </div>
+      <div id="searchlog-detail-table" style="overflow-x:auto;font-size:12px"></div>
+    </div>
+  </div>
+
   <div id="tab-admin" class="tab-content" style="display:none">
     <div class="admin-card">
       <h3>⚙️ Claude API Key</h3>
@@ -1129,6 +1175,7 @@ function showTab(tab){
   const btn=document.querySelector(`[data-tab="${tab}"]`);
   if(btn)btn.classList.add('active');
   if(tab==='providers')loadProviders().catch(()=>{});
+  if(tab==='searchlog')loadSearchLog().catch(()=>{});
   if(tab==='dashboard')loadDashboard();
 }
 
@@ -2654,6 +2701,29 @@ Return ONLY this JSON format (no markdown, no backticks):
     }
 
     try{await db.collection('runSessions').add({date:today,country:_searchCountry,city:_searchCity,region:loc,found:finalProviders.length,types:_searchTypes,runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
+
+    // Auto-save full provider data to searchLog
+    try{
+      const _slProviders=finalProviders.map(p=>({
+        name:p.name||'',type:p.type||'',country:p.country||'',city:p.city||'',
+        address:p.address||'',email:p.email||'',email_confidence:p.email_confidence||'',
+        phone:p.phone||'',website:p.website||'',
+        contact_person:p.contact_person||'',contact_title:p.contact_title||'',
+        linkedin_url:p.linkedin_url||'',linkedin_verified:p.linkedin_verified||false,
+        specialties:_toArr(p.specialties),accreditations:_toArr(p.accreditations),
+        cooperation_score:p.cooperation_score||null,why_hwa:p.why_hwa||'',
+        notes:p.notes||'',industry_source:p.industry_source||'',
+        has_international_dept:p.has_international_dept||false,
+        _isHWA:p._isHWA||false
+      }));
+      await db.collection('searchLog').add({
+        date:today,country:_searchCountry,city:_searchCity,region:loc,
+        found:finalProviders.length,types:_searchTypes,
+        runBy:currentUser.displayName||'HWA Team',runByEmail:currentUser.email||'',
+        providers:_slProviders,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }catch(_){}
 
     setStep(1,'done');setStep(2,'done');
     _finishRunUI(`${finalProviders.length} providers found`);
@@ -4241,6 +4311,174 @@ function showToast(msg,type='info'){
   el.textContent=msg;
   document.getElementById('toasts').appendChild(el);
   setTimeout(()=>el.remove(),4000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SEARCH LOG
+// ══════════════════════════════════════════════════════════════════
+let _searchLogCache=[];
+
+async function loadSearchLog(){
+  const tbody=document.getElementById('searchlog-tbody');
+  const countEl=document.getElementById('searchlog-count');
+  if(!tbody)return;
+  tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">Loading…</td></tr>';
+  try{
+    const snap=await db.collection('searchLog').orderBy('createdAt','desc').limit(200).get();
+    _searchLogCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(countEl)countEl.textContent=`${_searchLogCache.length} search run${_searchLogCache.length!==1?'s':''} logged · every search is automatically saved here`;
+    _renderSearchLog(_searchLogCache);
+  }catch(e){
+    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:40px;color:#c0392b">Error loading: ${e.message}</td></tr>`;
+  }
+}
+
+function _renderSearchLog(runs){
+  const tbody=document.getElementById('searchlog-tbody');
+  if(!tbody)return;
+  if(!runs.length){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">No search runs logged yet. Run a provider search to start building your log.</td></tr>';
+    return;
+  }
+  tbody.innerHTML=runs.map((r,idx)=>{
+    const types=(r.types||[]).map(t=>t.replace(/_/g,' ')).join(', ')||'—';
+    let dtStr='—';
+    try{dtStr=r.createdAt?(r.createdAt.toDate?r.createdAt.toDate():new Date(r.createdAt)).toLocaleString():(r.date||'—');}catch(_){}
+    const hasProviders=(r.providers||[]).length>0;
+    const scoreStr=hasProviders?`${r.found||0}`:`<span style="color:var(--text3)">${r.found||0}</span>`;
+    return`<tr style="border-bottom:1px solid var(--border);${idx%2===0?'background:#fff':'background:#f8f9ff'}">
+      <td style="padding:10px 14px;white-space:nowrap;font-size:12px">${dtStr}</td>
+      <td style="padding:10px 14px;font-weight:600;color:var(--navy)">${r.country||'—'}</td>
+      <td style="padding:10px 14px">${r.city||'—'}</td>
+      <td style="padding:10px 14px;font-size:11px;color:var(--text3);max-width:200px">${types}</td>
+      <td style="padding:10px 14px;text-align:center;font-weight:700;color:var(--navy)">${scoreStr}</td>
+      <td style="padding:10px 14px;font-size:11px;color:var(--text3)">${r.runBy||'—'}</td>
+      <td style="padding:10px 14px;text-align:center">
+        <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+          ${hasProviders?`<button onclick="viewSearchRun(${idx})" style="background:var(--navy);color:#fff;border:none;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600">👁 View</button>`:''}
+          ${hasProviders?`<button onclick="downloadSearchRun(${idx})" style="background:#fff;border:1px solid var(--border);border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer">⬇ Excel</button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function viewSearchRun(idx){
+  const run=_searchLogCache[idx];
+  if(!run)return;
+  const providers=run.providers||[];
+  const detail=document.getElementById('searchlog-detail');
+  const title=document.getElementById('searchlog-detail-title');
+  let dtStr='';
+  try{dtStr=run.createdAt?(run.createdAt.toDate?run.createdAt.toDate():new Date(run.createdAt)).toLocaleDateString():(run.date||'');}catch(_){}
+  title.textContent=`${providers.length} providers — ${[run.city,run.country].filter(Boolean).join(', ')} · ${dtStr}`;
+  const dlBtn=document.getElementById('searchlog-detail-dl');
+  if(dlBtn)dlBtn.onclick=()=>downloadSearchRun(idx);
+
+  const rows=providers.map(p=>{
+    const confBadge=p.email_confidence==='verified'?'<span style="font-size:9px;background:#d1fae5;color:#065f46;padding:1px 5px;border-radius:8px;font-weight:700;margin-left:4px">✓</span>':p.email_confidence==='likely'?'<span style="font-size:9px;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:8px;font-weight:700;margin-left:4px">~</span>':'';
+    const hwaBadge=p._isHWA?'<span style="font-size:9px;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:8px;font-weight:700;margin-left:4px">HWA</span>':'';
+    return`<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:8px 12px;font-weight:600;color:var(--navy)">${p.name||'—'}${hwaBadge}</td>
+      <td style="padding:8px 12px;font-size:11px">${p.type||'—'}</td>
+      <td style="padding:8px 12px;font-size:11px">${[p.city,p.country].filter(Boolean).join(', ')||'—'}</td>
+      <td style="padding:8px 12px;font-size:11px;word-break:break-all">${p.email?p.email+confBadge:'—'}</td>
+      <td style="padding:8px 12px;font-size:11px">${p.phone||'—'}</td>
+      <td style="padding:8px 12px;font-size:11px;word-break:break-all">${p.website||'—'}</td>
+      <td style="padding:8px 12px;font-size:11px">${p.contact_person||'—'}</td>
+      <td style="padding:8px 12px;text-align:center;font-weight:700;color:var(--navy)">${p.cooperation_score||'—'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('searchlog-detail-table').innerHTML=`
+    <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.07)">
+      <thead><tr style="background:var(--navy);color:#fff">
+        <th style="padding:9px 12px;text-align:left;font-weight:600">Name</th>
+        <th style="padding:9px 12px;text-align:left;font-weight:600">Type</th>
+        <th style="padding:9px 12px;text-align:left;font-weight:600">Location</th>
+        <th style="padding:9px 12px;text-align:left;font-weight:600">Email</th>
+        <th style="padding:9px 12px;text-align:left;font-weight:600">Phone</th>
+        <th style="padding:9px 12px;text-align:left;font-weight:600">Website</th>
+        <th style="padding:9px 12px;text-align:left;font-weight:600">Contact</th>
+        <th style="padding:9px 12px;text-align:center;font-weight:600">Score</th>
+      </tr></thead>
+      <tbody>${rows||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">No provider data</td></tr>'}</tbody>
+    </table>`;
+  detail.style.display='block';
+  requestAnimationFrame(()=>detail.scrollIntoView({behavior:'smooth',block:'nearest'}));
+}
+
+function closeSearchLogDetail(){
+  const d=document.getElementById('searchlog-detail');
+  if(d)d.style.display='none';
+}
+
+function downloadSearchRun(idx){
+  const run=_searchLogCache[idx];
+  if(!run)return;
+  const providers=run.providers||[];
+  if(!providers.length){showToast('No provider data saved for this run','error');return;}
+  let dtStr='';
+  try{dtStr=run.createdAt?(run.createdAt.toDate?run.createdAt.toDate():new Date(run.createdAt)).toISOString().split('T')[0]:(run.date||'');} catch(_){}
+  const loc=[run.city,run.country].filter(Boolean).join('_').replace(/[^a-zA-Z0-9_]/g,'');
+  const headers=['Search Date','Country','City','Types','Provider Name','Type','Address',
+    'Email','Email Confidence','Phone','Website','Contact Person','Contact Title',
+    'Specialties','Accreditations','Cooperation Score','Why HWA','Has Intl Dept','HWA Partner'];
+  const rows=providers.map(p=>[
+    dtStr,run.country||'',run.city||'',(run.types||[]).join(', '),
+    p.name||'',p.type||'',p.address||'',
+    p.email||'',p.email_confidence||'',
+    p.phone||'',p.website||'',
+    p.contact_person||'',p.contact_title||'',
+    _toArr(p.specialties).join('; '),
+    _toArr(p.accreditations).join('; '),
+    p.cooperation_score||'',p.why_hwa||'',
+    p.has_international_dept?'Yes':'No',p._isHWA?'Yes':'No'
+  ]);
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  ws['!cols']=headers.map(h=>({wch:Math.max(h.length,14)}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Search Results');
+  XLSX.writeFile(wb,`HWA_Search_${dtStr}_${loc||'run'}.xlsx`);
+  showToast('Downloaded ✓','success');
+}
+
+function downloadAllSearchLog(){
+  if(!_searchLogCache.length){showToast('No search history yet','error');return;}
+  const headers=['Search Date','Run By','Country','City','Types Searched',
+    'Provider Name','Type','Address','Email','Email Confidence','Phone','Website',
+    'Contact Person','Contact Title','Specialties','Accreditations',
+    'Cooperation Score','Why HWA','Has Intl Dept','HWA Partner'];
+  const rows=[];
+  _searchLogCache.forEach(run=>{
+    let dtStr='';
+    try{dtStr=run.createdAt?(run.createdAt.toDate?run.createdAt.toDate():new Date(run.createdAt)).toISOString().split('T')[0]:(run.date||'');}catch(_){}
+    const types=(run.types||[]).join(', ');
+    const providers=run.providers||[];
+    if(!providers.length){
+      rows.push([dtStr,run.runBy||'',run.country||'',run.city||'',types,
+        `(${run.found||0} found — details not available)`,'','','','','','','','','','','','','','']);
+    } else {
+      providers.forEach(p=>rows.push([
+        dtStr,run.runBy||'',run.country||'',run.city||'',types,
+        p.name||'',p.type||'',p.address||'',
+        p.email||'',p.email_confidence||'',
+        p.phone||'',p.website||'',
+        p.contact_person||'',p.contact_title||'',
+        _toArr(p.specialties).join('; '),
+        _toArr(p.accreditations).join('; '),
+        p.cooperation_score||'',p.why_hwa||'',
+        p.has_international_dept?'Yes':'No',p._isHWA?'Yes':'No'
+      ]));
+    }
+  });
+  if(!rows.length){showToast('No data to download','error');return;}
+  const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+  ws['!cols']=headers.map(h=>({wch:Math.max(h.length,14)}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'All Search History');
+  XLSX.writeFile(wb,`HWA_SearchLog_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast('Downloaded ✓','success');
 }
 
 // ── PWA Service Worker ────────────────────────────────────
